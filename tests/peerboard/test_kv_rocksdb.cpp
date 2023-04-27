@@ -22,7 +22,7 @@
 
 #include <catch2/catch.hpp>
 
-#include "../fabko/datastore/kv_rocksdb.hh"
+#include "kv_rocksdb.hh"
 
 TEST_CASE("kv_db_rocksdb_testcase") {
 

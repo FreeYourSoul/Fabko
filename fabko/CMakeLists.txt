@@ -16,6 +16,9 @@ target_sources(core
         core/sat/dimacs_compiler.hh
         core/sat/solver.cpp
         core/sat/solver.hh
+        PRIVATE
+        core/sat/helpers.hh
+        core/sat/helpers.cpp
         )
 target_include_directories(core
         PRIVATE

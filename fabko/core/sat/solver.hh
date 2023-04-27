@@ -24,6 +24,7 @@
 #pragma once
 
 #include <optional>
+#include <vector>
 #include <cstdint>
 #include <memory>
 
@@ -38,7 +39,7 @@ using assign_bool = std::optional<bool>;
  * Variable in the CNF representation.
  * This value is an index into the memory object and thus is not abstracted.
  */
-using variable = int;
+using variable = unsigned;
 
 /**
  * Represent a literal in the CNF representation.
@@ -50,24 +51,32 @@ using variable = int;
 class literal {
 
 public:
-  literal(variable var, bool positive) : _val(var + var + static_cast<std::int32_t>(positive)){}
+  literal(variable var, bool positive) : _val(var + var + static_cast<unsigned>(positive)){}
+
+  bool operator<=>(const literal& other) const = default;
+
+  literal &operator^(bool b) {
+    _val ^= static_cast<unsigned>(b);
+    return *this;
+  }
 
   literal operator^(bool b) const {
-    literal lit(*this);
-    lit._val ^= static_cast<std::int32_t>(b);
-    return lit;
+    return literal(*this) ^ b;
+  }
+
+  literal &operator~() {
+    _val ^= 1;
+    return *this;
   }
 
   literal operator~() const {
-    literal lit(*this);
-    lit._val ^= 1;
-    return lit;
+    return ~literal(*this);
   }
 
   [[nodiscard]] variable variable() const { return _val; };
 
 private:
-  std::int32_t _val;
+  unsigned _val;
 
 };
 

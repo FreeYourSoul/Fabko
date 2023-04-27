@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <concepts>
 #include <exception>
 #include <memory>
 
@@ -33,6 +34,9 @@
 #include "key_value_db.hh"
 
 namespace fabko {
+
+template<typename T>
+concept listing_handler = std::invocable<T, std::string&&, std::string&&>;
 
 [[maybe_unused]] static std::error_code put_error_code() { return {0, except_cat::db{}}; }
 [[maybe_unused]] static std::error_code get_error_code() { return {1, except_cat::db{}}; }
@@ -59,20 +63,20 @@ public:
       return ptr;
     }
 
-    template<typename Handler>
+    template<listing_handler Handler>
     void list(std::string_view start, std::string_view end_key, Handler&& handler) {
       auto it = get_iterator();
       for (it->Seek(rocksdb::Slice(start)); it->Valid(); it->Next()) {
         std::string key = it->key().ToString();
         if (key.compare(end_key) < 0) {
-          std::forward<Handler>(handler)(key, it->value().ToString());
+          std::forward<Handler>(handler)(std::move(key), it->value().ToString());
         } else {
           break;
         }
       }
     }
 
-    template<typename Handler>
+    template<listing_handler Handler>
     void list(std::string_view start, Handler&& handler) {
       std::string end(start);
       ++end.back();
@@ -85,16 +89,18 @@ public:
       if constexpr (std::is_same_v<std::string, T>) {
         return value;
       }
-      if constexpr (std::is_integral_v<T> && std::is_unsigned_v<T>) {
+      else if constexpr (std::is_integral_v<T> && std::is_unsigned_v<T>) {
         return std::stoul(value);
       }
-      if constexpr (std::is_integral_v<T> && std::is_signed_v<T>) {
+      else if constexpr (std::is_integral_v<T> && std::is_signed_v<T>) {
         return std::stoi(value);
       }
-      if constexpr (std::is_floating_point_v<T>) {
+      else if constexpr (std::is_floating_point_v<T>) {
         return std::stod(value);
       }
-      throw std::logic_error("get_as not implemented");
+      else {
+        throw std::logic_error("get_as not implemented");
+      }
     }
 
     void add_counter(const std::string& key, std::int64_t to_add);
@@ -114,7 +120,7 @@ public:
   explicit kv_rocksdb(const initializer_type& initializer);
 
 private:
-  std::unique_ptr<rocksdb::OptimisticTransactionDB, decltype([](auto *ptr){ ptr->Close(); delete(ptr); })> _db;
+  std::unique_ptr<rocksdb::OptimisticTransactionDB> _db;
 };
 
 using kv_rocksdb_instance = kv_db<kv_rocksdb>;

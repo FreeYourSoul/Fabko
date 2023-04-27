@@ -22,6 +22,7 @@
 //
 
 #include <ranges>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -131,31 +132,40 @@ private:
    * @return true if assignment occurred, false otherwise
    */
   [[nodiscard]] bool try_assign_variable(std::vector<int>& attempt_flags, std::size_t var) {
-    for (int attempt : {0, 1}) {
+    for (const bool attempt : {false, true}) {
       if ((attempt_flags[var] >> attempt) & 1) {
         continue;
       }
       // set the bit for the attempt on the variable var.
-      attempt_flags[var] |= 1 << attempt;
+      attempt_flags[var] |= 1 << static_cast<unsigned>(attempt);
 
       // apply assignment
-      context.cur_assignment.assign_variable(sat::variable(var), bool(attempt));
+      context.cur_assignment.assign_variable(sat::variable(var), attempt);
 
-//      if () {
-//
-//      }
+      if (update_watchlist(sat::variable(var), attempt)) {
+
+      }
 
       return true;
     }
     return false;
   }
 
-  void update_watchlist() {
+  /**
+   * Update the watcher list in accordance with the assign value.
+   *
+   * @details: For each literals, clause are watching them. When updating the watchlist for a specific variable
+   *
+   * @param var
+   * @param assign
+   * @return
+   */
+  bool update_watchlist(sat::variable var, bool assign) {
   }
 
 public:
   solver_config config;
-  std::vector<clause_watchers> clauses{};
+  std::unordered_map<unsigned, std::vector<clause>> clauses{};
   sat_execution_context context{};
 };
 
@@ -195,9 +205,7 @@ void solver::add_clause(clause clause_literals) {
                "an added clause cannot be empty");
 
   auto watcher = variable_watched{clause_literals[0].variable(), std::nullopt};
-  _pimpl->clauses.emplace_back(clause_watchers{
-      .clause = std::move(clause_literals),
-      .watch = std::move(watcher)});
+//  ...
 }
 
 solver_status solver::solving_status() const {
