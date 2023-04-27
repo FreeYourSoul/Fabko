@@ -3,3 +3,6 @@
 //
 
 #include "agent.hh"
+
+namespace fabko {
+}

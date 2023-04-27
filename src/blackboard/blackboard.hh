@@ -16,8 +16,8 @@
 namespace fabko {
 
 struct blackboard_data {
-  std::string id;
-  com::request_propositions propositions;
+  std::string id = {};
+  com::request_propositions propositions = std::nullopt;
 };
 
 /**

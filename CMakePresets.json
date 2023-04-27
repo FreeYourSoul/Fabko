@@ -12,11 +12,12 @@
     {
       "name": "base",
       "environment": {
-        "FABKO_LINUX_WARN_FLAGS": "-Werror -Wall -Wextra -Wconversion -Wsign-conversion -Wshadow -pedantic -pthread",
+        "FABKO_LINUX_WARN_FLAGS": "-Wall -Wextra -Wconversion -Wsign-conversion -Wshadow -pedantic -pthread",
         "FABKO_WIN_WARN_FLAGS": ""
       },
       "cacheVariables": {
-        "CXX": "/usr/bin/clang++"
+        "CMAKE_CXX_COMPILER": "/usr/bin/clang++",
+        "CMAKE_C_COMPILER": "/usr/bin/clang"
       },
       "hidden": true
     },
@@ -29,7 +30,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_CONFIGURATION_TYPES": "Debug",
-        "CXXFLAGS": "$env{FABKO_LINUX_WARN_FLAGS} -Og -g"
+        "CMAKE_CXX_FLAGS_DEBUG": "$env{FABKO_LINUX_WARN_FLAGS} -Og -g"
       }
     },
     {
@@ -41,7 +42,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CMAKE_CONFIGURATION_TYPES": "RelWithDebInfo",
-        "CXXFLAGS": "$env{FABKO_LINUX_WARN_FLAGS} -O3 -s"
+        "CMAKE_CXX_FLAGS_RELEASE": "$env{FABKO_LINUX_WARN_FLAGS} -Werror -O3 -s -DNDEBUG"
       }
     },
     {
@@ -52,7 +53,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_CONFIGURATION_TYPES": "Release",
-        "CXXFLAGS": "$env{FABKO_LINUX_WARN_FLAGS} -Og -g"
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "$env{FABKO_LINUX_WARN_FLAGS} -O2 -g"
       }
     },
     {

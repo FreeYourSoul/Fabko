@@ -39,9 +39,17 @@ concept c_board_com =
     } && std::movable<T>;
 
 class p2p {
+public:
+  std::string instantiate_black_board(const std::string&);
+  std::future<request_propositions> request_propositions(const std::string&);
+  decision_status commit_decision(const std::string&);
 };
 
 class online {
+public:
+  std::string instantiate_black_board(const std::string&);
+  std::future<request_propositions> request_propositions(const std::string&);
+  decision_status commit_decision(const std::string&);
 };
 
 using board_protocol = std::variant<p2p, online>;
