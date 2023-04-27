@@ -31,12 +31,15 @@ namespace except_cat {
 struct db : public std::error_category {
   [[nodiscard]] const char* name() const noexcept override { return "fabko::exception::db"; }
   [[nodiscard]] std::string message(int I) const override {
-    return fmt::format("Database Exception Category : {} : id {}", name(), I);
+    return fmt::format("Fabko::Database Exception Category : {} : id {}", name(), I);
   }
 };
 
 struct fbk : public std::error_category {
   [[nodiscard]] const char* name() const noexcept override { return "fabko::exception"; }
+  [[nodiscard]] std::string message(int I) const override {
+    return fmt::format("Fabko Exception Category : {} : id {}", name(), I);
+  }
 };
 }// namespace except_cat
 
@@ -57,7 +60,7 @@ static inline void fabko_assert(bool assertion, std::error_code ec, const std::s
 }
 
 static inline void fabko_assert(bool assertion, const std::string& msg = "") {
-  fabko_assert(assertion, std::error_cod{fbk{}}, msg);
+  fabko_assert(assertion, {42, except_cat::fbk{}}, msg);
 }
 
 }// namespace fabko

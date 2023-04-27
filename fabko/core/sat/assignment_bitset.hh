@@ -21,17 +21,20 @@
 
 #pragma once
 
+#include <algorithm>
 #include <bitset>
 #include <map>
 #include <numeric>
 #include <optional>
+#include <ranges>
 #include <vector>
 
 #include <fmt/format.h>
 
 #include <common/exception.hh>
+#include <sat/solver.hh>
 
-using namespace sr = std::ranges;
+namespace sr = std::ranges;
 
 namespace fabko {
 
@@ -54,11 +57,13 @@ public:
    * @param number_variable number of new variable to prepare for assignment
    */
   void reserve_new_variable(std::size_t number_variable) {
-    const std::size_t chunks = number_variable / ChunkSize;
-    _unassigned.resize(_unassigned.size() + chunks);
-    _assigned.resize(_assigned.size() + chunks);
-
     _total_variable_number += number_variable;
+
+    fabko_assert(_total_variable_number > 0);
+
+    const std::size_t chunks = ((_total_variable_number - 1) / ChunkSize) + 1;
+    _unassigned.resize(chunks);
+    _assigned.resize(chunks);
 
     fabko_assert(_unassigned.capacity() == _assigned.capacity());
   }
@@ -69,7 +74,7 @@ public:
    * @param v variable to check
    * @return true if the variable is assigned, false otherwise
    */
-  bool is_assigned(variable v) const {
+  [[nodiscard]] bool is_assigned(sat::variable v) const {
     const auto [index_chunk, index_bitset] = locate(v);
     return _unassigned[index_chunk][index_bitset];
   }
@@ -84,7 +89,7 @@ public:
    * @param v variable to check
    * @return true if variable assigned to false, false otherwise (could also mean non-assigned if is_assigned is not properly called)
    */
-  bool is_negated(variable v) const {
+  [[nodiscard]] bool is_negated(sat::variable v) const {
     const auto [index_chunk, index_bitset] = locate(v);
     return !_assigned[index_chunk][index_bitset];
   }
@@ -99,7 +104,7 @@ public:
    * @param v variable to check
    * @return true if variable assigned to true, false otherwise (could also mean non-assigned if is_assigned is not properly called)
    */
-  bool is_true(variable v) const {
+  [[nodiscard]] bool is_true(sat::variable v) const {
     const auto [index_chunk, index_bitset] = locate(v);
     return _assigned[index_chunk][index_bitset];
   }
@@ -110,7 +115,7 @@ public:
    * @param v variable to check the assignment on
    * @return std::nullopt if the variable is not assigned, true or false if assigned (depending on assignment)
    */
-  std::optional<bool> check_assignment(variable v) const {
+  [[nodiscard]] std::optional<bool> check_assignment(sat::variable v) const {
     const auto [index_chunk, index_bitset] = locate(v);
 
     if (!_unassigned[index_chunk][index_bitset]) {
@@ -125,7 +130,7 @@ public:
    * @param v id of the variable to assign
    * @param assign boolean value to assign to the provided variable
    */
-  void assign_variable(variable v, bool assign) {
+  void assign_variable(sat::variable v, bool assign) {
     const auto [index_chunk, index_bitset] = locate(v);
 
     _unassigned[index_chunk].set(index_bitset);
@@ -135,7 +140,7 @@ public:
   /**
    * @param v id of the variable to unassign
    */
-  void unassign_variable(variable v) {
+  void unassign_variable(sat::variable v) {
     const auto [index_chunk, index_bitset] = locate(v);
     _unassigned[index_chunk].reset(index_bitset);
   }
@@ -143,14 +148,14 @@ public:
   /**
    * @return true if all variable has been assigned properly, false otherwise
    */
-  bool all_assigned() const {
+  [[nodiscard]] bool all_assigned() const {
     return sr::all_of(_unassigned, [](const auto& bs) { return bs.all(); });
   }
 
   /**
    * @return number of variable assigned
    */
-  std::size_t number_assigned() const {
+  [[nodiscard]] std::size_t number_assigned() const {
     const int chunks_fully_assigned = sr::count(_unassigned, [](const auto& bs) { return bs.all(); });
     const int lasting_chunks = [this, &chunks_fully_assigned]() -> int {
       auto last_chunk = _unassigned.get(chunks_fully_assigned);
@@ -160,13 +165,13 @@ public:
       return last_chunk.value().count();
     }();
 
-    return chunks_fully_assigned * ChunkSize + lasting;
+    return chunks_fully_assigned * ChunkSize + lasting_chunks;
   }
 
-  const std::size_t nb_vars() const { return _total_variable_number; }
-  const std::size_t nb_chunks() const { return ChunkSize * _unassigned.capacity(); }
+  [[nodiscard]] std::size_t nb_vars() const { return _total_variable_number; }
+  [[nodiscard]] std::size_t nb_chunks() const { return _unassigned.size(); }
 
-  constexpr std::size_t chunk_size() const { return ChunkSize; }
+  [[nodiscard]] constexpr std::size_t chunk_size() const { return ChunkSize; }
 
 private:
   /**
@@ -178,16 +183,16 @@ private:
    * @param v variable to locate in the bitset
    * @return a tuple containing the chunk index and the bitset index
    */
-  std::pair<int, int> locate(variable v) const {
-    v -= 1;// variable starts at 1 (bitsets start at 0). normalization
+  [[nodiscard]] std::pair<std::size_t, std::size_t> locate(sat::variable v) const {
+    auto var = static_cast<std::size_t>(v - 1);// variable starts at 1 (bitsets start at 0). normalization
     fabko_assert(
-        v >= 0 && v < _total_variable_number,
-        fmt::format("cannot assign variable {} < total number of variable {} ", v, _total_variable_number));
+        var < _total_variable_number,
+        fmt::format("cannot assign variable {} < total number of variable {} ", var, _total_variable_number));
 
-    const int index_chunk = v / ChunkSize;
-    const int index_bitset = v % ChunkSize;
+    const std::size_t index_chunk = var / ChunkSize;
+    const std::size_t index_bitset = var % ChunkSize;
 
-    return std::pair(index_chunk, index_bitset);
+    return {index_chunk, index_bitset};
   }
 
 private:

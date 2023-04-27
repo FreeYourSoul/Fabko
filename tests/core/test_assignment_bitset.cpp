@@ -24,9 +24,21 @@
 #include <sat/assignment_bitset.hh>
 #include <sat/solver.hh>
 
+TEST_CASE("bitset") {
+  std::bitset<5> d{};
+
+  REQUIRE_FALSE(d[0]);
+  REQUIRE_FALSE(d[1]);
+  REQUIRE_FALSE(d[2]);
+  REQUIRE_FALSE(d[3]);
+  REQUIRE_FALSE(d[4]);
+}
+
 TEST_CASE("assignment_bitset") {
 
-  assignment_bitset<5> bitset{};
+  using namespace fabko::sat;
+
+  fabko::assignment_bitset<5> bitset{};
 
   REQUIRE(bitset.chunk_size() == 5);
 
@@ -42,18 +54,21 @@ TEST_CASE("assignment_bitset") {
     REQUIRE_THROWS(bitset.check_assignment(variable{1}));
   }
 
-  SECTION("reserve of 4 variable") {
-    bitset.reserve_new_variable(4);
+  SECTION("failure reserving 0 variable") {
+    REQUIRE_THROWS(bitset.reserve_new_variable(0z));
+  }
 
-    REQUIRE(bitset.nb_vars() == 0);
+  SECTION("reserve of 4 variable") {
+    REQUIRE(bitset.nb_vars() == 0z);
+    bitset.reserve_new_variable(2);
+    REQUIRE(bitset.nb_vars() == 2z);
+    bitset.reserve_new_variable(2);
+    REQUIRE(bitset.nb_vars() == 4z);
+
     REQUIRE_FALSE(bitset.check_assignment(1).has_value());
-    REQUIRE(bitset.nb_vars() == 1);
     REQUIRE_FALSE(bitset.check_assignment(2).has_value());
-    REQUIRE(bitset.nb_vars() == 2);
     REQUIRE_FALSE(bitset.check_assignment(3).has_value());
-    REQUIRE(bitset.nb_vars() == 3);
     REQUIRE_FALSE(bitset.check_assignment(4).has_value());
-    REQUIRE(bitset.nb_vars() == 4);
 
     SECTION("assignment works") {
       bitset.assign_variable(variable{1}, true);
@@ -73,9 +88,9 @@ TEST_CASE("assignment_bitset") {
     }
 
     SECTION("5th variable cannot be allocated") {
-      REQUIRE_THROWS(check_assignment(5).has_value());
-      REQUIRE_THROWS(bitset.assign_variable(variable{1}, true));
-      REQUIRE_THROWS(unassign_variable(variable{5}))
+      REQUIRE_THROWS(bitset.check_assignment(5).has_value());
+      REQUIRE_THROWS(bitset.assign_variable(variable{5}, true));
+      REQUIRE_THROWS(bitset.unassign_variable(variable{5}));
     }
 
     SECTION("5th variable allocation doesn't trigger a new chunk") {

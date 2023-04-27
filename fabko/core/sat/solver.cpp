@@ -22,7 +22,9 @@
 //
 
 #include <utility>
+#include <vector>
 
+#include <sat/assignment_bitset.hh>
 
 #include "solver.hh"
 
@@ -33,7 +35,7 @@ using variable_watched = std::pair<variable, assign_bool>;
 
 namespace {
 struct sat_execution_context {
-  assignement_bitset assignment;
+  assignment_bitset<> assignment;
 };
 }// namespace
 
@@ -47,10 +49,10 @@ struct solver::impl {
     std::vector<variable_watched> watch;
   };
 
-  std::vector<clause_watchers> clauses;
-  std::vector<> ;
+  explicit impl(fabko::sat::solver_config config) : config(config) {}
 
   solver_config config;
+  std::vector<clause_watchers> clauses{};
 };
 
 solver::solver(fabko::sat::solver_config config)
