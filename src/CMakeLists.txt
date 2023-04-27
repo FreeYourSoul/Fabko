@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.22)
 
 #
 # Core library -- blackboard
@@ -36,14 +36,14 @@ add_library(fabko::agent ALIAS agent)
 add_library(peerboard
         peerboard/peerboard.cpp
         peerboard/peerboard.hh
+        datastore/kv_rocksdb.cpp
+        datastore/key_value_db.hh
+        datastore/kv_rocksdb.hh
         )
 target_include_directories(peerboard PUBLIC
         src
         src/peerboard
         src/datastore
-        datastore/kv_rocksdb.cpp
-        datastore/key_value_db.hh
-        datastore/kv_rocksdb.hh
         )
 target_link_libraries(peerboard PRIVATE fabko::agent fabko::core)
 target_compile_definitions(peerboard PUBLIC cxx_std_23)

@@ -16,6 +16,7 @@
         "FABKO_WIN_WARN_FLAGS": ""
       },
       "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "/home/perso/Documents/any/vcpkg/scripts/buildsystems/vcpkg.cmake",
         "CMAKE_CXX_COMPILER": "/usr/bin/clang++",
         "CMAKE_C_COMPILER": "/usr/bin/clang"
       },

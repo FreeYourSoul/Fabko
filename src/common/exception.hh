@@ -25,7 +25,7 @@
 
 #include <fmt/format.h>
 
-namespace fil {
+namespace fabko {
 
 namespace except_cat {
 struct db : public std::error_category {
@@ -49,5 +49,11 @@ public:
 private:
   std::error_code _ec;
 };
+
+void fabko_assert(bool assertion, std::error_code ec, const std::string& msg = "") {
+  if (!assertion) {
+    throw exception(ec, msg);
+  }
+}
 
 }// namespace fil
