@@ -43,30 +43,14 @@ concept c_board_com =
  *
  * @tparam BoardCommunication
  */
-
+template<c_board_com BoardCommunication>
 class blackboard {
 
-private:
-
-  class blackboard_interface {
-    template<class Self>
-    int get_data(this Self && self) {
-      self.
-    }
-  };
-
-  template<class BoardCommunication>
-  class blackboard_impl : blackboard_interface {
-    BoardCommunication com;
-  };
-
 public:
-  template<class BoardCommunication>
-    requires c_board_com<BoardCommunication>
-  explicit blackboard(BoardCommunication&& bc) : _bc(std::make_unique<blackboard_impl>(std::forward<BoardCommunication>(bc))) {}
+  explicit blackboard(BoardCommunication&& bc) : _bc(std::make_unique<BoardCommunication>(std::forward<BoardCommunication>(bc))) {}
 
 private:
-  std::unique_ptr<blackboard_interface> _bc;
+  std::unique_ptr<BoardCommunication> _bc;
 };
 
 }// namespace fabko
