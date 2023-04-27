@@ -34,31 +34,41 @@ namespace fabko {
 using key_value = std::pair<std::string, std::string>;
 
 template<class T>
-concept DatabasePolicy =
-    requires (T v) {
-      { v.get(std::string{}) } -> std::convertible_to<std::vector<std::string>>;
+concept DbInteractivePolicy =
+    requires(T v) {
+      { v.get(std::string{}) } -> std::convertible_to<std::string>;
       { v.multi_get(std::vector{std::string{}}) } -> std::convertible_to<std::vector<key_value>>;
       { v.set(key_value{}) } -> std::convertible_to<bool>;
       { v.multi_set(std::vector{key_value{}}) } -> std::convertible_to<bool>;
     };
 
 template<class T>
-concept TransactionalDatabasePolicy = DatabasePolicy<T> &&
-    requires (T v) {
-      { T::transaction };
-    };
+concept DatabasePolicy =
+    requires(T v) {
+      typename T::initializer_type;
+    } && DbInteractivePolicy<T>;
 
-template<typename DbPolicy>
-class kv_db {};
+template<typename T>
+concept TransactionalDatabasePolicy =
+    requires(T v) {
+      typename T::transaction;
+    } && DbInteractivePolicy<T> && DbInteractivePolicy<typename T::transaction>;
+
+template<typename T>
+class kv_db {
+  static_assert(not DatabasePolicy<T>);
+  static_assert(not TransactionalDatabasePolicy<T>);
+};
 
 // ******* Non-Transactional part *******
 
-
-template<DatabasePolicy DbPolicy>
+template<typename DbPolicy>
+  requires DatabasePolicy<DbPolicy>
 class kv_db<DbPolicy> : public DbPolicy {
 
 public:
-  explicit kv_db(const typename DbPolicy::initializer_type& initializer) : DbPolicy(initializer) {}
+  explicit kv_db(const typename DbPolicy::initializer_type& initializer) : DbPolicy(initializer) {
+  }
 
   std::vector<std::string> get(const std::string& key) {
     return DbPolicy::multi_get(key);
@@ -100,18 +110,18 @@ public:
 
 // ******* Transactional part *******
 
-
-template<TransactionalDatabasePolicy DbPolicy>
+template<typename DbPolicy>
+  requires TransactionalDatabasePolicy<DbPolicy>
 class kv_db<DbPolicy> : public DbPolicy {
 public:
   using transaction_type = typename DbPolicy::transaction;
 
-  explicit kv_db(const typename DbPolicy::initializer_type& initializer) : DbPolicy(initializer) {}
+  explicit kv_db(const typename DbPolicy::initializer_type& initializer) : DbPolicy(initializer) {
+  }
 
   std::unique_ptr<transaction_type> make_transaction() {
     return std::make_unique<transaction_type>(*this);
   }
 };
 
-}// namespace fil
-
+}// namespace fabko

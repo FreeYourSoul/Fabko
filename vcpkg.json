@@ -4,6 +4,7 @@
   "dependencies": [
     "fmt",
     "spdlog",
-    "rocksdb"
+    "rocksdb",
+    "catch2"
   ]
 }

@@ -50,7 +50,7 @@ private:
   std::error_code _ec;
 };
 
-void fabko_assert(bool assertion, std::error_code ec, const std::string& msg = "") {
+static void fabko_assert(bool assertion, std::error_code ec, const std::string& msg = "") {
   if (!assertion) {
     throw exception(ec, msg);
   }

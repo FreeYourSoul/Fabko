@@ -41,8 +41,6 @@ static std::error_code commit_error_code() { return {42, except_cat::db{}}; }
 class kv_rocksdb {
 
 public:
-  static const bool is_transactional = true;
-
   class transaction {
   public:
     explicit transaction(kv_rocksdb& db);
@@ -113,6 +111,6 @@ private:
   std::unique_ptr<rocksdb::OptimisticTransactionDB> _db;
 };
 
-using kv_rocksdb_type = kv_db<kv_rocksdb>;
+using kv_rocksdb_instance = kv_db<kv_rocksdb>;
 
 }// namespace fabko
