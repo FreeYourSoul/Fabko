@@ -139,8 +139,6 @@ public:
   void assign_variable(sat::variable v, bool assign) {
     const auto [index_chunk, index_bitset] = locate(v);
 
-    fmt::print("DEBUG -- assign_variable -- v :: {} - assign :: {} -- index_check :: {} - index_bitset :: {}\n", v, assign, index_chunk, index_bitset);
-
     _unassigned[index_chunk].set(index_bitset);
     _assigned[index_chunk].set(index_bitset, assign);
   }
@@ -180,6 +178,17 @@ public:
   [[nodiscard]] std::size_t nb_chunks() const { return _unassigned.size(); }
 
   [[nodiscard]] constexpr std::size_t chunk_size() const { return ChunkSize; }
+
+
+  friend std::vector<sat::literal> to_lits(const assignment_bitset<ChunkSize>& bitset) {
+    std::vector<sat::literal> vec;
+
+    vec.reserve(bitset.nb_vars());
+    for (sat::variable v : std::ranges::views::iota(sat::variable{1}, bitset.nb_vars() + 1)) {
+      vec.emplace_back(v, bitset.is_true(v));
+    }
+    return vec;
+  }
 
 private:
   /**

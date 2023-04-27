@@ -77,7 +77,7 @@ TEST_CASE("test_literal_properties") {
   CHECK(set_check_unique.size() == 1000uz * 2);
 }
 
-TEST_CASE("basic_case_sat_solver") {
+TEST_CASE("basic_case_sat_solver::find_one_solution") {
 
   fabko::sat::solver s{fabko::sat::solver_config{}};
 
@@ -111,9 +111,51 @@ TEST_CASE("basic_case_sat_solver") {
   CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
 
   auto result = s.results();
-  fmt::print("RESULT -- {}\n", result.size());
-  fmt::print("RESULT ---- {}\n", result[0].size());
-  for (const auto& v : result[0]) {
-    fmt::print("RESULT ------ var::{}::assign[{}]\n", v.var(), bool(v));
-  }
+  CHECK(result.size() == 1);
+  CHECK_FALSE(bool(result[0][0]));
+  CHECK_FALSE(bool(result[0][1]));
+  CHECK(bool(result[0][2]));
+
+}
+
+
+TEST_CASE("basic_case_sat_solver::find_one_solution_but_ask_more") {
+
+  fabko::sat::solver s{fabko::sat::solver_config{}};
+
+  // Variable 1 2 3 defined
+  s.add_variables(3);
+
+  // DIMACS
+  // 3 2
+  //   1  2  3  0
+  //  ~1 ~2     0
+
+  // expected result : ~1 ~2 3
+
+  // clause
+  //  1 2 3 0
+  s.add_clause(
+      {fabko::sat::literal{1, true},
+       fabko::sat::literal{2, true},
+       fabko::sat::literal{3, true}});
+
+  // clause
+  //  ~1 ~2 0
+  s.add_clause(
+      {fabko::sat::literal{1, false},
+       fabko::sat::literal{2, false}});
+
+  CHECK(s.solving_status() == fabko::sat::solver_status::BUILDING);
+
+  s.solve(42);
+
+  CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
+
+  auto result = s.results();
+  CHECK(result.size() == 1);
+  CHECK_FALSE(bool(result[0][0]));
+  CHECK_FALSE(bool(result[0][1]));
+  CHECK(bool(result[0][2]));
+
 }
