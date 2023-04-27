@@ -1,8 +1,5 @@
 #include <iostream>
 
-#include "../fabko/fabko.hh"
-
-
-void hello() {
-    std::cout << "Hello, World!" << std::endl;
+int main() {
+    return 0;
 }
