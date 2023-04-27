@@ -6,6 +6,7 @@
 #define FABKO_BLACKBOARD_H
 
 #include <concepts>
+#include <future>
 #include <optional>
 #include <string>
 #include <vector>
@@ -34,9 +35,9 @@ template<typename T>
 concept c_board_com =
     requires(T a) {
       { a.instantiate_black_board(std::string{}) } -> std::same_as<blackboard_data>;
-      { a.is_request_ready(std::string{}) } -> std::same_as<std::optional<std::vector<proposition>>>;
+      { a.is_request_ready(std::string{}) } -> std::same_as<std::future<std::optional<std::vector<proposition>>>>;
       { a.commit_decision(std::string{}) } -> std::same_as<decision_status>;
-    };
+    } && std::movable<T>;
 
 /**
  *
@@ -45,6 +46,12 @@ concept c_board_com =
 template<class BoardCommunication>
   requires c_board_com<BoardCommunication>
 class blackboard {
+
+private:
+  BoardCommunication _bc;
+
+public:
+  explicit blackboard(BoardCommunication&& bc) : _bc(std::forward<BoardCommunication>(bc)) {}
 };
 
 }// namespace fabko
