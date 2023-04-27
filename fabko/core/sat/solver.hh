@@ -108,7 +108,7 @@ struct solver_config {
  *   the Fabko project.
  */
 class solver {
-  struct impl;
+  struct sat_impl;
 
 public:
   explicit solver(solver_config config);
@@ -118,7 +118,7 @@ public:
   void add_clause(std::vector<literal> clause_literals);
 
 private:
-  std::unique_ptr<impl> _pimpl;
+  std::unique_ptr<sat_impl> _pimpl;
 };
 
 }

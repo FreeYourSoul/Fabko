@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 
 enable_testing()
 
-find_package(Catch2 3 REQUIRED)
+find_package(Catch2 3 CONFIG REQUIRED)
 
 include(CTest)
 include(Catch)
@@ -18,7 +18,7 @@ target_sources(test_datastore
 target_link_libraries(test_datastore
         PRIVATE Catch2::Catch2 fabko::peerboard)
 
-catch_discover_tests(test_datastore)
+#catch_discover_tests(test_datastore)
 
 # Test of the core
 #

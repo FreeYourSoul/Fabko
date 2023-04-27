@@ -20,9 +20,7 @@ target_sources(core
 target_include_directories(core
         PRIVATE
         ${RocksDB_INCLUDE_DIR}
-        datastore/include/
         PUBLIC
-        core/common
         core
         )
 target_compile_definitions(core PUBLIC cxx_std_23)
@@ -65,6 +63,7 @@ target_sources(peerboard
 target_include_directories(peerboard PUBLIC
         peerboard
         datastore
+        core
         )
 target_link_libraries(peerboard PRIVATE fabko::agent fabko::core)
 target_compile_definitions(peerboard PUBLIC cxx_std_23)

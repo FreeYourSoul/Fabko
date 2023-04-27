@@ -28,7 +28,7 @@
 #include <rocksdb/utilities/optimistic_transaction_db.h>
 #include <rocksdb/utilities/transaction.h>
 
-#include <exception.hh>
+#include <common/exception.hh>
 
 #include "key_value_db.hh"
 

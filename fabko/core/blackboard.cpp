@@ -20,8 +20,8 @@
 //
 #include <functional>
 
+#include <common/utils.hh>
 #include "blackboard.hh"
-#include "utils.hh"
 
 namespace fabko {
 

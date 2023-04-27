@@ -73,7 +73,7 @@ TEST_CASE("kv_db_rocksdb_testcase") {
     trans->set({"3", "42"});
     trans->set({"4", "16.1337"});
 
-    auto v = trans->get_as<std::uint32_t>("3");
+    auto v = trans->get_as<unsigned long>("3");
     CHECK(42 == v);
 
     auto v_double = trans->get_as<double>("4");

@@ -27,8 +27,9 @@
 
 #include <fmt/format.h>
 
+#include <common/exception.hh>
+
 #include "kv_rocksdb.hh"
-#include <exception.hh>
 
 namespace fabko {
 

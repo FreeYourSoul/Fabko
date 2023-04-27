@@ -20,26 +20,25 @@
 //
 
 #include "peerboard.hh"
-#include "kv_rocksdb.hh"
+#include <kv_rocksdb.hh>
 
 namespace fabko {
 
 struct peerboard::pb_impl {
 
-  fabko::kv_rocksdb_instance datastore;
+  explicit pb_impl(kv_rocksdb::initializer_type&& datastore) : datastore(kv_rocksdb_instance(std::move(datastore))) {}
 
+  kv_rocksdb_instance datastore;
 };
 
 peerboard::~peerboard() = default;
 
-peerboard::peerboard(std::string data_store_location) : _pimpl(std::unique_ptr<pb_impl>(kv_rocksdb_instance(
-    kv_rocksdb::initializer_type{})))
-{}
+peerboard::peerboard(std::string data_store_location) : _pimpl(std::make_unique<pb_impl>(
+    kv_rocksdb::initializer_type{.path_db_file = std::move(data_store_location)})) {}
 
 void peerboard::register_capability(capability to_add) {
-  auto serializer = serial::make_serializer();
-  auto ser_cap = serialize(std::move(capability));
-
+  //  auto serializer = serial::make_serializer();
+  //  auto ser_cap = serialize(std::move(capability));
 }
 
-}
+}// namespace fabko

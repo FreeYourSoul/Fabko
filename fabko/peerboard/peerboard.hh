@@ -26,7 +26,7 @@
 #include <variant>
 #include <vector>
 
-#include "../blackboard/blackboard.hh"
+#include <blackboard.hh>
 
 namespace fabko {
 
@@ -70,8 +70,8 @@ class peerboard {
   struct pb_impl;
 
 public:
+  explicit peerboard(std::string data_store_location);
   ~peerboard();
-  peerboard();
 
   void register_capability(capability to_add);
   void unregister_capability(const std::string& id);

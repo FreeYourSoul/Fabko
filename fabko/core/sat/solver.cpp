@@ -42,21 +42,21 @@ struct sat_execution_context {
 /**
  * Implementation details of the solver class
  */
-struct solver::impl {
+struct solver::sat_impl {
 
   struct clause_watchers {
     clause clause;
     std::vector<variable_watched> watch;
   };
 
-  explicit impl(fabko::sat::solver_config config) : config(config) {}
+  explicit sat_impl(fabko::sat::solver_config config) : config(config) {}
 
   solver_config config;
   std::vector<clause_watchers> clauses{};
 };
 
 solver::solver(fabko::sat::solver_config config)
-    : _pimpl(std::make_unique<impl>(std::move(config))) {}
+    : _pimpl(std::make_unique<sat_impl>(std::move(config))) {}
 
 solver::~solver() = default;
 
