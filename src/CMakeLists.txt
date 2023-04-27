@@ -21,8 +21,7 @@ add_library(fabko::core ALIAS core)
 #
 add_library(agent
         agent/agent.cpp
-        agent/agent.hh
-        )
+        agent/agent.hh)
 target_include_directories(agent PUBLIC
         agent
         )
@@ -42,6 +41,9 @@ target_include_directories(peerboard PUBLIC
         src
         src/peerboard
         src/datastore
+        datastore/kv_rocksdb.cpp
+        datastore/key_value_db.hh
+        datastore/kv_rocksdb.hh
         )
 target_link_libraries(peerboard PRIVATE fabko::agent fabko::core)
 target_compile_definitions(peerboard PUBLIC cxx_std_23)

@@ -18,41 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#include <functional>
+#pragma once
 
-#include "blackboard.hh"
-#include "utils.hh"
+#include <stdexcept>
+#include <system_error>
 
-namespace fabko {
+#include <fmt/format.h>
 
-struct blackboard::blackboard_impl {
+namespace fil {
 
-  explicit blackboard_impl(com::c_board_com auto&& bc, blackboard_data data)
-      : bc(std::forward<decltype(bc)>(bc)), data(std::move(data)) {}
-
-  blackboard_data instantiate_black_board(const std::string& request) {
-    data.id = std::visit(
-        overloaded{[&request](auto& b) -> std::string { return b.instantiate_black_board(request); }}, bc);
-    return data;
+namespace except_cat {
+struct db : public std::error_category {
+  [[nodiscard]] const char* name() const noexcept override { return "fabko::exception::db"; }
+  [[nodiscard]] std::string message(int I) const override {
+    return fmt::format("Database Exception Category : {} : id {}", name(), I);
   }
-
-  com::board_protocol bc;
-  blackboard_data data;
 };
 
-blackboard::~blackboard() = default;
+struct fil : public std::error_category {
+  [[nodiscard]] const char* name() const noexcept override { return "fil::exception"; }
+};
+}// namespace except_cat
 
-template<com::c_board_com BoardCommunication>
-blackboard::blackboard(BoardCommunication bc, com::request initial_request)
-    : _pimpl(std::move<BoardCommunication>(bc), {.initial_request = std::move(initial_request)}) {
-}
+class exception : public std::runtime_error {
+public:
+  exception(const std::error_code& ec, const std::string& what) : std::runtime_error(what), _ec(ec) {}
 
-com::propositions blackboard::request_propositions(const com::request& request) {
-  return {};
-}
+  [[nodiscard]] int code() const { return _ec.value(); }
 
-com::decision_status blackboard::submit_decision(const std::string& decision) {
-  return {};
-}
+private:
+  std::error_code _ec;
+};
 
-}// namespace fabko
+}// namespace fil
