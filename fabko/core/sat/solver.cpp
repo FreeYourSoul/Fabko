@@ -21,6 +21,7 @@
 // SOFTWARE.
 //
 
+#include <algorithm>
 #include <ranges>
 #include <unordered_map>
 #include <utility>
@@ -37,23 +38,27 @@ namespace fabko::sat {
 //
 
 using clause = std::vector<literal>;
-using variable_watched = std::pair<variable, assign_bool>;
+
+struct variable_watched {
+  variable v{};
+  std::optional<bool> assign{};
+};
 
 namespace {
 struct sat_execution_context {
-  assignment_bitset<> cur_assignment{};
-  std::vector<assignment_bitset<>> valid_assignments{};
-};
-
-/**
-   * Watcher structure used for the temporary cur_assignment and backtracking of the SAT solver algorithm.
-   */
-struct clause_watchers {
-  clause clause;
   /**
-     * Variable currently watched in the on-going algorithm.
-     */
-  variable_watched watch;
+   * Assignment currently in trial for satisfiability.
+   */
+  assignment_bitset<> cur_assignment{};
+
+  /**
+   * Assignment that has been registered as being potential result for the SAT resolution.
+   * If this vector is filled with at least one value, it means the SAT resolved.
+   *
+   * It is possible for the SAT solver to resolve as many time as required (or until no new resolution is found).
+   * It depends on the configuration of the SAT solver before calling `resolve`
+   */
+  std::vector<assignment_bitset<>> valid_result_assignments{};
 };
 
 }// namespace
@@ -61,8 +66,8 @@ struct clause_watchers {
 struct solver::sat_impl {
 
 public:
-  explicit sat_impl(fabko::sat::solver_config config) : config(config) {
-  }
+  explicit sat_impl(fabko::sat::solver_config config)
+      : config(config) {}
 
   /**
    * Entry point of the SAT solver algorithm.
@@ -93,7 +98,7 @@ public:
         }
         --var;
         // store current cur_assignment result (as it is a valid result)
-        context.valid_assignments.emplace_back(context.cur_assignment);
+        context.valid_result_assignments.emplace_back(context.cur_assignment);
         continue;
       }
 
@@ -103,7 +108,7 @@ public:
       if (!assignment_happened) {
         // variable cannot continue backtracking. Solver is in error if no result has been previously found.
         if (var == 0) {
-          return context.valid_assignments.empty() ? solver_status::UNSAT : solver_status::SAT;
+          return context.valid_result_assignments.empty() ? solver_status::UNSAT : solver_status::SAT;
         }
 
         // reset attempts
@@ -122,7 +127,6 @@ public:
   }
 
 private:
-
   /**
    * attempt an assignment on false and then true.
    * if already attempted : the flag is not retried and backtracking should be initiated
@@ -143,7 +147,6 @@ private:
       context.cur_assignment.assign_variable(sat::variable(var), attempt);
 
       if (update_watchlist(sat::variable(var), attempt)) {
-
       }
 
       return true;
@@ -152,20 +155,52 @@ private:
   }
 
   /**
-   * Update the watcher list in accordance with the assign value.
+   * Update the watcher list in accordance with the assigned value (we look for all clauses which are watching the opposite of the assignment).
    *
-   * @details: For each literals, clause are watching them. When updating the watchlist for a specific variable
+   * @details:
+   *    For each literals, clause are watching them. When updating the watchlist for a specific variable
+   *    we go through all the clause watching the updated variable. An alternative is looked for each of the clause.
    *
-   * @param var
-   * @param assign
-   * @return
+   * @param var variable to trigger update of the watch list
+   * @param assign assignment happening on the variable. Retrieve the watcher of the opposite of the assignment.
+   * @return True if assignment is possible and a proper alternative has been found for each clause watching the variable.
+   *    False otherwise (if false is returned then assignment is contradicting the resolvability and a backtracking should start)
    */
-  bool update_watchlist(sat::variable var, bool assign) {
+  [[nodiscard]] bool update_watchlist(sat::variable var, bool assign) {
+    auto& clauses_watching = watchlist.at((~literal{var, assign}).value());
+
+    auto rm_when_find_alternative =
+        clauses_watching
+        | std::ranges::views::take_while([this](const auto& clause_watching) {
+            return std::ranges::any_of(clause_watching.get(), [this, &clause_watching](const literal& lit) {
+              const variable alt = lit.variable();// alternative to check
+              if (!context.cur_assignment.is_assigned(alt) || context.cur_assignment.is(alt, static_cast<bool>(lit))) {
+                watchlist[alt].emplace_back(clause_watching);
+                return true;
+              }
+              return false;
+            });
+          });
+
+    clauses_watching.erase(
+        std::begin(clauses_watching),
+        std::begin(clauses_watching) + std::ranges::distance(rm_when_find_alternative));
+
+    if (!clauses_watching.empty()) {
+      // all alternatives have not been found :: return false assignment is contradicting a clause.
+      return false;
+    }
+    // alternative has been found for every single one in the watching list
+    return true;
   }
 
 public:
   solver_config config;
-  std::unordered_map<unsigned, std::vector<clause>> clauses{};
+  std::vector<clause> clauses{};
+  /**
+   * watch list per literal for clauses
+   */
+  std::unordered_map<unsigned, std::vector<std::reference_wrapper<const clause>>> watchlist{};
   sat_execution_context context{};
 };
 
@@ -205,7 +240,11 @@ void solver::add_clause(clause clause_literals) {
                "an added clause cannot be empty");
 
   auto watcher = variable_watched{clause_literals[0].variable(), std::nullopt};
-//  ...
+
+  _pimpl->clauses.emplace_back(std::move(clause_literals));
+  for (const auto& lit : _pimpl->clauses.back()) {
+    _pimpl->watchlist[lit.variable()].emplace_back(_pimpl->clauses.back());
+  }
 }
 
 solver_status solver::solving_status() const {

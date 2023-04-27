@@ -110,6 +110,21 @@ public:
   }
 
   /**
+   * Check if the variable is assigned or negated depending on the provided checker
+   *
+   * @note It is important to validate if the variable is assigned (with ``is_assigned``) before using this function.
+   *    If the variable is not assigned it will be visible as false by this function.
+   *    The best usage of this method is if you have knowledge that the variable is already assigned (to avoid an necessary check)
+   *
+   * @param v variable to check
+   * @param check if set to true equivalent to calling is_true(v), if set to false is_negated(v)
+   * @return true if variable assigned to true, false otherwise (could also mean non-assigned if is_assigned is not properly called)
+   */
+  [[nodiscard]] bool is(sat::variable v, bool check) const {
+    return check ? is_true(v) : is_negated(check);
+  }
+
+  /**
    * Check the cur_assignment of the variable.
    *
    * @param v variable to check the cur_assignment on

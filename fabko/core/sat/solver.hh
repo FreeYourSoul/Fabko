@@ -73,7 +73,13 @@ public:
     return ~literal(*this);
   }
 
-  [[nodiscard]] variable variable() const { return _val; };
+  //! true or false depending on current assignment designation of the literal
+  explicit operator bool() const {
+    return (_val & 1) == 1;
+  }
+
+  [[nodiscard]] variable variable() const { return _val << 1; };
+  [[nodiscard]] unsigned value() const { return _val; };
 
 private:
   unsigned _val;
@@ -145,6 +151,12 @@ public:
    * @param number_to_add number of variables to add in the sat solver
    */
   void add_variables(std::size_t number_to_add);
+  /**
+   * Add a clause to the SAT solver
+   * This step has to be done before calling the `solve` function
+   *
+   * @param clause_literals disjunction literals forming a clause (each individual clause are conjunctions)
+   */
   void add_clause(std::vector<literal> clause_literals);
 
   /**
