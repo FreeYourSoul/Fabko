@@ -3,3 +3,5 @@
 //
 
 #include "peerboard.hh"
+
+namespace fabko {}
