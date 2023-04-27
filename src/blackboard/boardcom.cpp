@@ -10,7 +10,7 @@ std::string com::p2p::instantiate_black_board(const std::string&) {
   return {};
 }
 
-std::future<com::request_propositions> com::p2p::request_propositions(const std::string&) {
+std::future<com::propositions> com::p2p::request_propositions(const std::string&) {
   return {};
 }
 
@@ -22,7 +22,7 @@ std::string com::online::instantiate_black_board(const std::string&) {
   return {};
 }
 
-std::future<com::request_propositions> com::online::request_propositions(const std::string&) {
+std::future<com::propositions> com::online::request_propositions(const std::string&) {
   return {};
 }
 

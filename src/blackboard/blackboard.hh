@@ -16,8 +16,9 @@
 namespace fabko {
 
 struct blackboard_data {
-  std::string id = {};
-  com::request_propositions propositions = std::nullopt;
+  std::string id{};
+  com::request initial_request;
+  com::propositions propositions{};
 };
 
 /**
@@ -33,10 +34,10 @@ public:
   ~blackboard();
 
   template<com::c_board_com BoardCommunication>
-  explicit blackboard(BoardCommunication bc);
+  explicit blackboard(BoardCommunication bc, com::request initial_request);
 
-  [[nodiscard]] std::future<com::request_propositions> request_propositions(const std::string& request);
-  [[nodiscard]] std::future<com::decision_status> submit_decision(const std::string& decision);
+  [[nodiscard]] com::propositions request_propositions(const com::request& request);
+  [[nodiscard]] com::decision_status submit_decision(const std::string& decision);
 
 private:
   std::unique_ptr<blackboard_impl> _pimpl;

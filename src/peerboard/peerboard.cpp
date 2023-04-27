@@ -4,4 +4,7 @@
 
 #include "peerboard.hh"
 
-namespace fabko {}
+namespace fabko {
+
+
+}

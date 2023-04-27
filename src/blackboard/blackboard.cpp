@@ -27,14 +27,15 @@ struct blackboard::blackboard_impl {
 blackboard::~blackboard() = default;
 
 template<com::c_board_com BoardCommunication>
-blackboard::blackboard(BoardCommunication bc) : _pimpl(std::move<BoardCommunication>(bc), {}) {
+blackboard::blackboard(BoardCommunication bc, com::request initial_request)
+    : _pimpl(std::move<BoardCommunication>(bc), {.initial_request = std::move(initial_request)}) {
 }
 
-std::future<com::request_propositions> blackboard::request_propositions(const std::string& request) {
+com::propositions blackboard::request_propositions(const com::request& request) {
   return {};
 }
 
-std::future<com::decision_status> blackboard::submit_decision(const std::string& decision) {
+com::decision_status blackboard::submit_decision(const std::string& decision) {
   return {};
 }
 
