@@ -30,7 +30,7 @@
 namespace fabko::sat {
 
 /**
- * Leveraged boolean in order to represent a negation - non-negation - non-assignment of a variable
+ * Leveraged boolean in order to represent a negation - non-negation - non-cur_assignment of a variable
  */
 using assign_bool = std::optional<bool>;
 
@@ -63,19 +63,19 @@ public:
     lit._val ^= 1;
     return lit;
   }
+
+  [[nodiscard]] variable variable() const { return _val; };
+
 private:
   std::int32_t _val;
 
-};
+};sol
 
-/**
- * Context of a current sat resolution
- */
-struct context {
-};
-
-struct sat_execution_context {
-  //  std::vector<v>
+enum class solver_status {
+  BUILDING = 0,
+  SOLVING = 1,
+  SAT = 2,
+  UNSAT = 3,
 };
 
 /**
@@ -92,6 +92,8 @@ struct solver_config {
   struct {
     unsigned random_init: 1;
     unsigned multi_threaded: 1;
+    unsigned status_solver: 3;
+    unsigned previous_status: 3;
   } flags;
 
   double random_seed;
@@ -114,8 +116,40 @@ public:
   explicit solver(solver_config config);
   ~solver();
 
-  void add_variables(int number_to_add);
+  /**
+   * Reset the context of the sat solver.
+   * @details Set back the solver and discard the previous result.
+   */
+  void reset_solver();
+  /**
+   * Make it possible to continue the resolution of the solver. Starting from this point,
+   * Adding variable and clause are possible.
+   * This method only works in case the Solver found a result (status SAT)
+   * @details Set the solver as in building phase. Does not discard the current result.
+   */
+  void reuse_solver();
+
+  /**
+   * Add a variable in the SAT solver.
+   * This step has to be done before calling the `solve` function
+   *
+   * @param number_to_add number of variables to add in the sat solver
+   */
+  void add_variables(std::size_t number_to_add);
   void add_clause(std::vector<literal> clause_literals);
+
+  /**
+   * Start the resolution of the SAT solver.
+   * From this point on, it is not possible to add clauses or variable
+   *
+   * @param requested_sat_solution number of solution to retrieve for the sat solver, -1 means all of them.
+   */
+  void solve(int requested_sat_solution = 1);
+
+  /**
+   * @return current status of the solver
+   */
+  [[nodiscard]] solver_status solving_status() const;
 
 private:
   std::unique_ptr<sat_impl> _pimpl;

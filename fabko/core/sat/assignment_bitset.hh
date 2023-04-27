@@ -39,22 +39,22 @@ namespace sr = std::ranges;
 namespace fabko {
 
 /**
- * Store the state of the assignment of each variable in a SAT solver.
+ * Store the state of the cur_assignment of each variable in a SAT solver.
  *
  * The storage is internally handled as a vector of static bitset of size `ChunkSize`
  *
- * @tparam ChunkSize size of each static bitset composing the assignment bitset
+ * @tparam ChunkSize size of each static bitset composing the cur_assignment bitset
  */
 template<int ChunkSize = 128>
 class assignment_bitset {
 
 public:
   /**
-   * Reserve enough space for every currently watched variable assignment to be stored.
+   * Reserve enough space for every currently watched variable cur_assignment to be stored.
    * @note If the total number of variable exceed the current amount of bitset chunk. New
    *    chunk are reserved.
    *
-   * @param number_variable number of new variable to prepare for assignment
+   * @param number_variable number of new variable to prepare for cur_assignment
    */
   void reserve_new_variable(std::size_t number_variable) {
     _total_variable_number += number_variable;
@@ -110,10 +110,10 @@ public:
   }
 
   /**
-   * Check the assignment of the variable.
+   * Check the cur_assignment of the variable.
    *
-   * @param v variable to check the assignment on
-   * @return std::nullopt if the variable is not assigned, true or false if assigned (depending on assignment)
+   * @param v variable to check the cur_assignment on
+   * @return std::nullopt if the variable is not assigned, true or false if assigned (depending on cur_assignment)
    */
   [[nodiscard]] std::optional<bool> check_assignment(sat::variable v) const {
     const auto [index_chunk, index_bitset] = locate(v);
@@ -178,7 +178,7 @@ private:
    * Locate the variable in the bitset
    *
    * @note This function is used internally in order to retrieve the proper bit that set
-   *  the assignment of a variable.
+   *  the cur_assignment of a variable.
    *
    * @param v variable to locate in the bitset
    * @return a tuple containing the chunk index and the bitset index
@@ -201,7 +201,7 @@ private:
   //! unassigned :: 0 = unassigned variable :: 1 = assigned value
   std::vector<std::bitset<ChunkSize>> _unassigned{};
 
-  //! assigned   :: 0 = false assignment to variable :: 1 = true assignment to variable
+  //! assigned   :: 0 = false cur_assignment to variable :: 1 = true cur_assignment to variable
   std::vector<std::bitset<ChunkSize>> _assigned{};
 
   std::size_t _total_variable_number{0};

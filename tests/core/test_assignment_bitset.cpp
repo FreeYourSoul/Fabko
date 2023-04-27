@@ -42,11 +42,11 @@ TEST_CASE("assignment_bitset") {
 
   REQUIRE(bitset.chunk_size() == 5);
 
-  SECTION("failure assignment of variable before reserve") {
+  SECTION("failure cur_assignment of variable before reserve") {
     REQUIRE_THROWS(bitset.assign_variable(variable{1}, true));
   }
 
-  SECTION("failure assignment of variable before reserve") {
+  SECTION("failure cur_assignment of variable before reserve") {
     REQUIRE_THROWS(bitset.unassign_variable(variable{1}));
   }
 
@@ -70,7 +70,7 @@ TEST_CASE("assignment_bitset") {
     REQUIRE_FALSE(bitset.check_assignment(3).has_value());
     REQUIRE_FALSE(bitset.check_assignment(4).has_value());
 
-    SECTION("assignment works") {
+    SECTION("cur_assignment works") {
       bitset.assign_variable(variable{1}, true);
       bitset.assign_variable(variable{2}, false);
       bitset.assign_variable(variable{3}, true);
