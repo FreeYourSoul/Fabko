@@ -108,7 +108,9 @@ TEST_CASE("kv_db_rocksdb_testcase listing") {
   SECTION("test listing : default") {
     std::vector<std::pair<std::string, std::string>> listing;
 
-    trans->list("Key1", [&listing](const std::string& key, const std::string& value) {
+    auto trans_t = rocks_db.make_transaction();
+
+    trans_t->list("Key1", [&listing](const std::string& key, const std::string& value) {
       listing.emplace_back(key, value);
     });
 

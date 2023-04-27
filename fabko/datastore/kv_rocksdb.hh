@@ -34,9 +34,9 @@
 
 namespace fabko {
 
-static std::error_code put_error_code() { return {0, except_cat::db{}}; }
-static std::error_code get_error_code() { return {1, except_cat::db{}}; }
-static std::error_code commit_error_code() { return {42, except_cat::db{}}; }
+[[maybe_unused]] static std::error_code put_error_code() { return {0, except_cat::db{}}; }
+[[maybe_unused]] static std::error_code get_error_code() { return {1, except_cat::db{}}; }
+[[maybe_unused]] static std::error_code commit_error_code() { return {42, except_cat::db{}}; }
 
 class kv_rocksdb {
 
@@ -53,9 +53,15 @@ public:
     bool set(const key_value& to_add);
     bool multi_set(const std::vector<key_value>& to_add);
 
+    std::unique_ptr<rocksdb::Iterator> get_iterator(const rocksdb::ReadOptions& ro = {}) {
+      auto ptr = std::unique_ptr<rocksdb::Iterator>();
+      ptr.reset(_transaction->GetIterator(ro));
+      return ptr;
+    }
+
     template<typename Handler>
     void list(std::string_view start, std::string_view end_key, Handler&& handler) {
-      auto* it = _transaction->GetIterator(rocksdb::ReadOptions{});
+      auto it = get_iterator();
       for (it->Seek(rocksdb::Slice(start)); it->Valid(); it->Next()) {
         std::string key = it->key().ToString();
         if (key.compare(end_key) < 0) {
@@ -108,7 +114,7 @@ public:
   explicit kv_rocksdb(const initializer_type& initializer);
 
 private:
-  std::unique_ptr<rocksdb::OptimisticTransactionDB> _db;
+  std::unique_ptr<rocksdb::OptimisticTransactionDB, decltype([](auto *ptr){ ptr->Close(); delete(ptr); })> _db;
 };
 
 using kv_rocksdb_instance = kv_db<kv_rocksdb>;

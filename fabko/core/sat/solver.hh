@@ -69,7 +69,7 @@ public:
 private:
   std::int32_t _val;
 
-};sol
+};
 
 enum class solver_status {
   BUILDING = 0,

@@ -12,8 +12,8 @@
     {
       "name": "base",
       "environment": {
-        "FABKO_LINUX_CXX_FLAGS": "-Wall -Wextra -Wconversion -Wsign-conversion -Wshadow -pedantic -pthread -gdwarf-4",
-        "FABKO_WIN_WARN_FLAGS": ""
+        "FABKO_LINUX_CXX_FLAGS": "-Wall -Wextra -Wshadow -Wnon-virtual-dtor -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wold-style-cast  -pthread -gdwarf-4",
+        "FABKO_WIN_WARN_FLAGS": "/permissive- /W4 /w14640 /w14296"
       },
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "/home/perso/Documents/any/vcpkg/scripts/buildsystems/vcpkg.cmake",
