@@ -38,8 +38,9 @@ struct capability {
   std::vector<std::string> cap_deps;
 
   /**
-   * Acceptance is used in order to determine if the provider of this capability
+   * @brief Acceptance is used in order to determine if the provider of this capability
    * validation requirement are.
+   *
    * In other words, what is the action that the provider of the capability has to
    * do in order to validate that the action will be done.
    */
