@@ -12,8 +12,8 @@ target_sources(core
         core/boardcom.hh
         core/cnf/cnf_compiler.cpp
         core/cnf/cnf_compiler.hh
-        core/cnf/dimacs_compiler.cpp
-        core/cnf/dimacs_compiler.hh
+        core/sat/dimacs_compiler.cpp
+        core/sat/dimacs_compiler.hh
         core/sat/solver.cpp
         core/sat/solver.hh
         )

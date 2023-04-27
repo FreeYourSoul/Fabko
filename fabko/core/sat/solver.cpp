@@ -23,6 +23,15 @@
 
 #include "solver.hh"
 
-namespace fabko {
+namespace fabko::sat {
+
+struct solver::impl {
+  solver_config config;
+};
+
+solver::solver(fabko::sat::solver_config config) : _pimpl(std::make_unique<impl>(std::move(config)))
+{}
+
+solver::~solver() = default;
 
 }

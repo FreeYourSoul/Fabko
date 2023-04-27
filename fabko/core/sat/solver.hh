@@ -23,9 +23,87 @@
 
 #pragma once
 
-namespace fabko {
+#include <cstdint>
+#include <memory>
+
+namespace fabko::sat {
+
+/**
+ * Variable in the CNF representation.
+ * This value is an index into the memory object and thus is not abstracted.
+ */
+using variable = int;
+
+/**
+ * Represent a literal in the CNF representation.
+ *
+ * The value of the literal is equivalent to the variable it represent mult by 2
+ *  +0 if the variable is positive
+ *  +1 if the variable is negated
+ */
+class literal {
+
+public:
+  literal(variable var, bool positive) : _val(var + var + static_cast<std::int32_t>(positive)){}
+
+  literal operator^(bool b) const {
+    literal lit(*this);
+    lit._val ^= static_cast<std::int32_t>(b);
+    return lit;
+  }
+
+  literal operator~() const {
+    literal lit(*this);
+    lit._val ^= 1;
+    return lit;
+  }
+private:
+  std::int32_t _val;
+
+};
+
+class clause {
+
+private:
+
+public:
+
+};
+
+/**
+ * context of a current sat resolution
+ */
+struct context {
+
+};
+
+/**
+ * configuration of the solver
+ */
+struct solver_config {
+
+  using custom_allocator_literal = std::false_type;
+  using custom_allocator_clause = std::false_type;
+
+  /**
+   * byte field representing the different flags that could be set at the solver level
+   */
+  struct {
+    unsigned random_init: 1;
+    unsigned multi_threaded: 1;
+  } flags;
+  double random_seed;
+};
 
 class solver {
+  struct impl;
+
+public:
+  explicit solver(solver_config config);
+  ~solver();
+
+private:
+  std::unique_ptr<impl> _pimpl;
 };
 
 }
