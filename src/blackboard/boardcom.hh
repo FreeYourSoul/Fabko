@@ -18,7 +18,15 @@ struct proposition {
   std::string id;
 };
 
-using request_propositions = std::optional<std::vector<proposition>>;
+enum class request_process : int {
+  IN_PROGRESS = 0,
+  DONE = 0,
+};
+
+struct request_propositions {
+  std::optional<std::vector<proposition>> props;
+  request_process status;
+}
 
 enum class decision_status {
   SUCCESS,
