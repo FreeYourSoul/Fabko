@@ -183,8 +183,8 @@ private:
       return true;
     }
     auto& clauses_watching = it_found->second;
-    fmt::print("DEBUG -- solve::update_watchlist -- var assign :: {}[{}] - over clause :: {}\n",
-               var, assign,
+    fmt::print("DEBUG -- solve::update_watchlist -- var assign :: {}[{}] - over {} clause :: {}\n",
+               var, assign, clauses_watching.size(),
                fmt::join(clauses_watching
                              | std::ranges::views::transform([this](std::size_t index){ return clauses[index];})
                              | std::ranges::views::transform([](const auto &lits){
@@ -216,10 +216,12 @@ private:
             });
           });
 
-    fmt::print("DEBUG -- solve::update_watchlist -- removal of {} elements in watchlist of {} elements\n", std::ranges::distance(rm_when_find_alternative), clauses_watching.size());
+    const auto number_to_remove = std::ranges::distance(rm_when_find_alternative);
+    fmt::print("DEBUG -- solve::update_watchlist -- removal of elements in watchlist of {} : remove::{} ", clauses_watching.size(), number_to_remove);
     clauses_watching.erase(
         std::begin(clauses_watching),
-        std::begin(clauses_watching) + std::ranges::distance(rm_when_find_alternative));
+        std::begin(clauses_watching) + number_to_remove);
+    fmt::print("-- after removal {}\n ", clauses_watching.size());
 
     if (!clauses_watching.empty()) {
       // all alternatives have not been found :: return false assignment is contradicting a clause.
@@ -295,18 +297,19 @@ void solver::add_clause(clause clause_literals) {
   for (const auto& lit : _pimpl->clauses.back()) {
     fmt::print("DEBUG -- watchlist add -- lit.value :: {}\n", lit.value());
     _pimpl->watchlist[lit.value()].emplace_back(_pimpl->clauses.size() - 1);
+    _pimpl->watchlist[(~lit).value()].emplace_back(_pimpl->clauses.size() - 1);
   }
 
   for (const auto& [key, watched] : _pimpl->watchlist) {
     fmt::print("======================================\n");
 
-    fmt::print("DEBUG -- watchlist content :: {}\n", key);
+    fmt::print("DEBUG -- watchlist content :: lit.value::{}\n", key);
     for (const auto& watched_indexes : watched) {
       const auto& clause = _pimpl->clauses[watched_indexes];
       fmt::print("DEBUG -----------------:: clauses (size - {})\n", clause.size());
 
       for (const auto& lit : clause) {
-        fmt::print("var::{}::{} -- ", lit.var(), lit.value());
+        fmt::print("var::{}[{}] (v:{}) -- ", lit.var(), bool(lit), lit.value());
       }
       fmt::print("\n");
     }
