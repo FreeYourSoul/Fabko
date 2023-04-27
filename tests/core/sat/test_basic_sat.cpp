@@ -12,6 +12,7 @@
 
 #include <catch2/catch.hpp>
 
+#include <fmt/core.h>
 #include <ranges>
 #include <sat/solver.hh>
 #include <set>
@@ -88,6 +89,8 @@ TEST_CASE("basic_case_sat_solver") {
   //   1  2  3  0
   //  ~1 ~2     0
 
+  // expected result : ~1 ~2 3
+
   // clause
   //  1 2 3 0
   s.add_clause(
@@ -106,4 +109,11 @@ TEST_CASE("basic_case_sat_solver") {
   s.solve();
 
   CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
+
+  auto result = s.results();
+  fmt::print("RESULT -- {}\n", result.size());
+  fmt::print("RESULT ---- {}\n", result[0].size());
+  for (const auto& v : result[0]) {
+    fmt::print("RESULT ------ var::{}::assign[{}]\n", v.var(), bool(v));
+  }
 }

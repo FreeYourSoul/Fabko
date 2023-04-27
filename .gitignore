@@ -43,3 +43,4 @@ tmp
 *.app
 
 venv
+vcpkg_installed

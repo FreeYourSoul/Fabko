@@ -1,24 +1,13 @@
-// MIT License
+// Dual Licensing Either :
+// - AGPL
+// or
+// - Subscription license for commercial usage (without requirement of licensing propagation).
+//   please contact ballandfys@protonmail.com for additional information about this subscription commercial licensing.
 //
-// Created by FyS on 03/04/23. License 2022-2023
+// Created by FyS on 23/04/23. License 2022-2023
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-//         of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-//         to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-//         copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-//         copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-//         AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// In the case no license has been purchased for the use (modification or distribution in any way) of the software stack
+// the APGL license is applying.
 //
 
 #pragma once
@@ -63,10 +52,15 @@ public:
 
   //! true or false depending on current assignment designation of the literal
   explicit operator bool() const {
-    return (unsigned(_val) & 1) == 1;
+    auto v = _val;
+    return (v & 1) == 1;
   }
 
-  [[nodiscard]] variable var() const { return unsigned(_val) >> 1; };
+  [[nodiscard]] variable var() const {
+    auto v = _val;
+    return v >> 1;
+  };
+
   [[nodiscard]] unsigned value() const { return _val; };
 
 private:
@@ -153,6 +147,8 @@ public:
    * @param requested_sat_solution number of solution to retrieve for the sat solver, -1 means all of them.
    */
   void solve(int requested_sat_solution = 1);
+
+  [[nodiscard]] std::vector<std::vector<literal>> results() const;
 
   /**
    * @return current status of the solver

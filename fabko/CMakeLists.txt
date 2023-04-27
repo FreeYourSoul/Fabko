@@ -11,6 +11,7 @@ target_sources(core
         core/boardcom.cpp
         core/boardcom.hh
         core/common/exception.hh
+        core/common/ranges_to.hh
         core/common/utils.hh
         core/sat/dimacs_compiler.cpp
         core/sat/dimacs_compiler.hh

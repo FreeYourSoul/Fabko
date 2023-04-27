@@ -27,6 +27,7 @@
 #include <utility>
 #include <vector>
 
+#include <common/ranges_to.hh>
 #include <sat/assignment_bitset.hh>
 
 #include "solver.hh"
@@ -94,27 +95,31 @@ public:
       // if at the end of the var count, initiate backtracking
       if (var > num_var) {
         fmt::print("DEBUG -- solve -- init backtracking - var :: {} - num_var :: {}\n", var, num_var);
-        if (requested_sat_solution != -1) {
-          --requested_sat_solution;
-        }
         --var;
-        // store current cur_assignment result (as it is a valid result)
-        context.valid_result_assignments.emplace_back(context.cur_assignment);
         continue;
       }
 
-      const auto assignment_happened = try_assign_variable(attempt_flags, var);
+      const bool assignment_happened = try_assign_variable(attempt_flags, var);
 
       // nothing has been attempted :: backtracking
       if (!assignment_happened) {
         // var cannot continue backtracking. Solver is in error if no result has been previously found.
         if (var == 0) {
+          fmt::print("DEBUG -- SAT execution -- end");
+
+          // store current cur_assignment result (as it is a valid result)
+          context.valid_result_assignments.emplace_back(context.cur_assignment);
+          if (requested_sat_solution > 0) {
+            --requested_sat_solution;
+          }
           return context.valid_result_assignments.empty() ? solver_status::UNSAT : solver_status::SAT;
         }
 
         // reset attempts
         attempt_flags[var] = 0;
-        context.cur_assignment.unassign_variable(sat::variable(var));
+        context.cur_assignment.unassign_variable(var);
+        fmt::print("DEBUG -- solve -- unassigned :: {}\n", var);
+
         --var;
 
       }
@@ -137,7 +142,7 @@ private:
    * @return true if assignment occurred, false otherwise
    */
   [[nodiscard]] bool try_assign_variable(std::vector<int>& attempt_flags, sat::variable var) {
-    for (const bool attempt : {false, true}) {
+    for (const bool attempt : {true, false}) {
       if ((attempt_flags[var] >> attempt) & 1) {
         continue;
       }
@@ -147,12 +152,15 @@ private:
       fmt::print("DEBUG -- solve::try_assign_variable -- var :: {} - attempt :: {}\n", var, attempt);
       // apply assignment
       context.cur_assignment.assign_variable(var, attempt);
+      const bool watch_list_update_success = update_watchlist(var, attempt);
 
-      if (!update_watchlist(var, attempt)) {
-        context.cur_assignment.unassign_variable(var);
+      fmt::print("DEBUG -- solve::try_assign_variable -- assign var::{}[{}] - success :: {} \n\n", var, attempt, watch_list_update_success);
+      if (watch_list_update_success) {
+        return true;
       }
-      return true;
+      context.cur_assignment.unassign_variable(var);
     }
+    fmt::print("DEBUG -- solve::try_assign_variable -- var :: {} - no assignment\n", var);
     return false;
   }
 
@@ -170,13 +178,27 @@ private:
    */
   [[nodiscard]] bool update_watchlist(sat::variable var, bool assign) {
     auto opposite_literal = ~literal{var, assign};
-    auto& clauses_watching = watchlist.at(opposite_literal.value());
-    fmt::print("DEBUG -- solve::update_watchlist -- var :: {} - assign :: {} - opposite_literal :: {}\n", var, assign, opposite_literal.value());
-    fmt::print("DEBUG --                            size_clause_watching :: {}\n", clauses_watching.size());
+    auto it_found = watchlist.find(opposite_literal.value());
+    if (it_found == watchlist.end()) {
+      return true;
+    }
+    auto& clauses_watching = it_found->second;
+    fmt::print("DEBUG -- solve::update_watchlist -- var assign :: {}[{}] - over clause :: {}\n",
+               var, assign,
+               fmt::join(clauses_watching
+                             | std::ranges::views::transform([this](std::size_t index){ return clauses[index];})
+                             | std::ranges::views::transform([](const auto &lits){
+                                std::string res{};
+                                for (const auto& lit : lits) {
+                                  res += fmt::format(" lit::{}[{}] -", lit.var(), bool(lit));
+                                }
+                                 return res;})
+                             ,
+                         "|"));
 
     auto rm_when_find_alternative =
         clauses_watching
-        | std::ranges::views::transform([this](std::size_t index_clause){
+        | std::ranges::views::transform([this](std::size_t index_clause) {
             return std::pair<std::size_t, const clause&>(index_clause, clauses[index_clause]);
           })
         | std::ranges::views::take_while([this](const auto& index_with_clause) {
@@ -184,8 +206,9 @@ private:
 
             return std::ranges::any_of(clause_watching, [this, &index_clause](const literal& lit) {
               const variable alt = lit.var();// alternative to check
-              fmt::print("DEBUG -- solve::update_watchlist::take_while::any_of -- lit.value :: {} - (check_alternative) alt :: {}\n", lit.value(), alt);
-              if (!context.cur_assignment.is_assigned(alt) || context.cur_assignment.is(alt, static_cast<bool>(lit))) {
+              fmt::print("DEBUG -- solve::update_watchlist::take_while::any_of clause {} -- lit::{}[{}] -- (check_alternative) ", index_clause, alt, bool(lit));
+              fmt::print("-- is_assigned(alt)::{} -- is(alt, bool(alt))::{} \n", context.cur_assignment.is_assigned(alt), context.cur_assignment.is(alt, bool(lit)));
+              if (!context.cur_assignment.is_assigned(alt) || context.cur_assignment.is(alt, bool(lit))) {
                 watchlist[alt].emplace_back(index_clause);
                 return true;
               }
@@ -193,12 +216,24 @@ private:
             });
           });
 
+    fmt::print("DEBUG -- solve::update_watchlist -- removal of {} elements in watchlist of {} elements\n", std::ranges::distance(rm_when_find_alternative), clauses_watching.size());
     clauses_watching.erase(
         std::begin(clauses_watching),
         std::begin(clauses_watching) + std::ranges::distance(rm_when_find_alternative));
 
     if (!clauses_watching.empty()) {
       // all alternatives have not been found :: return false assignment is contradicting a clause.
+
+      // debug print the contradicted clause
+      fmt::print("INFO  -- clause contradicted assign var::{}[{}] -- ", var, assign);
+      for (std::size_t c : clauses_watching) {
+
+        for (const auto& lit : clauses[c])
+          fmt::print("lit::{}[{}], ", lit.var(), bool(lit));
+
+        fmt::print("<< clause {}\n", c);
+      }
+
       return false;
     }
     // alternative has been found for every single one in the watching list
@@ -287,6 +322,21 @@ void solver::solve(int requested_sat_solution) {
   fmt::print("DEBUG -- solve -- requested_solutions :: {}\n", requested_sat_solution);
   _pimpl->config.flags.status_solver = unsigned(solver_status::SOLVING);
   _pimpl->config.flags.status_solver = unsigned(_pimpl->solve_sat(requested_sat_solution));
+}
+
+std::vector<std::vector<literal>> solver::results() const {
+  std::vector<std::vector<literal>> res;
+  res.reserve(_pimpl->context.valid_result_assignments.size());
+  for (const auto& result : _pimpl->context.valid_result_assignments) {
+    auto lit_res = fabko::ranges::to_vector(
+        std::ranges::views::iota(sat::variable{1}, result.nb_vars() + 1)
+        | std::views::transform([&result](sat::variable var) {
+            return literal{var, result.is_true(var)};
+          }));
+
+    res.emplace_back(std::move(lit_res));
+  }
+  return res;
 }
 
 }// namespace fabko::sat
