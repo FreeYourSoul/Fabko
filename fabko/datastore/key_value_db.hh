@@ -52,7 +52,7 @@ template<typename T>
 concept TransactionalDatabasePolicy =
     requires(T v) {
       typename T::transaction;
-    } && DbInteractivePolicy<T> && DbInteractivePolicy<typename T::transaction>;
+    } && DbInteractivePolicy<typename T::transaction>;
 
 template<typename T>
 class kv_db {

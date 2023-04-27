@@ -1,5 +1,7 @@
 // MIT License
 //
+// Created by FyS on 03/04/23.
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 //         of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -19,27 +21,8 @@
 // SOFTWARE.
 //
 
-#include "peerboard.hh"
-#include "kv_rocksdb.hh"
+#include "cnf.hh"
 
 namespace fabko {
-
-struct peerboard::pb_impl {
-
-  fabko::kv_rocksdb_instance datastore;
-
-};
-
-peerboard::~peerboard() = default;
-
-peerboard::peerboard(std::string data_store_location) : _pimpl(std::unique_ptr<pb_impl>(kv_rocksdb_instance(
-    kv_rocksdb::initializer_type{})))
-{}
-
-void peerboard::register_capability(capability to_add) {
-  auto serializer = serial::make_serializer();
-  auto ser_cap = serialize(std::move(capability));
-
-}
 
 }
