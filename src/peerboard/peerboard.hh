@@ -10,6 +10,8 @@
 #include <variant>
 #include <vector>
 
+#include "../blackboard/blackboard.hh"
+
 namespace fabko {
 
 enum acceptance_requirement {
@@ -54,6 +56,8 @@ private:
   std::vector<peer_rule> _rule_set;
 
 public:
+
+  std::unique_ptr<blackboard> make_blackboard(const std::string& requested_action);
 
 
 
