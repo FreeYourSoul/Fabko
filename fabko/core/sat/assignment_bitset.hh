@@ -1,71 +1,205 @@
-/**
- *
- * Copyright (C) 2023 INAIT.SA - - All Rights Reserved
- *
- * Unauthorized copying of this file, via any medium is strictly prohibited
- *
- * Proprietary and confidential
- *
- **/
+// MIT License
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+//         of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+//         to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//         copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+//         copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//         AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+//
 
 #pragma once
 
+#include <bitset>
 #include <map>
+#include <numeric>
+#include <optional>
+#include <vector>
 
-namespace fil {
+#include <fmt/format.h>
 
-template<typename T = int>
-class boundary_map {
-public:
-  [[nodiscard]] auto get(int index) const {
-    return _map.lower_bound(index);
-  }
+#include <common/exception.hh>
 
-  void insert(int index, T&& element) {
-    auto it = get(index);
-    if (it == _map.end()) {
-      _map[index] = std::forward<T>(element);
-    } else if (element != it->second) {
-      _map[it->first + 1] = std::forward<T>(element);
-    } else {
-      _map.erase(it);
-      _map[it->first] = std::forward<T>(element);
-    }
-  }
-
-  void insert(int index, const T& element) {
-    T elem = element;
-    insert(index, std::move(elem));
-  }
-
-  [[nodiscard]] auto end() const {
-    return _map.end();
-  }
-
-private:
-  std::map<int, T> _map;
-
-};
+using namespace sr = std::ranges;
 
 namespace fabko {
 
-template <int ChunkSize = 128>
+/**
+ * Store the state of the assignment of each variable in a SAT solver.
+ *
+ * The storage is internally handled as a vector of static bitset of size `ChunkSize`
+ *
+ * @tparam ChunkSize size of each static bitset composing the assignment bitset
+ */
+template<int ChunkSize = 128>
 class assignment_bitset {
+
 public:
+  /**
+   * Reserve enough space for every currently watched variable assignment to be stored.
+   * @note If the total number of variable exceed the current amount of bitset chunk. New
+   *    chunk are reserved.
+   *
+   * @param number_variable number of new variable to prepare for assignment
+   */
+  void reserve_new_variable(std::size_t number_variable) {
+    const std::size_t chunks = number_variable / ChunkSize;
+    _unassigned.resize(_unassigned.size() + chunks);
+    _assigned.resize(_assigned.size() + chunks);
 
+    _total_variable_number += number_variable;
 
-private:
-  boundary_map<std::bitset<ChunkSize>> _unassigned{};
-  boundary_map<std::bitset<ChunkSize>> _assigned{};
+    fabko_assert(_unassigned.capacity() == _assigned.capacity());
+  }
 
   /**
-   * Cursor of assignment.
-   * Index into the assignement biteset
+   * Check if the variable is assigned or not. Should be used before the usage of is_negated or is_true
+   *
+   * @param v variable to check
+   * @return true if the variable is assigned, false otherwise
    */
-  std::size_t _cursor_assign{0};
+  bool is_assigned(variable v) const {
+    const auto [index_chunk, index_bitset] = locate(v);
+    return _unassigned[index_chunk][index_bitset];
+  }
 
-  std::size_t _total_assignment{0};
+  /**
+   * Check if the variable is assigned to false or not
+   *
+   * @note It is important to validate if the variable is assigned (with ``is_assigned``) before using this function.
+   *    If the variable is not assigned it will be visible as false by this function.
+   *    The best usage of this method is if you have knowledge that the variable is already assigned (to avoid an necessary check)
+   *
+   * @param v variable to check
+   * @return true if variable assigned to false, false otherwise (could also mean non-assigned if is_assigned is not properly called)
+   */
+  bool is_negated(variable v) const {
+    const auto [index_chunk, index_bitset] = locate(v);
+    return !_assigned[index_chunk][index_bitset];
+  }
 
+  /**
+   * Check if the variable is assigned to true or not
+   *
+   * @note It is important to validate if the variable is assigned (with ``is_assigned``) before using this function.
+   *    If the variable is not assigned it will be visible as false by this function.
+   *    The best usage of this method is if you have knowledge that the variable is already assigned (to avoid an necessary check)
+   *
+   * @param v variable to check
+   * @return true if variable assigned to true, false otherwise (could also mean non-assigned if is_assigned is not properly called)
+   */
+  bool is_true(variable v) const {
+    const auto [index_chunk, index_bitset] = locate(v);
+    return _assigned[index_chunk][index_bitset];
+  }
+
+  /**
+   * Check the assignment of the variable.
+   *
+   * @param v variable to check the assignment on
+   * @return std::nullopt if the variable is not assigned, true or false if assigned (depending on assignment)
+   */
+  std::optional<bool> check_assignment(variable v) const {
+    const auto [index_chunk, index_bitset] = locate(v);
+
+    if (!_unassigned[index_chunk][index_bitset]) {
+      return std::nullopt;
+    }
+    return _assigned[index_chunk][index_bitset];
+  }
+
+  /**
+   * Assign a variable to the provided boolean state
+   *
+   * @param v id of the variable to assign
+   * @param assign boolean value to assign to the provided variable
+   */
+  void assign_variable(variable v, bool assign) {
+    const auto [index_chunk, index_bitset] = locate(v);
+
+    _unassigned[index_chunk].set(index_bitset);
+    _assigned[index_chunk].set(index_bitset, assign);
+  }
+
+  /**
+   * @param v id of the variable to unassign
+   */
+  void unassign_variable(variable v) {
+    const auto [index_chunk, index_bitset] = locate(v);
+    _unassigned[index_chunk].reset(index_bitset);
+  }
+
+  /**
+   * @return true if all variable has been assigned properly, false otherwise
+   */
+  bool all_assigned() const {
+    return sr::all_of(_unassigned, [](const auto& bs) { return bs.all(); });
+  }
+
+  /**
+   * @return number of variable assigned
+   */
+  std::size_t number_assigned() const {
+    const int chunks_fully_assigned = sr::count(_unassigned, [](const auto& bs) { return bs.all(); });
+    const int lasting_chunks = [this, &chunks_fully_assigned]() -> int {
+      auto last_chunk = _unassigned.get(chunks_fully_assigned);
+      if (!last_chunk.has_value()) {
+        return 0;
+      }
+      return last_chunk.value().count();
+    }();
+
+    return chunks_fully_assigned * ChunkSize + lasting;
+  }
+
+  const std::size_t nb_vars() const { return _total_variable_number; }
+  const std::size_t nb_chunks() const { return ChunkSize * _unassigned.capacity(); }
+
+  constexpr std::size_t chunk_size() const { return ChunkSize; }
+
+private:
+  /**
+   * Locate the variable in the bitset
+   *
+   * @note This function is used internally in order to retrieve the proper bit that set
+   *  the assignment of a variable.
+   *
+   * @param v variable to locate in the bitset
+   * @return a tuple containing the chunk index and the bitset index
+   */
+  std::pair<int, int> locate(variable v) const {
+    v -= 1;// variable starts at 1 (bitsets start at 0). normalization
+    fabko_assert(
+        v >= 0 && v < _total_variable_number,
+        fmt::format("cannot assign variable {} < total number of variable {} ", v, _total_variable_number));
+
+    const int index_chunk = v / ChunkSize;
+    const int index_bitset = v % ChunkSize;
+
+    return std::pair(index_chunk, index_bitset);
+  }
+
+private:
+  // chunking the static bitset into dynamic
+
+  //! unassigned :: 0 = unassigned variable :: 1 = assigned value
+  std::vector<std::bitset<ChunkSize>> _unassigned{};
+
+  //! assigned   :: 0 = false assignment to variable :: 1 = true assignment to variable
+  std::vector<std::bitset<ChunkSize>> _assigned{};
+
+  std::size_t _total_variable_number{0};
 };
 
 }// namespace fabko

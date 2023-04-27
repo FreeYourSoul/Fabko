@@ -18,46 +18,5 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#pragma once
 
-#include <stdexcept>
-#include <system_error>
-
-#include <fmt/format.h>
-
-namespace fabko {
-
-namespace except_cat {
-struct db : public std::error_category {
-  [[nodiscard]] const char* name() const noexcept override { return "fabko::exception::db"; }
-  [[nodiscard]] std::string message(int I) const override {
-    return fmt::format("Database Exception Category : {} : id {}", name(), I);
-  }
-};
-
-struct fbk : public std::error_category {
-  [[nodiscard]] const char* name() const noexcept override { return "fabko::exception"; }
-};
-}// namespace except_cat
-
-class exception : public std::runtime_error {
-public:
-  exception(const std::error_code& ec, const std::string& what) : std::runtime_error(what), _ec(ec) {}
-
-  [[nodiscard]] int code() const { return _ec.value(); }
-
-private:
-  std::error_code _ec;
-};
-
-static inline void fabko_assert(bool assertion, std::error_code ec, const std::string& msg = "") {
-  if (!assertion) {
-    throw exception(ec, msg);
-  }
-}
-
-static inline void fabko_assert(bool assertion, const std::string& msg = "") {
-  fabko_assert(assertion, std::error_cod{fbk{}}, msg);
-}
-
-}// namespace fabko
+#define CATCH_CONFIG_MAIN
