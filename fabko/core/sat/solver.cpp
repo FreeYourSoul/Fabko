@@ -21,17 +21,41 @@
 // SOFTWARE.
 //
 
+#include <utility>
+
+
 #include "solver.hh"
 
 namespace fabko::sat {
 
+using clause = std::vector<literal>;
+using variable_watched = std::pair<variable, assign_bool>;
+
+namespace {
+struct sat_execution_context {
+  assignement_bitset assignment;
+};
+}// namespace
+
+/**
+ * Implementation details of the solver class
+ */
 struct solver::impl {
+
+  struct clause_watchers {
+    clause clause;
+    std::vector<variable_watched> watch;
+  };
+
+  std::vector<clause_watchers> clauses;
+  std::vector<> ;
+
   solver_config config;
 };
 
-solver::solver(fabko::sat::solver_config config) : _pimpl(std::make_unique<impl>(std::move(config)))
-{}
+solver::solver(fabko::sat::solver_config config)
+    : _pimpl(std::make_unique<impl>(std::move(config))) {}
 
 solver::~solver() = default;
 
-}
+}// namespace fabko::sat

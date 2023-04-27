@@ -23,10 +23,16 @@
 
 #pragma once
 
+#include <optional>
 #include <cstdint>
 #include <memory>
 
 namespace fabko::sat {
+
+/**
+ * Leveraged boolean in order to represent a negation - non-negation - non-assignment of a variable
+ */
+using assign_bool = std::optional<bool>;
 
 /**
  * Variable in the CNF representation.
@@ -62,23 +68,18 @@ private:
 
 };
 
-class clause {
-
-private:
-
-public:
-
-};
-
 /**
- * context of a current sat resolution
+ * Context of a current sat resolution
  */
 struct context {
+};
 
+struct sat_execution_context {
+  //  std::vector<v>
 };
 
 /**
- * configuration of the solver
+ * Configuration of the solver
  */
 struct solver_config {
 
@@ -86,21 +87,35 @@ struct solver_config {
   using custom_allocator_clause = std::false_type;
 
   /**
-   * byte field representing the different flags that could be set at the solver level
+   * Byte field representing the different flags that could be set at the solver level
    */
   struct {
     unsigned random_init: 1;
     unsigned multi_threaded: 1;
   } flags;
+
   double random_seed;
 };
 
+/**
+ * Main solver class.
+ *
+ * This class is the entry point of the solver.
+ *
+ * @copyright
+ *   This solver is based on the algorithm developed for [minisat](https://github.com/niklasso/minisat) project and is based
+ *   on their released paper on their [website](http://minisat.se/).   None if not little of those algorithm is developed for
+ *   the Fabko project.
+ */
 class solver {
   struct impl;
 
 public:
   explicit solver(solver_config config);
   ~solver();
+
+  void add_variables(int number_to_add);
+  void add_clause(std::vector<literal> clause_literals);
 
 private:
   std::unique_ptr<impl> _pimpl;

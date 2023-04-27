@@ -10,6 +10,8 @@ target_sources(core
         core/blackboard.hh
         core/boardcom.cpp
         core/boardcom.hh
+        core/common/exception.hh
+        core/common/utils.hh
         core/cnf/cnf_compiler.cpp
         core/cnf/cnf_compiler.hh
         core/sat/dimacs_compiler.cpp
