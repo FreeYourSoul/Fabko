@@ -33,23 +33,23 @@ TEST_CASE("assignment_bitset") {
 
   REQUIRE(bitset.chunk_size() == 5);
 
-  SECTION("failure cur_assignment of variable before reserve") {
+  SECTION("failure cur_assignment of var before reserve") {
     REQUIRE_THROWS(bitset.assign_variable(variable{1}, true));
   }
 
-  SECTION("failure cur_assignment of variable before reserve") {
+  SECTION("failure cur_assignment of var before reserve") {
     REQUIRE_THROWS(bitset.unassign_variable(variable{1}));
   }
 
-  SECTION("failure check of variable before reserve") {
+  SECTION("failure check of var before reserve") {
     REQUIRE_THROWS(bitset.check_assignment(variable{1}));
   }
 
-  SECTION("failure reserving 0 variable") {
+  SECTION("failure reserving 0 var") {
     REQUIRE_THROWS(bitset.reserve_new_variable(0z));
   }
 
-  SECTION("reserve of 4 variable") {
+  SECTION("reserve of 4 var") {
     REQUIRE(bitset.nb_vars() == 0z);
     bitset.reserve_new_variable(2);
     REQUIRE(bitset.nb_vars() == 2z);
@@ -78,13 +78,13 @@ TEST_CASE("assignment_bitset") {
       REQUIRE_FALSE(bitset.check_assignment(4).value());
     }
 
-    SECTION("5th variable cannot be allocated") {
+    SECTION("5th var cannot be allocated") {
       REQUIRE_THROWS(bitset.check_assignment(5).has_value());
       REQUIRE_THROWS(bitset.assign_variable(variable{5}, true));
       REQUIRE_THROWS(bitset.unassign_variable(variable{5}));
     }
 
-    SECTION("5th variable allocation doesn't trigger a new chunk") {
+    SECTION("5th var allocation doesn't trigger a new chunk") {
 
       // only one chunk is in use currently
       REQUIRE(bitset.nb_vars() == 4);
@@ -100,7 +100,7 @@ TEST_CASE("assignment_bitset") {
       REQUIRE(bitset.nb_chunks() == 1);
     }
 
-    SECTION("6th variable allocation trigger a new chunk") {
+    SECTION("6th var allocation trigger a new chunk") {
       // only one chunk is in use currently
       REQUIRE(bitset.nb_vars() == 4);
       REQUIRE(bitset.nb_chunks() == 1);

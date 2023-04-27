@@ -30,9 +30,9 @@ namespace fabko::sat {
 /**
  * Helper function to retrieve the literal v
  *
- * @param var variable to get the assignment literal value
+ * @param var var to get the assignment literal value
  * @param assignment assignment to have
- * @return an index (literal value) that a specific variable would have for the given assignment
+ * @return an index (literal value) that a specific var would have for the given assignment
  */
 [[nodiscard]] unsigned get_lit_index_for_variable(sat::variable var, bool assignment);
 

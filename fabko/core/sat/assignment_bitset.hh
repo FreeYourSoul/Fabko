@@ -30,7 +30,7 @@ namespace sr = std::ranges;
 namespace fabko {
 
 /**
- * Store the state of the cur_assignment of each variable in a SAT solver.
+ * Store the state of the cur_assignment of each var in a SAT solver.
  *
  * The storage is internally handled as a vector of static bitset of size `ChunkSize`
  *
@@ -41,11 +41,11 @@ class assignment_bitset {
 
 public:
   /**
-   * Reserve enough space for every currently watched variable cur_assignment to be stored.
-   * @note If the total number of variable exceed the current amount of bitset chunk. New
+   * Reserve enough space for every currently watched var cur_assignment to be stored.
+   * @note If the total number of var exceed the current amount of bitset chunk. New
    *    chunk are reserved.
    *
-   * @param number_variable number of new variable to prepare for cur_assignment
+   * @param number_variable number of new var to prepare for cur_assignment
    */
   void reserve_new_variable(std::size_t number_variable) {
     _total_variable_number += number_variable;
@@ -60,10 +60,10 @@ public:
   }
 
   /**
-   * Check if the variable is assigned or not. Should be used before the usage of is_negated or is_true
+   * Check if the var is assigned or not. Should be used before the usage of is_negated or is_true
    *
-   * @param v variable to check
-   * @return true if the variable is assigned, false otherwise
+   * @param v var to check
+   * @return true if the var is assigned, false otherwise
    */
   [[nodiscard]] bool is_assigned(sat::variable v) const {
     const auto [index_chunk, index_bitset] = locate(v);
@@ -71,14 +71,14 @@ public:
   }
 
   /**
-   * Check if the variable is assigned to false or not
+   * Check if the var is assigned to false or not
    *
-   * @note It is important to validate if the variable is assigned (with ``is_assigned``) before using this function.
-   *    If the variable is not assigned it will be visible as false by this function.
-   *    The best usage of this method is if you have knowledge that the variable is already assigned (to avoid an necessary check)
+   * @note It is important to validate if the var is assigned (with ``is_assigned``) before using this function.
+   *    If the var is not assigned it will be visible as false by this function.
+   *    The best usage of this method is if you have knowledge that the var is already assigned (to avoid an necessary check)
    *
-   * @param v variable to check
-   * @return true if variable assigned to false, false otherwise (could also mean non-assigned if is_assigned is not properly called)
+   * @param v var to check
+   * @return true if var assigned to false, false otherwise (could also mean non-assigned if is_assigned is not properly called)
    */
   [[nodiscard]] bool is_negated(sat::variable v) const {
     const auto [index_chunk, index_bitset] = locate(v);
@@ -86,14 +86,14 @@ public:
   }
 
   /**
-   * Check if the variable is assigned to true or not
+   * Check if the var is assigned to true or not
    *
-   * @note It is important to validate if the variable is assigned (with ``is_assigned``) before using this function.
-   *    If the variable is not assigned it will be visible as false by this function.
-   *    The best usage of this method is if you have knowledge that the variable is already assigned (to avoid an necessary check)
+   * @note It is important to validate if the var is assigned (with ``is_assigned``) before using this function.
+   *    If the var is not assigned it will be visible as false by this function.
+   *    The best usage of this method is if you have knowledge that the var is already assigned (to avoid an necessary check)
    *
-   * @param v variable to check
-   * @return true if variable assigned to true, false otherwise (could also mean non-assigned if is_assigned is not properly called)
+   * @param v var to check
+   * @return true if var assigned to true, false otherwise (could also mean non-assigned if is_assigned is not properly called)
    */
   [[nodiscard]] bool is_true(sat::variable v) const {
     const auto [index_chunk, index_bitset] = locate(v);
@@ -101,25 +101,25 @@ public:
   }
 
   /**
-   * Check if the variable is assigned or negated depending on the provided checker
+   * Check if the var is assigned or negated depending on the provided checker
    *
-   * @note It is important to validate if the variable is assigned (with ``is_assigned``) before using this function.
-   *    If the variable is not assigned it will be visible as false by this function.
-   *    The best usage of this method is if you have knowledge that the variable is already assigned (to avoid an necessary check)
+   * @note It is important to validate if the var is assigned (with ``is_assigned``) before using this function.
+   *    If the var is not assigned it will be visible as false by this function.
+   *    The best usage of this method is if you have knowledge that the var is already assigned (to avoid an necessary check)
    *
-   * @param v variable to check
+   * @param v var to check
    * @param check if set to true equivalent to calling is_true(v), if set to false is_negated(v)
-   * @return true if variable assigned to true, false otherwise (could also mean non-assigned if is_assigned is not properly called)
+   * @return true if var assigned to true, false otherwise (could also mean non-assigned if is_assigned is not properly called)
    */
   [[nodiscard]] bool is(sat::variable v, bool check) const {
     return check ? is_true(v) : is_negated(check);
   }
 
   /**
-   * Check the cur_assignment of the variable.
+   * Check the cur_assignment of the var.
    *
-   * @param v variable to check the cur_assignment on
-   * @return std::nullopt if the variable is not assigned, true or false if assigned (depending on cur_assignment)
+   * @param v var to check the cur_assignment on
+   * @return std::nullopt if the var is not assigned, true or false if assigned (depending on cur_assignment)
    */
   [[nodiscard]] std::optional<bool> check_assignment(sat::variable v) const {
     const auto [index_chunk, index_bitset] = locate(v);
@@ -131,20 +131,22 @@ public:
   }
 
   /**
-   * Assign a variable to the provided boolean state
+   * Assign a var to the provided boolean state
    *
-   * @param v id of the variable to assign
-   * @param assign boolean value to assign to the provided variable
+   * @param v id of the var to assign
+   * @param assign boolean value to assign to the provided var
    */
   void assign_variable(sat::variable v, bool assign) {
     const auto [index_chunk, index_bitset] = locate(v);
+
+    fmt::print("DEBUG -- assign_variable -- v :: {} - assign :: {} -- index_check :: {} - index_bitset :: {}\n", v, assign, index_chunk, index_bitset);
 
     _unassigned[index_chunk].set(index_bitset);
     _assigned[index_chunk].set(index_bitset, assign);
   }
 
   /**
-   * @param v id of the variable to unassign
+   * @param v id of the var to unassign
    */
   void unassign_variable(sat::variable v) {
     const auto [index_chunk, index_bitset] = locate(v);
@@ -152,14 +154,14 @@ public:
   }
 
   /**
-   * @return true if all variable has been assigned properly, false otherwise
+   * @return true if all var has been assigned properly, false otherwise
    */
   [[nodiscard]] bool all_assigned() const {
     return sr::all_of(_unassigned, [](const auto& bs) { return bs.all(); });
   }
 
   /**
-   * @return number of variable assigned
+   * @return number of var assigned
    */
   [[nodiscard]] std::size_t number_assigned() const {
     const int chunks_fully_assigned = sr::count(_unassigned, [](const auto& bs) { return bs.all(); });
@@ -181,19 +183,19 @@ public:
 
 private:
   /**
-   * Locate the variable in the bitset
+   * Locate the var in the bitset
    *
    * @note This function is used internally in order to retrieve the proper bit that set
-   *  the cur_assignment of a variable.
+   *  the cur_assignment of a var.
    *
-   * @param v variable to locate in the bitset
+   * @param v var to locate in the bitset
    * @return a tuple containing the chunk index and the bitset index
    */
   [[nodiscard]] std::pair<std::size_t, std::size_t> locate(sat::variable v) const {
-    auto var = static_cast<std::size_t>(v - 1);// variable starts at 1 (bitsets start at 0). normalization
+    auto var = static_cast<std::size_t>(v - 1);// var starts at 1 (bitsets start at 0). normalization
     fabko_assert(
         var < _total_variable_number,
-        fmt::format("cannot assign variable {} < total number of variable {} ", var, _total_variable_number));
+        fmt::format("cannot locate variable {} < total number of var {} ", var, _total_variable_number));
 
     const std::size_t index_chunk = var / ChunkSize;
     const std::size_t index_bitset = var % ChunkSize;
@@ -204,10 +206,10 @@ private:
 private:
   // chunking the static bitset into dynamic
 
-  //! unassigned :: 0 = unassigned variable :: 1 = assigned value
+  //! unassigned :: 0 = unassigned var :: 1 = assigned value
   std::vector<std::bitset<ChunkSize>> _unassigned{};
 
-  //! assigned   :: 0 = false cur_assignment to variable :: 1 = true cur_assignment to variable
+  //! assigned   :: 0 = false cur_assignment to variable :: 1 = true cur_assignment to var
   std::vector<std::bitset<ChunkSize>> _assigned{};
 
   std::size_t _total_variable_number{0};

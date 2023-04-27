@@ -86,14 +86,15 @@ public:
     std::vector<int> attempt_flags{};
     attempt_flags.resize(num_var);
 
-    std::size_t var = 0;
+    // var is the var to set
+    sat::variable var = 1;
 
-    // var is the variable to set
     while (requested_sat_solution > 0 || requested_sat_solution == -1) {
 
-      // if at the end of the variable count, initiate backtracking
-      if (var == num_var) {
-        if (requested_sat_solution == -1) {
+      // if at the end of the var count, initiate backtracking
+      if (var > num_var) {
+        fmt::print("DEBUG -- solve -- init backtracking - var :: {} - num_var :: {}\n", var, num_var);
+        if (requested_sat_solution != -1) {
           --requested_sat_solution;
         }
         --var;
@@ -106,7 +107,7 @@ public:
 
       // nothing has been attempted :: backtracking
       if (!assignment_happened) {
-        // variable cannot continue backtracking. Solver is in error if no result has been previously found.
+        // var cannot continue backtracking. Solver is in error if no result has been previously found.
         if (var == 0) {
           return context.valid_result_assignments.empty() ? solver_status::UNSAT : solver_status::SAT;
         }
@@ -117,7 +118,7 @@ public:
         --var;
 
       }
-      // if an assignment has been attempted. Go forward to the next variable;
+      // if an assignment has been attempted. Go forward to the next var;
       else {
         ++var;
       }
@@ -132,23 +133,24 @@ private:
    * if already attempted : the flag is not retried and backtracking should be initiated
    *
    * @param attempt_flags flags of attempts (0 no attempts 1 false attempt, 2 true attempt, 3 false and true attempt)
-   * @param var variable to try an assignment
+   * @param var variable to try an assignment on
    * @return true if assignment occurred, false otherwise
    */
-  [[nodiscard]] bool try_assign_variable(std::vector<int>& attempt_flags, std::size_t var) {
+  [[nodiscard]] bool try_assign_variable(std::vector<int>& attempt_flags, sat::variable var) {
     for (const bool attempt : {false, true}) {
       if ((attempt_flags[var] >> attempt) & 1) {
         continue;
       }
-      // set the bit for the attempt on the variable var.
+      // set the bit for the attempt on the var.
       attempt_flags[var] |= 1 << static_cast<unsigned>(attempt);
 
+      fmt::print("DEBUG -- solve::try_assign_variable -- var :: {} - attempt :: {}\n", var, attempt);
       // apply assignment
-      context.cur_assignment.assign_variable(sat::variable(var), attempt);
+      context.cur_assignment.assign_variable(var, attempt);
 
-      if (update_watchlist(sat::variable(var), attempt)) {
+      if (!update_watchlist(var, attempt)) {
+        context.cur_assignment.unassign_variable(var);
       }
-
       return true;
     }
     return false;
@@ -158,24 +160,33 @@ private:
    * Update the watcher list in accordance with the assigned value (we look for all clauses which are watching the opposite of the assignment).
    *
    * @details:
-   *    For each literals, clause are watching them. When updating the watchlist for a specific variable
-   *    we go through all the clause watching the updated variable. An alternative is looked for each of the clause.
+   *    For each literals, clause are watching them. When updating the watchlist for a specific var
+   *    we go through all the clause watching the updated var. An alternative is looked for each of the clause.
    *
-   * @param var variable to trigger update of the watch list
-   * @param assign assignment happening on the variable. Retrieve the watcher of the opposite of the assignment.
-   * @return True if assignment is possible and a proper alternative has been found for each clause watching the variable.
+   * @param var var to trigger update of the watch list
+   * @param assign assignment happening on the var. Retrieve the watcher of the opposite of the assignment.
+   * @return True if assignment is possible and a proper alternative has been found for each clause watching the var.
    *    False otherwise (if false is returned then assignment is contradicting the resolvability and a backtracking should start)
    */
   [[nodiscard]] bool update_watchlist(sat::variable var, bool assign) {
-    auto& clauses_watching = watchlist.at((~literal{var, assign}).value());
+    auto opposite_literal = ~literal{var, assign};
+    auto& clauses_watching = watchlist.at(opposite_literal.value());
+    fmt::print("DEBUG -- solve::update_watchlist -- var :: {} - assign :: {} - opposite_literal :: {}\n", var, assign, opposite_literal.value());
+    fmt::print("DEBUG --                            size_clause_watching :: {}\n", clauses_watching.size());
 
     auto rm_when_find_alternative =
         clauses_watching
-        | std::ranges::views::take_while([this](const auto& clause_watching) {
-            return std::ranges::any_of(clause_watching.get(), [this, &clause_watching](const literal& lit) {
-              const variable alt = lit.variable();// alternative to check
+        | std::ranges::views::transform([this](std::size_t index_clause){
+            return std::pair<std::size_t, const clause&>(index_clause, clauses[index_clause]);
+          })
+        | std::ranges::views::take_while([this](const auto& index_with_clause) {
+            const auto& [index_clause, clause_watching] = index_with_clause;
+
+            return std::ranges::any_of(clause_watching, [this, &index_clause](const literal& lit) {
+              const variable alt = lit.var();// alternative to check
+              fmt::print("DEBUG -- solve::update_watchlist::take_while::any_of -- lit.value :: {} - (check_alternative) alt :: {}\n", lit.value(), alt);
               if (!context.cur_assignment.is_assigned(alt) || context.cur_assignment.is(alt, static_cast<bool>(lit))) {
-                watchlist[alt].emplace_back(clause_watching);
+                watchlist[alt].emplace_back(index_clause);
                 return true;
               }
               return false;
@@ -198,9 +209,11 @@ public:
   solver_config config;
   std::vector<clause> clauses{};
   /**
-   * watch list per literal for clauses
+   * watch list per literal for clauses ::
+   * key   <unsigned>                 -> is the value of the literal
+   * value <std::vector<std::size_t>> -> is the list of index in the clause vector that are watching the literal
    */
-  std::unordered_map<unsigned, std::vector<std::reference_wrapper<const clause>>> watchlist{};
+  std::unordered_map<unsigned, std::vector<std::size_t>> watchlist{};
   sat_execution_context context{};
 };
 
@@ -228,7 +241,8 @@ void solver::reuse_solver() {
 
 void solver::add_variables(std::size_t number_to_add) {
   fabko_assert(solving_status() == solver_status::BUILDING,
-               "cannot add a new variable in the SAT solver if the solver is not in building phase");
+               "cannot add a new var in the SAT solver if the solver is not in building phase");
+  fmt::print("DEBUG -- add_variables :: number_to_add {}\n", number_to_add);
   _pimpl->context.cur_assignment.reserve_new_variable(number_to_add);
 }
 
@@ -239,19 +253,38 @@ void solver::add_clause(clause clause_literals) {
   fabko_assert(!clause_literals.empty(),
                "an added clause cannot be empty");
 
-  auto watcher = variable_watched{clause_literals[0].variable(), std::nullopt};
+  auto watcher = variable_watched{clause_literals[0].var(), std::nullopt};
 
-  _pimpl->clauses.emplace_back(std::move(clause_literals));
+  _pimpl->clauses.push_back(std::move(clause_literals));
+  fmt::print("DEBUG -- add_clause -- clause added size :: {}\n", std::size(_pimpl->clauses.back()));
   for (const auto& lit : _pimpl->clauses.back()) {
-    _pimpl->watchlist[lit.variable()].emplace_back(_pimpl->clauses.back());
+    fmt::print("DEBUG -- watchlist add -- lit.value :: {}\n", lit.value());
+    _pimpl->watchlist[lit.value()].emplace_back(_pimpl->clauses.size() - 1);
+  }
+
+  for (const auto& [key, watched] : _pimpl->watchlist) {
+    fmt::print("======================================\n");
+
+    fmt::print("DEBUG -- watchlist content :: {}\n", key);
+    for (const auto& watched_indexes : watched) {
+      const auto& clause = _pimpl->clauses[watched_indexes];
+      fmt::print("DEBUG -----------------:: clauses (size - {})\n", clause.size());
+
+      for (const auto& lit : clause) {
+        fmt::print("var::{}::{} -- ", lit.var(), lit.value());
+      }
+      fmt::print("\n");
+    }
+    fmt::print("======================================\n");
   }
 }
 
 solver_status solver::solving_status() const {
-  return solver_status(_pimpl->config.flags.status_solver);
+  return solver_status(unsigned(_pimpl->config.flags.status_solver));
 }
 
 void solver::solve(int requested_sat_solution) {
+  fmt::print("DEBUG -- solve -- requested_solutions :: {}\n", requested_sat_solution);
   _pimpl->config.flags.status_solver = unsigned(solver_status::SOLVING);
   _pimpl->config.flags.status_solver = unsigned(_pimpl->solve_sat(requested_sat_solution));
 }

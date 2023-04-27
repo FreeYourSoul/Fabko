@@ -10,9 +10,11 @@ project(fabko
 
 set(CMAKE_CXX_STANDARD 23)
 
-find_package(RocksDB CONFIG REQUIRED)
+include(/home/perso/Documents/any/vcpkg/scripts/buildsystems//vcpkg.cmake)
+
 find_package(fmt CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
+find_package(RocksDB CONFIG REQUIRED)
 
 set(nlohmann-json_IMPLICIT_CONVERSIONS OFF)
 

@@ -23,15 +23,15 @@
 
 #pragma once
 
-#include <optional>
-#include <vector>
 #include <cstdint>
 #include <memory>
+#include <optional>
+#include <vector>
 
 namespace fabko::sat {
 
 /**
- * Leveraged boolean in order to represent a negation - non-negation - non-cur_assignment of a variable
+ * Leveraged boolean in order to represent a negation - non-negation - non-cur_assignment of a var
  */
 using assign_bool = std::optional<bool>;
 
@@ -44,49 +44,36 @@ using variable = unsigned;
 /**
  * Represent a literal in the CNF representation.
  *
- * The value of the literal is equivalent to the variable it represent mult by 2
- *  +0 if the variable is positive
- *  +1 if the variable is negated
+ * The value of the literal is equivalent to the var it represent mult by 2
+ *  +1 if the var is positive
+ *  +0 if the var is negative
  */
 class literal {
 
 public:
-  literal(variable var, bool positive) : _val(var + var + static_cast<unsigned>(positive)){}
+  literal(variable var, bool positive) : _val(var + var + static_cast<unsigned>(positive)) {}
 
   bool operator<=>(const literal& other) const = default;
 
-  literal &operator^(bool b) {
-    _val ^= static_cast<unsigned>(b);
-    return *this;
-  }
-
-  literal operator^(bool b) const {
-    return literal(*this) ^ b;
-  }
-
-  literal &operator~() {
-    _val ^= 1;
-    return *this;
-  }
-
   literal operator~() const {
-    return ~literal(*this);
+    auto tmp = literal(*this);
+    tmp._val ^= 1;
+    return tmp;
   }
 
   //! true or false depending on current assignment designation of the literal
   explicit operator bool() const {
-    return (_val & 1) == 1;
+    return (unsigned(_val) & 1) == 1;
   }
 
-  [[nodiscard]] variable variable() const { return _val << 1; };
+  [[nodiscard]] variable var() const { return unsigned(_val) >> 1; };
   [[nodiscard]] unsigned value() const { return _val; };
 
 private:
   unsigned _val;
-
 };
 
-enum class solver_status {
+enum class solver_status : unsigned {
   BUILDING = 0,
   SOLVING = 1,
   SAT = 2,
@@ -105,10 +92,10 @@ struct solver_config {
    * Byte field representing the different flags that could be set at the solver level
    */
   struct {
-    unsigned random_init: 1;
-    unsigned multi_threaded: 1;
-    unsigned status_solver: 3;
-    unsigned previous_status: 3;
+    unsigned random_init : 1;
+    unsigned multi_threaded : 1;
+    unsigned status_solver : 3;
+    unsigned previous_status : 3;
   } flags;
 
   double random_seed;
@@ -138,14 +125,14 @@ public:
   void reset_solver();
   /**
    * Make it possible to continue the resolution of the solver. Starting from this point,
-   * Adding variable and clause are possible.
+   * Adding var and clause are possible.
    * This method only works in case the Solver found a result (status SAT)
    * @details Set the solver as in building phase. Does not discard the current result.
    */
   void reuse_solver();
 
   /**
-   * Add a variable in the SAT solver.
+   * Add a var in the SAT solver.
    * This step has to be done before calling the `solve` function
    *
    * @param number_to_add number of variables to add in the sat solver
@@ -161,7 +148,7 @@ public:
 
   /**
    * Start the resolution of the SAT solver.
-   * From this point on, it is not possible to add clauses or variable
+   * From this point on, it is not possible to add clauses or var
    *
    * @param requested_sat_solution number of solution to retrieve for the sat solver, -1 means all of them.
    */
@@ -176,4 +163,4 @@ private:
   std::unique_ptr<sat_impl> _pimpl;
 };
 
-}
+}// namespace fabko::sat

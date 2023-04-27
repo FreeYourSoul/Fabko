@@ -25,6 +25,7 @@ target_sources(test_core
         PRIVATE
         catch_main.cpp
         core/test_assignment_bitset.cpp
+        core/sat/test_basic_sat.cpp
         )
 target_link_libraries(test_core
         PRIVATE Catch2::Catch2 fabko::core)
