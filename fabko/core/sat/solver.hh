@@ -1,6 +1,6 @@
 // MIT License
 //
-// Created by FyS on 03/04/23.
+// Created by FyS on 03/04/23. License 2022-2023
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 //         of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +21,11 @@
 // SOFTWARE.
 //
 
-#include "cnf.hh"
+#pragma once
 
 namespace fabko {
+
+class solver {
+};
 
 }

@@ -12,6 +12,9 @@ set(CMAKE_CXX_STANDARD 23)
 
 find_package(RocksDB CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+
+set(nlohmann-json_IMPLICIT_CONVERSIONS OFF)
 
 add_subdirectory(fabko)
 add_subdirectory(tests)

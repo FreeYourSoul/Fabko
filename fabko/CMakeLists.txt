@@ -1,25 +1,36 @@
 cmake_minimum_required(VERSION 3.22)
 
 #
-# Core library -- blackboard
+# Core library -- core
 #
 add_library(core STATIC)
 target_sources(core
         PUBLIC
-        blackboard/blackboard.cpp
-        blackboard/blackboard.hh
-        blackboard/boardcom.cpp
-        blackboard/boardcom.hh)
+        core/blackboard.cpp
+        core/blackboard.hh
+        core/boardcom.cpp
+        core/boardcom.hh
+        core/cnf/cnf_compiler.cpp
+        core/cnf/cnf_compiler.hh
+        core/cnf/dimacs_compiler.cpp
+        core/cnf/dimacs_compiler.hh
+        core/sat/solver.cpp
+        core/sat/solver.hh
+        )
 target_include_directories(core
         PRIVATE
         ${RocksDB_INCLUDE_DIR}
         datastore/include/
         PUBLIC
-        common
-        blackboard
+        core/common
+        core
         )
 target_compile_definitions(core PUBLIC cxx_std_23)
-target_link_libraries(core PUBLIC RocksDB::rocksdb fmt::fmt)
+target_link_libraries(core
+        PUBLIC
+        RocksDB::rocksdb fmt::fmt
+        PRIVATE
+        nlohmann_json::nlohmann_json)
 add_library(fabko::core ALIAS core)
 
 #
@@ -54,7 +65,6 @@ target_sources(peerboard
 target_include_directories(peerboard PUBLIC
         peerboard
         datastore
-        common
         )
 target_link_libraries(peerboard PRIVATE fabko::agent fabko::core)
 target_compile_definitions(peerboard PUBLIC cxx_std_23)

@@ -21,11 +21,8 @@
 // SOFTWARE.
 //
 
-#pragma once
+#include "cnf_compiler.hh"
 
 namespace fabko {
-
-class cnf {
-};
 
 }

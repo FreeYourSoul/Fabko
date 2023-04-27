@@ -1,5 +1,5 @@
 {
-  description = "Free Agent Board operative is an agent / blackboard library that enable distributed resolution of problem among Agents.";
+  description = "Free Agent Board operative is an agent / core library that enable distributed resolution of problem among Agents.";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs";

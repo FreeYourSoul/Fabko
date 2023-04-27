@@ -5,6 +5,7 @@
     "fmt",
     "spdlog",
     "rocksdb",
-    "catch2"
+    "catch2",
+    "nlohmann-json"
   ]
 }
