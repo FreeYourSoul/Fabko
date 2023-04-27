@@ -20,5 +20,7 @@
         defaultApp = apps.hello;
       }
 
+      );
+
   };
 }
