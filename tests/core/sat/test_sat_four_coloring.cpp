@@ -47,7 +47,6 @@ TEST_CASE("sat_solver_4_coloring_problem") {
 
   fabko::sat::solver s{fabko::sat::solver_config{}};
 
-  s.add_variables(8);
 
   // region 1 and 2 with color R G B Y
 
@@ -57,29 +56,56 @@ TEST_CASE("sat_solver_4_coloring_problem") {
   // var :: 5    6    7    8
   // var :: R2   B2   G2   Y2
 
-  // only one color can be set  region 1
-  s.add_clause({fabko::sat::literal{1, false}, fabko::sat::literal{2, false}});
-  s.add_clause({fabko::sat::literal{1, false}, fabko::sat::literal{3, false}});
-  s.add_clause({fabko::sat::literal{1, false}, fabko::sat::literal{4, false}});
-  s.add_clause({fabko::sat::literal{2, false}, fabko::sat::literal{3, false}});
-  s.add_clause({fabko::sat::literal{2, false}, fabko::sat::literal{4, false}});
-  s.add_clause({fabko::sat::literal{3, false}, fabko::sat::literal{4, false}});
+  SECTION("test section 1 should have one color") {
+    s.add_variables(4);
 
-  // only one color can be set region 2
-  s.add_clause({fabko::sat::literal{5, false}, fabko::sat::literal{6, false}});
-  s.add_clause({fabko::sat::literal{5, false}, fabko::sat::literal{7, false}});
-  s.add_clause({fabko::sat::literal{5, false}, fabko::sat::literal{8, false}});
-  s.add_clause({fabko::sat::literal{6, false}, fabko::sat::literal{7, false}});
-  s.add_clause({fabko::sat::literal{7, false}, fabko::sat::literal{8, false}});
-  s.add_clause({fabko::sat::literal{8, false}, fabko::sat::literal{8, false}});
+    // only one color can be set  region 1
+    s.add_clause({fabko::sat::literal{1, false}, fabko::sat::literal{2, false}});
+    s.add_clause({fabko::sat::literal{1, false}, fabko::sat::literal{3, false}});
+    s.add_clause({fabko::sat::literal{1, false}, fabko::sat::literal{4, false}});
+    s.add_clause({fabko::sat::literal{2, false}, fabko::sat::literal{3, false}});
+    s.add_clause({fabko::sat::literal{2, false}, fabko::sat::literal{4, false}});
+    s.add_clause({fabko::sat::literal{3, false}, fabko::sat::literal{4, false}});
 
-  // make sure that region 1 and 2 are not coloured the same as they are neighbours
-  s.add_clause({fabko::sat::literal{1, false}, fabko::sat::literal{5, false}});
-  s.add_clause({fabko::sat::literal{2, false}, fabko::sat::literal{6, false}});
-  s.add_clause({fabko::sat::literal{3, false}, fabko::sat::literal{7, false}});
-  s.add_clause({fabko::sat::literal{4, false}, fabko::sat::literal{8, false}});
+    s.solve(); // find all solutions
 
-  s.solve(42); // find all solutions
+    CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
+    auto r = s.results();
+    CHECK(r.size() == 4);
+  }
+
+  SECTION("test 2 colour selection") {
+    s.add_variables(8);
+
+    // only one color can be set  region 1
+    s.add_clause({fabko::sat::literal{1, false}, fabko::sat::literal{2, false}});
+    s.add_clause({fabko::sat::literal{1, false}, fabko::sat::literal{3, false}});
+    s.add_clause({fabko::sat::literal{1, false}, fabko::sat::literal{4, false}});
+    s.add_clause({fabko::sat::literal{2, false}, fabko::sat::literal{3, false}});
+    s.add_clause({fabko::sat::literal{2, false}, fabko::sat::literal{4, false}});
+    s.add_clause({fabko::sat::literal{3, false}, fabko::sat::literal{4, false}});
+
+    // only one color can be set region 2
+    s.add_clause({fabko::sat::literal{5, false}, fabko::sat::literal{6, false}});
+    s.add_clause({fabko::sat::literal{5, false}, fabko::sat::literal{7, false}});
+    s.add_clause({fabko::sat::literal{5, false}, fabko::sat::literal{8, false}});
+    s.add_clause({fabko::sat::literal{6, false}, fabko::sat::literal{7, false}});
+    s.add_clause({fabko::sat::literal{6, false}, fabko::sat::literal{8, false}});
+    s.add_clause({fabko::sat::literal{7, false}, fabko::sat::literal{8, false}});
+
+    // make sure that region 1 and 2 are not coloured the same as they are neighbours
+    s.add_clause({fabko::sat::literal{1, false}, fabko::sat::literal{5, false}});
+    s.add_clause({fabko::sat::literal{2, false}, fabko::sat::literal{6, false}});
+    s.add_clause({fabko::sat::literal{3, false}, fabko::sat::literal{7, false}});
+    s.add_clause({fabko::sat::literal{4, false}, fabko::sat::literal{8, false}});
+
+    s.solve(); // find all solutions
+
+    CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
+    auto r = s.results();
+    CHECK(r.size() == 12);
+
+  }
 
   // 12 solutions are possible to this problem
   // R1 B2
@@ -95,8 +121,6 @@ TEST_CASE("sat_solver_4_coloring_problem") {
   // Y1 B2
   // Y1 G2
 
-  CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
-  auto r = s.results();
-  CHECK(r.size() == 12);
+
 
 }
