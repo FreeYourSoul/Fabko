@@ -12,21 +12,25 @@ include(Catch)
 add_executable(test_datastore)
 target_sources(test_datastore
         PRIVATE
-        catch_main.cpp
         peerboard/test_kv_rocksdb.cpp
         )
 target_link_libraries(test_datastore
-        PRIVATE Catch2::Catch2 fabko::peerboard)
+        PRIVATE Catch2::Catch2WithMain fabko::peerboard)
+
+catch_discover_tests(test_datastore)
+
 
 # Test of the core
 #
 add_executable(test_core)
 target_sources(test_core
         PRIVATE
-        catch_main.cpp
         core/test_assignment_bitset.cpp
         core/sat/test_basic_sat.cpp
+        core/sat/test_sat_four_coloring.cpp
         )
 target_link_libraries(test_core
-        PRIVATE Catch2::Catch2 fabko::core)
+        PRIVATE fabko::core Catch2::Catch2WithMain)
+
+catch_discover_tests(test_core)
 

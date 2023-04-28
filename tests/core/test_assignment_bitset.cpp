@@ -10,7 +10,7 @@
 // the APGL license is applying.
 //
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 #include <sat/assignment_bitset.hh>
 #include <sat/solver.hh>
@@ -33,7 +33,7 @@ TEST_CASE("assignment_bitset") {
 
   REQUIRE(bitset.chunk_size() == 5);
 
-  SECTION("failure cur_assignment of var before reserve") {
+  SECTION("failure cur_assignment of var before reserve variable") {
     REQUIRE_THROWS(bitset.assign_variable(variable{1}, true));
   }
 
@@ -114,6 +114,50 @@ TEST_CASE("assignment_bitset") {
       // 2 chunks as the 6th element is added a chunk-size of 5
       REQUIRE(bitset.nb_chunks() == 2);
     }
+
+    SECTION("validate all assigned") {
+      REQUIRE_FALSE(bitset.check_assignment(1).has_value());
+      REQUIRE_FALSE(bitset.check_assignment(2).has_value());
+      REQUIRE_FALSE(bitset.check_assignment(3).has_value());
+      REQUIRE_FALSE(bitset.check_assignment(4).has_value());
+
+      REQUIRE_FALSE(bitset.all_assigned());
+      REQUIRE(bitset.number_assigned() == 0);
+
+      bitset.assign_variable(1, true);
+      bitset.assign_variable(3, false);
+
+      REQUIRE(bitset.check_assignment(1).has_value());
+      REQUIRE_FALSE(bitset.check_assignment(2).has_value());
+      REQUIRE(bitset.check_assignment(3).has_value());
+      REQUIRE_FALSE(bitset.check_assignment(4).has_value());
+
+      REQUIRE_FALSE(bitset.all_assigned());
+      REQUIRE(bitset.number_assigned() == 2);
+
+      bitset.assign_variable(2, true);
+      bitset.assign_variable(4, false);
+
+      REQUIRE(bitset.check_assignment(1).has_value());
+      REQUIRE(bitset.check_assignment(2).has_value());
+      REQUIRE(bitset.check_assignment(3).has_value());
+      REQUIRE(bitset.check_assignment(4).has_value());
+
+      REQUIRE(bitset.all_assigned());
+      REQUIRE(bitset.number_assigned() == 4);
+
+      bitset.unassign_variable(4);
+
+      REQUIRE(bitset.check_assignment(1).has_value());
+      REQUIRE(bitset.check_assignment(2).has_value());
+      REQUIRE(bitset.check_assignment(3).has_value());
+      REQUIRE_FALSE(bitset.check_assignment(4).has_value());
+
+      REQUIRE_FALSE(bitset.all_assigned());
+      REQUIRE(bitset.number_assigned() == 3);
+
+    }
+
   }
 
 }// End TestCase : assignment_bitset

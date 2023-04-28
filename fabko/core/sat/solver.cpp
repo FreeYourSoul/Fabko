@@ -91,12 +91,6 @@ public:
 
     while (requested_sat_solution > 0 || requested_sat_solution <= -1) {
 
-      // if at the end of the var count, initiate backtracking
-      if (var > num_var) {
-        fmt::print("DEBUG -- solve -- init backtracking - var :: {} - num_var :: {}\n", var, num_var);
-        --var;
-      }
-
       const bool assignment_happened = try_assign_variable(attempt_flags, var);
 
       // nothing has been attempted :: backtracking
@@ -117,7 +111,7 @@ public:
       else if (var == num_var) {
         fmt::print("INFO -- SAT execution -- end - solution::");
         fmt::print("{}\n",
-                   fmt::join(to_lits(context.cur_assignment)
+                   fmt::join(to_literals(context.cur_assignment)
                                  | std::ranges::views::transform([](const auto& lit){
                                      return fmt::format(" lit::{}[{}] ", lit.var(), bool(lit));
                                    }), "|"));
@@ -129,6 +123,9 @@ public:
         if (--requested_sat_solution == 0) {
           return context.valid_result_assignments.empty() ? solver_status::UNSAT : solver_status::SAT;
         }
+
+        fmt::print("DEBUG -- solve -- init backtracking\n");
+//        --var;
       }
       // if an assignment has been attempted. Go forward to the next var;
       else {
@@ -192,31 +189,20 @@ private:
       return true;
     }
     auto& clauses_watching = it_found->second;
-//    fmt::print("DEBUG -- solve::update_watchlist -- var assign :: {}[{}] - over {} clause :: {}\n",
-//               var, assign, clauses_watching.size(),
-//               fmt::join(clauses_watching
-//                             | std::ranges::views::transform([this](std::size_t index){ return clauses[index];})
-//                             | std::ranges::views::transform([](const auto &lits){
-//                                std::string res{};
-//                                for (const auto& lit : lits) {
-//                                  res += fmt::format(" lit::{}[{}] -", lit.var(), bool(lit));
-//                                }
-//                                 return res;})
-//                             ,
-//                         "|"));
 
     auto rm_when_find_alternative =
         clauses_watching
-        | std::ranges::views::take_while([this](std::size_t index_clause) {
+        | std::ranges::views::take_while([this, var](std::size_t index_clause) {
             const auto& clause_watching = clauses[index_clause];
 
-            return std::ranges::any_of(clause_watching, [this, &index_clause](const literal& lit) {
+            return std::ranges::any_of(clause_watching, [this, &index_clause, var](const literal& lit) {
               const variable alt_var = lit.var();// alternative to check
 //              fmt::print("DEBUG -- solve::update_watchlist::take_while::any_of clause {} -- lit::{}[{}] -- (check_alternative) ", index_clause, alt_var, bool(lit));
 //              fmt::print("-- is_assigned(alt_var)::{} -- is(alt_var, bool(alt_var))::{} \n", context.cur_assignment.is_assigned(alt_var), context.cur_assignment.is(alt_var, bool(lit)));
               if (!context.cur_assignment.is_assigned(alt_var) || context.cur_assignment.is(alt_var, bool(lit))) {
-
-                watchlist[lit.value()].emplace_back(index_clause);
+                if (std::ranges::none_of(watchlist[lit.value()], [index_clause](std::size_t i){ return i == index_clause;})) {
+                  watchlist[lit.value()].emplace_back(index_clause);
+                }
                 return true;
               }
               return false;
@@ -288,6 +274,11 @@ void solver::add_variables(std::size_t number_to_add) {
                "cannot add a new var in the SAT solver if the solver is not in building phase");
   fmt::print("DEBUG -- add_variables :: number_to_add {}\n", number_to_add);
   _pimpl->context.cur_assignment.reserve_new_variable(number_to_add);
+  for (variable to_add_in_watchlist : std::ranges::views::iota(variable{1}, _pimpl->context.cur_assignment.nb_vars() + 1)) {
+    auto lit = sat::literal(to_add_in_watchlist, true);
+    _pimpl->watchlist[lit.value()] = std::vector<std::size_t>{};
+    _pimpl->watchlist[(~lit).value()] = std::vector<std::size_t>{};
+  }
 }
 
 void solver::add_clause(clause clause_literals) {
@@ -300,28 +291,12 @@ void solver::add_clause(clause clause_literals) {
   auto watcher = variable_watched{clause_literals[0].var(), std::nullopt};
 
   _pimpl->clauses.push_back(std::move(clause_literals));
-  fmt::print("DEBUG -- add_clause -- clause added size :: {}\n", std::size(_pimpl->clauses.back()));
+
   for (const auto& lit : _pimpl->clauses.back()) {
-    fmt::print("DEBUG -- watchlist add -- lit.value :: {}\n", lit.value());
     _pimpl->watchlist[lit.value()].emplace_back(_pimpl->clauses.size() - 1);
     _pimpl->watchlist[(~lit).value()].emplace_back(_pimpl->clauses.size() - 1);
   }
 
-  for (const auto& [key, watched] : _pimpl->watchlist) {
-    fmt::print("======================================\n");
-
-    fmt::print("DEBUG -- watchlist content :: lit.value::{}\n", key);
-    for (const auto& watched_indexes : watched) {
-      const auto& clause = _pimpl->clauses[watched_indexes];
-      fmt::print("DEBUG -----------------:: clauses (size - {})\n", clause.size());
-
-      for (const auto& lit : clause) {
-        fmt::print("var::{}[{}] (v:{}) -- ", lit.var(), bool(lit), lit.value());
-      }
-      fmt::print("\n");
-    }
-    fmt::print("======================================\n");
-  }
 }
 
 solver_status solver::solving_status() const {

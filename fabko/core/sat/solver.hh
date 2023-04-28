@@ -144,9 +144,9 @@ public:
    * Start the resolution of the SAT solver.
    * From this point on, it is not possible to add clauses or var
    *
-   * @param requested_sat_solution number of solution to retrieve for the sat solver, -1 means all of them.
+   * @param requested_sat_solution number of solution to retrieve for the sat solver, -1 means all of them. defaulted to -1.
    */
-  void solve(int requested_sat_solution = 1);
+  void solve(int requested_sat_solution = -1);
 
   [[nodiscard]] std::vector<std::vector<literal>> results() const;
 

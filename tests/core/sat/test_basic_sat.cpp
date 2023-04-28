@@ -10,12 +10,12 @@
 // the APGL license is applying.
 //
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
-#include <fmt/core.h>
 #include <ranges>
-#include <sat/solver.hh>
 #include <set>
+
+#include <sat/solver.hh>
 
 TEST_CASE("test_literal_properties") {
   //
@@ -77,7 +77,42 @@ TEST_CASE("test_literal_properties") {
   CHECK(set_check_unique.size() == 1000uz * 2);
 }
 
-TEST_CASE("basic_case_sat_solver::find_one_solution") {
+
+TEST_CASE("basic_case_sat_solver_0_solution") {
+
+  fabko::sat::solver s{fabko::sat::solver_config{}};
+
+  // Variable 1 defined
+  s.add_variables(1);
+
+
+  SECTION("Default :: Ask all solution :: find no solution") {
+    // DIMACS
+    //   1  2
+    //   1  0
+    //  ~1  0
+
+    // expected result : UNSAT
+
+    // clause
+    //  1  0
+    s.add_clause({fabko::sat::literal{1, true}});
+
+    // clause
+    // ~1  0
+    s.add_clause({fabko::sat::literal{1, false}});
+
+    CHECK(s.solving_status() == fabko::sat::solver_status::BUILDING);
+    s.solve();
+    CHECK(s.solving_status() == fabko::sat::solver_status::UNSAT);
+    auto result = s.results();
+    CHECK(result.empty());
+  }
+
+}
+
+
+TEST_CASE("basic_case_sat_solver_2_clauses_2_solution") {
 
   fabko::sat::solver s{fabko::sat::solver_config{}};
 
@@ -85,18 +120,15 @@ TEST_CASE("basic_case_sat_solver::find_one_solution") {
   s.add_variables(3);
 
   // DIMACS
-  // 3 2
-  //   1  2  3  0
-  //  ~1 ~2     0
+  //   3  2
+  //   1     0
+  //  ~1 ~2  0
 
-  // expected result : ~1 ~2 3
+  // expected result : 1 ~2 3 |  1 ~2 ~3
 
   // clause
-  //  1 2 3 0
-  s.add_clause(
-      {fabko::sat::literal{1, true},
-       fabko::sat::literal{2, true},
-       fabko::sat::literal{3, true}});
+  // 3 0
+  s.add_clause({fabko::sat::literal{1, true}});
 
   // clause
   //  ~1 ~2 0
@@ -104,22 +136,60 @@ TEST_CASE("basic_case_sat_solver::find_one_solution") {
       {fabko::sat::literal{1, false},
        fabko::sat::literal{2, false}});
 
-  CHECK(s.solving_status() == fabko::sat::solver_status::BUILDING);
 
-  s.solve();
+  SECTION("Default :: Ask all solution :: find two solution") {
+    CHECK(s.solving_status() == fabko::sat::solver_status::BUILDING);
 
-  CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
+    s.solve();
 
-  auto result = s.results();
-  CHECK(result.size() == 1);
-  CHECK_FALSE(bool(result[0][0]));
-  CHECK_FALSE(bool(result[0][1]));
-  CHECK(bool(result[0][2]));
+    CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
 
+    auto result = s.results();
+    CHECK(result.size() == 2);
+    CHECK(bool(result[0][0]));
+    CHECK_FALSE(bool(result[0][1]));
+    CHECK_FALSE(bool(result[0][2]));
+
+    CHECK(bool(result[1][0]));
+    CHECK_FALSE(bool(result[1][1]));
+    CHECK(bool(result[1][2]));
+  }
+
+  SECTION("Custom :: Ask one solution :: find one solution") {
+    CHECK(s.solving_status() == fabko::sat::solver_status::BUILDING);
+
+    s.solve(1);
+
+    CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
+
+    auto result = s.results();
+    CHECK(result.size() == 1);
+    CHECK(bool(result[0][0]));
+    CHECK_FALSE(bool(result[0][1]));
+    CHECK_FALSE(bool(result[0][2]));
+  }
+
+  SECTION("Custom :: Ask 42 solution :: find two solutions") {
+    CHECK(s.solving_status() == fabko::sat::solver_status::BUILDING);
+
+    s.solve(42);
+
+    CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
+
+    auto result = s.results();
+    CHECK(result.size() == 2);
+    CHECK(bool(result[0][0]));
+    CHECK_FALSE(bool(result[0][1]));
+    CHECK_FALSE(bool(result[0][2]));
+
+    CHECK(bool(result[1][0]));
+    CHECK_FALSE(bool(result[1][1]));
+    CHECK(bool(result[1][2]));
+  }
 }
 
 
-TEST_CASE("basic_case_sat_solver::find_one_solution_but_ask_more") {
+TEST_CASE("basic_case_sat_solver_3_clause_1_solutions") {
 
   fabko::sat::solver s{fabko::sat::solver_config{}};
 
@@ -127,35 +197,70 @@ TEST_CASE("basic_case_sat_solver::find_one_solution_but_ask_more") {
   s.add_variables(3);
 
   // DIMACS
-  // 3 2
-  //   1  2  3  0
-  //  ~1 ~2     0
+  //   3  3
+  //   1  2  0
+  //   3 ~2  0
+  //  ~3     0
 
-  // expected result : ~1 ~2 3
+  // expected result : 1 ~2 ~3
 
   // clause
-  //  1 2 3 0
+  //  1  2  0
   s.add_clause(
       {fabko::sat::literal{1, true},
-       fabko::sat::literal{2, true},
-       fabko::sat::literal{3, true}});
+       fabko::sat::literal{2, true}});
 
-  // clause
-  //  ~1 ~2 0
+  //  3  ~2  0
   s.add_clause(
-      {fabko::sat::literal{1, false},
+      {fabko::sat::literal{3, true},
        fabko::sat::literal{2, false}});
 
-  CHECK(s.solving_status() == fabko::sat::solver_status::BUILDING);
+  //  ~3  0
+  s.add_clause(
+      {fabko::sat::literal{3, false}});
 
-  s.solve(42);
 
-  CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
+  SECTION("Custom :: Ask one solution :: find one solutions") {
+    CHECK(s.solving_status() == fabko::sat::solver_status::BUILDING);
 
-  auto result = s.results();
-  CHECK(result.size() == 1);
-  CHECK_FALSE(bool(result[0][0]));
-  CHECK_FALSE(bool(result[0][1]));
-  CHECK(bool(result[0][2]));
+    s.solve(1);
 
+    CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
+
+    auto result = s.results();
+    CHECK(result.size() == 1);
+    CHECK(bool(result[0][0]));
+    CHECK_FALSE(bool(result[0][1]));
+    CHECK_FALSE(bool(result[0][2]));
+  }
+
+
+  SECTION("Custom :: Ask 42 solution :: find one solutions") {
+    CHECK(s.solving_status() == fabko::sat::solver_status::BUILDING);
+
+    s.solve(42);
+
+    CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
+
+    auto result = s.results();
+    CHECK(result.size() == 1);
+    CHECK(bool(result[0][0]));
+    CHECK_FALSE(bool(result[0][1]));
+    CHECK_FALSE(bool(result[0][2]));
+  }
+
+  SECTION("Default :: Ask all solution :: find one solutions") {
+    CHECK(s.solving_status() == fabko::sat::solver_status::BUILDING);
+
+    s.solve();
+
+    CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
+
+    auto result = s.results();
+    CHECK(result.size() == 1);
+    CHECK(bool(result[0][0]));
+    CHECK_FALSE(bool(result[0][1]));
+    CHECK_FALSE(bool(result[0][2]));
+  }
 }
+

@@ -36,7 +36,7 @@ namespace fabko {
  *
  * @tparam ChunkSize size of each static bitset composing the cur_assignment bitset
  */
-template<int ChunkSize = 128>
+template<std::size_t ChunkSize = 128>
 class assignment_bitset {
 
 public:
@@ -144,7 +144,7 @@ public:
   }
 
   /**
-   * @param v id of the var to unassign
+   * @param v id of the var to unassigned
    */
   void unassign_variable(sat::variable v) {
     const auto [index_chunk, index_bitset] = locate(v);
@@ -155,21 +155,15 @@ public:
    * @return true if all var has been assigned properly, false otherwise
    */
   [[nodiscard]] bool all_assigned() const {
-    return sr::all_of(_unassigned, [](const auto& bs) { return bs.all(); });
+    return number_assigned() == nb_vars();
   }
 
   /**
    * @return number of var assigned
    */
   [[nodiscard]] std::size_t number_assigned() const {
-    const int chunks_fully_assigned = sr::count(_unassigned, [](const auto& bs) { return bs.all(); });
-    const int lasting_chunks = [this, &chunks_fully_assigned]() -> int {
-      auto last_chunk = _unassigned.get(chunks_fully_assigned);
-      if (!last_chunk.has_value()) {
-        return 0;
-      }
-      return last_chunk.value().count();
-    }();
+    const auto chunks_fully_assigned = static_cast<std::size_t>(sr::count_if(_unassigned, [](const auto& bs) { return bs.all(); }));
+    const auto lasting_chunks = static_cast<std::size_t>(_unassigned[chunks_fully_assigned].count());
 
     return chunks_fully_assigned * ChunkSize + lasting_chunks;
   }
@@ -179,8 +173,13 @@ public:
 
   [[nodiscard]] constexpr std::size_t chunk_size() const { return ChunkSize; }
 
-
-  friend std::vector<sat::literal> to_lits(const assignment_bitset<ChunkSize>& bitset) {
+  /**
+   * Conversion of the bitset into a sat::literal vector
+   *
+   * @param bitset to convert into a sat vector
+   * @return vector of literals resulting from the provided bitset
+   */
+  friend std::vector<sat::literal> to_literals(const assignment_bitset<ChunkSize>& bitset) {
     std::vector<sat::literal> vec;
 
     vec.reserve(bitset.nb_vars());
