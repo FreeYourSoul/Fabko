@@ -27,7 +27,7 @@ target_sources(test_core
         PRIVATE
         core/test_assignment_bitset.cpp
         core/sat/test_basic_sat.cpp
-        core/sat/test_sat_four_coloring.cpp
+        core/sat/test_sat_coloring.cpp
         )
 target_link_libraries(test_core
         PRIVATE fabko::core Catch2::Catch2WithMain)

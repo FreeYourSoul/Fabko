@@ -112,9 +112,10 @@ public:
         fmt::print("INFO -- SAT execution -- end - solution::");
         fmt::print("{}\n",
                    fmt::join(to_literals(context.cur_assignment)
-                                 | std::ranges::views::transform([](const auto& lit){
+                                 | std::ranges::views::transform([](const auto& lit) {
                                      return fmt::format(" lit::{}[{}] ", lit.var(), bool(lit));
-                                   }), "|"));
+                                   }),
+                             "|"));
 
         // store current cur_assignment result (as it is a valid result)
         context.valid_result_assignments.emplace_back(context.cur_assignment);
@@ -125,7 +126,7 @@ public:
         }
 
         fmt::print("DEBUG -- solve -- init backtracking\n");
-//        --var;
+        //        --var;
       }
       // if an assignment has been attempted. Go forward to the next var;
       else {
@@ -146,7 +147,9 @@ private:
    * @return true if assignment occurred, false otherwise
    */
   [[nodiscard]] bool try_assign_variable(std::vector<int>& attempt_flags, sat::variable var) {
-    if (var == 0) { return false; }
+    if (var == 0) {
+      return false;
+    }
 
     for (const bool attempt : {false, true}) {
       if (bool((attempt_flags[var] >> static_cast<int>(attempt)) & 1)) {
@@ -197,10 +200,10 @@ private:
 
             return std::ranges::any_of(clause_watching, [this, &index_clause, var](const literal& lit) {
               const variable alt_var = lit.var();// alternative to check
-//              fmt::print("DEBUG -- solve::update_watchlist::take_while::any_of clause {} -- lit::{}[{}] -- (check_alternative) ", index_clause, alt_var, bool(lit));
-//              fmt::print("-- is_assigned(alt_var)::{} -- is(alt_var, bool(alt_var))::{} \n", context.cur_assignment.is_assigned(alt_var), context.cur_assignment.is(alt_var, bool(lit)));
+                                                 //              fmt::print("DEBUG -- solve::update_watchlist::take_while::any_of clause {} -- lit::{}[{}] -- (check_alternative) ", index_clause, alt_var, bool(lit));
+                                                 //              fmt::print("-- is_assigned(alt_var)::{} -- is(alt_var, bool(alt_var))::{} \n", context.cur_assignment.is_assigned(alt_var), context.cur_assignment.is(alt_var, bool(lit)));
               if (!context.cur_assignment.is_assigned(alt_var) || context.cur_assignment.is(alt_var, bool(lit))) {
-                if (std::ranges::none_of(watchlist[lit.value()], [index_clause](std::size_t i){ return i == index_clause;})) {
+                if (std::ranges::none_of(watchlist[lit.value()], [index_clause](std::size_t i) { return i == index_clause; })) {
                   watchlist[lit.value()].emplace_back(index_clause);
                 }
                 return true;
@@ -251,6 +254,19 @@ public:
 // SAT Solver public API
 //
 
+sat_result::sat_result(std::vector<literal> data) : _data(std::move(data)) {
+  std::ranges::partition(_data, [](const literal& lit) { return bool(lit); });
+}
+
+std::string to_string(const sat_result& res) {
+  return fmt::format(
+      "resutls::[ {} ]",
+      fmt::join(std::ranges::views::transform(res.get_all(), [](const literal& lit) {
+                  return fmt::format("{}[{}]", lit.var(), bool(lit));
+                }),
+                ", "));
+}
+
 solver::~solver() = default;
 
 solver::solver(fabko::sat::solver_config config)
@@ -296,7 +312,6 @@ void solver::add_clause(clause clause_literals) {
     _pimpl->watchlist[lit.value()].emplace_back(_pimpl->clauses.size() - 1);
     _pimpl->watchlist[(~lit).value()].emplace_back(_pimpl->clauses.size() - 1);
   }
-
 }
 
 solver_status solver::solving_status() const {
@@ -309,8 +324,8 @@ void solver::solve(int requested_sat_solution) {
   _pimpl->config.flags.status_solver = unsigned(_pimpl->solve_sat(requested_sat_solution));
 }
 
-std::vector<std::vector<literal>> solver::results() const {
-  std::vector<std::vector<literal>> res;
+std::vector<sat_result> solver::results() const {
+  std::vector<sat_result> res;
   res.reserve(_pimpl->context.valid_result_assignments.size());
   for (const auto& result : _pimpl->context.valid_result_assignments) {
     auto lit_res = fabko::ranges::to_vector(

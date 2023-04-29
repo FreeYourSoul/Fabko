@@ -12,17 +12,14 @@
 
 #pragma once
 
+#include <algorithm>
+#include <span>
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <vector>
 
 namespace fabko::sat {
-
-/**
- * Leveraged boolean in order to represent a negation - non-negation - non-cur_assignment of a var
- */
-using assign_bool = std::optional<bool>;
 
 /**
  * Variable in the CNF representation.
@@ -72,6 +69,30 @@ enum class solver_status : unsigned {
   SOLVING = 1,
   SAT = 2,
   UNSAT = 3,
+};
+
+/**
+ * A specific result of a sat solver execution
+ */
+class sat_result {
+public:
+  explicit sat_result(std::vector<literal> data);
+
+  [[nodiscard]] auto get() const {
+    const auto size_positive = std::size_t(
+        std::distance(_data.begin(), std::ranges::find_if(_data, [](const literal& lit) { return !bool(lit); })));
+
+    return std::span{_data.data(), size_positive};
+  }
+
+  [[nodiscard]] auto get_all() const {
+    return std::span{_data.data(), _data.size()};
+  }
+
+  friend std::string to_string(const sat_result&);
+
+private:
+  std::vector<literal> _data;
 };
 
 /**
@@ -148,7 +169,10 @@ public:
    */
   void solve(int requested_sat_solution = -1);
 
-  [[nodiscard]] std::vector<std::vector<literal>> results() const;
+  /**
+   * @return results got from the sat_solver
+   */
+  [[nodiscard]] std::vector<sat_result> results() const;
 
   /**
    * @return current status of the solver

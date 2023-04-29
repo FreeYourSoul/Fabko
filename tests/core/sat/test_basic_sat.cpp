@@ -146,13 +146,13 @@ TEST_CASE("basic_case_sat_solver_2_clauses_2_solution") {
 
     auto result = s.results();
     CHECK(result.size() == 2);
-    CHECK(bool(result[0][0]));
-    CHECK_FALSE(bool(result[0][1]));
-    CHECK_FALSE(bool(result[0][2]));
+    CHECK(bool(result[0].get_all()[0]));
+    CHECK_FALSE(bool(result[0].get_all()[1]));
+    CHECK_FALSE(bool(result[0].get_all()[2]));
 
-    CHECK(bool(result[1][0]));
-    CHECK_FALSE(bool(result[1][1]));
-    CHECK(bool(result[1][2]));
+    CHECK(bool(result[1].get_all()[0]));
+    CHECK(bool(result[1].get_all()[1]));
+    CHECK_FALSE(bool(result[1].get_all()[2]));
   }
 
   SECTION("Custom :: Ask one solution :: find one solution") {
@@ -164,9 +164,9 @@ TEST_CASE("basic_case_sat_solver_2_clauses_2_solution") {
 
     auto result = s.results();
     CHECK(result.size() == 1);
-    CHECK(bool(result[0][0]));
-    CHECK_FALSE(bool(result[0][1]));
-    CHECK_FALSE(bool(result[0][2]));
+    CHECK(bool(result[0].get_all()[0]));
+    CHECK_FALSE(bool(result[0].get_all()[1]));
+    CHECK_FALSE(bool(result[0].get_all()[2]));
   }
 
   SECTION("Custom :: Ask 42 solution :: find two solutions") {
@@ -178,13 +178,13 @@ TEST_CASE("basic_case_sat_solver_2_clauses_2_solution") {
 
     auto result = s.results();
     CHECK(result.size() == 2);
-    CHECK(bool(result[0][0]));
-    CHECK_FALSE(bool(result[0][1]));
-    CHECK_FALSE(bool(result[0][2]));
+    CHECK(bool(result[0].get_all()[0]));
+    CHECK_FALSE(bool(result[0].get_all()[1]));
+    CHECK_FALSE(bool(result[0].get_all()[2]));
 
-    CHECK(bool(result[1][0]));
-    CHECK_FALSE(bool(result[1][1]));
-    CHECK(bool(result[1][2]));
+    CHECK(bool(result[1].get_all()[0]));
+    CHECK(bool(result[1].get_all()[1]));
+    CHECK_FALSE(bool(result[1].get_all()[2]));
   }
 }
 
@@ -229,9 +229,9 @@ TEST_CASE("basic_case_sat_solver_3_clause_1_solutions") {
 
     auto result = s.results();
     CHECK(result.size() == 1);
-    CHECK(bool(result[0][0]));
-    CHECK_FALSE(bool(result[0][1]));
-    CHECK_FALSE(bool(result[0][2]));
+    CHECK(bool(result[0].get_all()[0]));
+    CHECK_FALSE(bool(result[0].get_all()[1]));
+    CHECK_FALSE(bool(result[0].get_all()[2]));
   }
 
 
@@ -244,9 +244,9 @@ TEST_CASE("basic_case_sat_solver_3_clause_1_solutions") {
 
     auto result = s.results();
     CHECK(result.size() == 1);
-    CHECK(bool(result[0][0]));
-    CHECK_FALSE(bool(result[0][1]));
-    CHECK_FALSE(bool(result[0][2]));
+    CHECK(bool(result[0].get_all()[0]));
+    CHECK_FALSE(bool(result[0].get_all()[1]));
+    CHECK_FALSE(bool(result[0].get_all()[2]));
   }
 
   SECTION("Default :: Ask all solution :: find one solutions") {
@@ -258,9 +258,9 @@ TEST_CASE("basic_case_sat_solver_3_clause_1_solutions") {
 
     auto result = s.results();
     CHECK(result.size() == 1);
-    CHECK(bool(result[0][0]));
-    CHECK_FALSE(bool(result[0][1]));
-    CHECK_FALSE(bool(result[0][2]));
+    CHECK(bool(result[0].get_all()[0]));
+    CHECK_FALSE(bool(result[0].get_all()[1]));
+    CHECK_FALSE(bool(result[0].get_all()[2]));
   }
 }
 
