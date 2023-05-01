@@ -36,4 +36,4 @@ namespace fabko::sat {
  */
 [[nodiscard]] unsigned get_lit_index_for_variable(sat::variable var, bool assignment);
 
-}
+} // namespace fabko::sat

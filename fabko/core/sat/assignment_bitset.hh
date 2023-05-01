@@ -163,7 +163,7 @@ public:
    */
   [[nodiscard]] std::size_t number_assigned() const {
     const auto chunks_fully_assigned = static_cast<std::size_t>(sr::count_if(_unassigned, [](const auto& bs) { return bs.all(); }));
-    const auto lasting_chunks = static_cast<std::size_t>(_unassigned[chunks_fully_assigned].count());
+    const auto lasting_chunks        = static_cast<std::size_t>(_unassigned[chunks_fully_assigned].count());
 
     return chunks_fully_assigned * ChunkSize + lasting_chunks;
   }
@@ -200,12 +200,12 @@ private:
    * @return a tuple containing the chunk index and the bitset index
    */
   [[nodiscard]] std::pair<std::size_t, std::size_t> locate(sat::variable v) const {
-    auto var = static_cast<sat::variable>(v - 1);// var starts at 1 (bitsets start at 0). normalization
+    auto var = static_cast<sat::variable>(v - 1); // var starts at 1 (bitsets start at 0). normalization
     fabko_assert(
         var < _total_variable_number,
         fmt::format("cannot locate variable {} < total number of var {} :: retrieved variable indexing is {}", v, _total_variable_number, var));
 
-    const std::size_t index_chunk = var / ChunkSize;
+    const std::size_t index_chunk  = var / ChunkSize;
     const std::size_t index_bitset = var % ChunkSize;
 
     return {index_chunk, index_bitset};
@@ -223,4 +223,4 @@ private:
   std::size_t _total_variable_number{0};
 };
 
-}// namespace fabko
+} // namespace fabko

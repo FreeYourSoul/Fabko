@@ -17,7 +17,7 @@
 
 namespace fabko::ranges {
 
-template <std::ranges::range R>
+template<std::ranges::range R>
 auto to_vector(R&& r) {
   std::vector<std::ranges::range_value_t<R>> v;
 
@@ -34,4 +34,4 @@ auto to_vector(R&& r) {
   return v;
 }
 
-}    // namespace fabko::ranges
+} // namespace fabko::ranges

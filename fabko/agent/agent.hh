@@ -17,4 +17,4 @@ namespace fabko {
 class agent {
 };
 
-}
+} // namespace fabko

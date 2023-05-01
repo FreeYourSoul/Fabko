@@ -13,10 +13,10 @@
 #pragma once
 
 #include <algorithm>
-#include <span>
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <span>
 #include <vector>
 
 namespace fabko::sat {
@@ -60,15 +60,17 @@ public:
 
   [[nodiscard]] unsigned value() const { return _val; };
 
+  friend std::string to_string(const literal&);
+
 private:
   unsigned _val;
 };
 
 enum class solver_status : unsigned {
   BUILDING = 0,
-  SOLVING = 1,
-  SAT = 2,
-  UNSAT = 3,
+  SOLVING  = 1,
+  SAT      = 2,
+  UNSAT    = 3,
 };
 
 /**
@@ -101,7 +103,7 @@ private:
 struct solver_config {
 
   using custom_allocator_literal = std::false_type;
-  using custom_allocator_clause = std::false_type;
+  using custom_allocator_clause  = std::false_type;
 
   /**
    * Byte field representing the different flags that could be set at the solver level
@@ -183,4 +185,4 @@ private:
   std::unique_ptr<sat_impl> _pimpl;
 };
 
-}// namespace fabko::sat
+} // namespace fabko::sat

@@ -30,4 +30,4 @@ com::decision_status com::online::commit_decision(const std::string&) {
   return com::decision_status::RETRY;
 }
 
-}
+} // namespace fabko

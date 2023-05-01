@@ -10,6 +10,8 @@ target_sources(core
         core/blackboard.hh
         core/boardcom.cpp
         core/boardcom.hh
+        core/common/logging.cpp
+        core/common/logging.hh
         core/common/exception.hh
         core/common/ranges_to.hh
         core/common/utils.hh
@@ -32,6 +34,7 @@ target_link_libraries(core
         PUBLIC
         RocksDB::rocksdb fmt::fmt
         PRIVATE
+        spdlog::spdlog
         nlohmann_json::nlohmann_json)
 add_library(fabko::core ALIAS core)
 

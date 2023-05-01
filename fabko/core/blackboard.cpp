@@ -11,8 +11,8 @@
 //
 #include <functional>
 
-#include <common/utils.hh>
 #include "blackboard.hh"
+#include <common/utils.hh>
 
 namespace fabko {
 
@@ -46,4 +46,4 @@ com::decision_status blackboard::submit_decision(const std::string& decision) {
   return {};
 }
 
-}// namespace fabko
+} // namespace fabko

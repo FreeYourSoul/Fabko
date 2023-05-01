@@ -84,7 +84,7 @@ bool kv_rocksdb::transaction::commit_transaction() {
   return true;
 }
 
-void kv_rocksdb::transaction::add_counter(const std::string& /*key*/, std::int64_t /*to_add*/){}
+void kv_rocksdb::transaction::add_counter(const std::string& /*key*/, std::int64_t /*to_add*/) {}
 
 kv_rocksdb::kv_rocksdb(const initializer_type& initializer) {
 
@@ -109,4 +109,4 @@ kv_rocksdb::kv_rocksdb(const initializer_type& initializer) {
   }
 }
 
-}// namespace fabko
+} // namespace fabko

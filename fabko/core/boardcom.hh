@@ -26,14 +26,14 @@ struct proposition {
 };
 
 enum class request_process : int {
-  INIT = 0,
+  INIT        = 0,
   IN_PROGRESS = 1,
-  DONE = 2,
+  DONE        = 2,
 };
 
 struct propositions {
   std::optional<std::vector<proposition>> props;
-  request_process status {request_process::INIT};
+  request_process status{request_process::INIT};
 };
 
 enum class decision_status {
@@ -76,4 +76,4 @@ public:
 
 using board_protocol = std::variant<p2p, online>;
 
-}// namespace fabko::com
+} // namespace fabko::com

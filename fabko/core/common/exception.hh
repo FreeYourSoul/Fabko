@@ -32,7 +32,7 @@ struct fbk : public std::error_category {
     return fmt::format("Fabko Exception Category : {} : id {}", name(), I);
   }
 };
-}// namespace except_cat
+} // namespace except_cat
 
 class exception : public std::runtime_error {
 public:
@@ -54,4 +54,4 @@ static inline void fabko_assert(bool assertion, const std::string& msg = "") {
   fabko_assert(assertion, {42, except_cat::fbk{}}, msg);
 }
 
-}// namespace fabko
+} // namespace fabko

@@ -18,7 +18,7 @@ TEST_CASE("kv_db_rocksdb_testcase") {
 
   static_assert(fabko::TransactionalDatabasePolicy<fabko::kv_rocksdb>);
 
-  fabko::kv_rocksdb::initializer_type arg {"tmp.db"};
+  fabko::kv_rocksdb::initializer_type arg{"tmp.db"};
   fabko::kv_rocksdb_instance rocks_db(arg);
 
   auto trans = rocks_db.make_transaction();
@@ -40,7 +40,11 @@ TEST_CASE("kv_db_rocksdb_testcase") {
   }
 
   SECTION("test multiset") {
-    trans->multi_set({{"BABY", "CHOCOBY"}, {"BABO", "CHOCOBO"}, {"BABA", "CHOCOBA"}});
+    trans->multi_set({
+        {"BABY", "CHOCOBY"},
+        {"BABO", "CHOCOBO"},
+        {"BABA", "CHOCOBA"}
+    });
     CHECK("CHOCOBY" == trans->get("BABY"));
     CHECK("CHOCOBO" == trans->get("BABO"));
     CHECK("CHOCOBA" == trans->get("BABA"));
@@ -81,7 +85,7 @@ TEST_CASE("kv_db_rocksdb_testcase") {
 
 TEST_CASE("kv_db_rocksdb_testcase listing") {
 
-  fabko::kv_rocksdb::initializer_type arg {"tmp.db"};
+  fabko::kv_rocksdb::initializer_type arg{"tmp.db"};
   fabko::kv_rocksdb_instance rocks_db(arg);
 
   auto trans = rocks_db.make_transaction();
@@ -166,11 +170,13 @@ TEST_CASE("kv_db_rocksdb_testcase listing") {
 
     CHECK(listing.empty());
   }
-
 }
 
 TEST_CASE("kv_db_rocksdb_testcase default setting", "[fil][kv_db][rocksdb]") {
-  fabko::kv_rocksdb::initializer_type arg {"tmp.db", {{"1", "White Chocobo"}, {"4", "Black Chocobo"}, {"2", "Green Chocobo"}, {"3", "Yellow Chocobo"}}};
+  fabko::kv_rocksdb::initializer_type arg{
+      "tmp.db",
+      {{"1", "White Chocobo"}, {"4", "Black Chocobo"}, {"2", "Green Chocobo"}, {"3", "Yellow Chocobo"}}
+  };
   fabko::kv_rocksdb_instance rocks_db(arg);
 
   auto trans = rocks_db.make_transaction();
@@ -191,6 +197,5 @@ TEST_CASE("kv_db_rocksdb_testcase default setting", "[fil][kv_db][rocksdb]") {
     CHECK("4" == res.at(3).first);
     CHECK("Black Chocobo" == res.at(3).second);
   }// End section : Test default key/values are set
-
 
 }// End TestCase : kv_db_rocksdb_testcase

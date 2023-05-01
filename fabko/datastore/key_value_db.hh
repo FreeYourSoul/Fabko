@@ -124,4 +124,4 @@ public:
   }
 };
 
-}// namespace fabko
+} // namespace fabko

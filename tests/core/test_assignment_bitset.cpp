@@ -155,9 +155,7 @@ TEST_CASE("assignment_bitset") {
 
       REQUIRE_FALSE(bitset.all_assigned());
       REQUIRE(bitset.number_assigned() == 3);
-
     }
-
   }
 
-}// End TestCase : assignment_bitset
+} // End TestCase : assignment_bitset

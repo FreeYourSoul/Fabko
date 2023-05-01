@@ -33,7 +33,7 @@ using capability_meta = std::variant<std::string, int, double>;
 struct capability {
 
   std::string id;
-//  std::string description;
+  //  std::string description;
 
   /** result that would be generated out of the activity. */
   capability_meta result;
@@ -43,7 +43,7 @@ struct capability {
    */
   std::unordered_map<std::string, capability_meta> metadata;
 
-   /** specific capabilities required to be done before this capability is executed. */
+  /** specific capabilities required to be done before this capability is executed. */
   std::vector<std::string> cap_deps;
 
   /**
@@ -55,7 +55,6 @@ struct capability {
    */
   acceptance_requirement accept = acceptance_requirement::NONE;
 };
-
 
 class peerboard {
   struct pb_impl;
@@ -71,7 +70,6 @@ public:
 
 private:
   std::unique_ptr<pb_impl> _pimpl;
-
 };
 
-}
+} // namespace fabko

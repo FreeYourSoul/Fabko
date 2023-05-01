@@ -60,18 +60,40 @@ TEST_CASE("sat_solver_4_coloring_problem") {
     s.add_variables(4);
 
     // only one color can be set  region 1
-    s.add_clause({fabko::sat::literal{1, false}, fabko::sat::literal{2, false}});
-    s.add_clause({fabko::sat::literal{1, false}, fabko::sat::literal{3, false}});
-    s.add_clause({fabko::sat::literal{1, false}, fabko::sat::literal{4, false}});
-    s.add_clause({fabko::sat::literal{2, false}, fabko::sat::literal{3, false}});
-    s.add_clause({fabko::sat::literal{2, false}, fabko::sat::literal{4, false}});
-    s.add_clause({fabko::sat::literal{3, false}, fabko::sat::literal{4, false}});
+    s.add_clause({
+        fabko::sat::literal{1, false},
+        fabko::sat::literal{2, false}
+    });
+    s.add_clause({
+        fabko::sat::literal{1, false},
+        fabko::sat::literal{3, false}
+    });
+    s.add_clause({
+        fabko::sat::literal{1, false},
+        fabko::sat::literal{4, false}
+    });
+    s.add_clause({
+        fabko::sat::literal{2, false},
+        fabko::sat::literal{3, false}
+    });
+    s.add_clause({
+        fabko::sat::literal{2, false},
+        fabko::sat::literal{4, false}
+    });
+    s.add_clause({
+        fabko::sat::literal{3, false},
+        fabko::sat::literal{4, false}
+    });
 
     // at least one color has to be taken
-    s.add_clause({fabko::sat::literal{1, true}, fabko::sat::literal{2, true},
-                  fabko::sat::literal{3, true}, fabko::sat::literal{4, true}});
+    s.add_clause({
+        fabko::sat::literal{1, true},
+        fabko::sat::literal{2, true},
+        fabko::sat::literal{3, true},
+        fabko::sat::literal{4, true}
+    });
 
-    s.solve();// find all solutions
+    s.solve(); // find all solutions
 
     CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
     auto r = s.results();
@@ -82,34 +104,90 @@ TEST_CASE("sat_solver_4_coloring_problem") {
     s.add_variables(8);
 
     // only one color can be set  region 1
-    s.add_clause({fabko::sat::literal{1, false}, fabko::sat::literal{2, false}});
-    s.add_clause({fabko::sat::literal{1, false}, fabko::sat::literal{3, false}});
-    s.add_clause({fabko::sat::literal{1, false}, fabko::sat::literal{4, false}});
-    s.add_clause({fabko::sat::literal{2, false}, fabko::sat::literal{3, false}});
-    s.add_clause({fabko::sat::literal{2, false}, fabko::sat::literal{4, false}});
-    s.add_clause({fabko::sat::literal{3, false}, fabko::sat::literal{4, false}});
+    s.add_clause({
+        fabko::sat::literal{1, false},
+        fabko::sat::literal{2, false}
+    });
+    s.add_clause({
+        fabko::sat::literal{1, false},
+        fabko::sat::literal{3, false}
+    });
+    s.add_clause({
+        fabko::sat::literal{1, false},
+        fabko::sat::literal{4, false}
+    });
+    s.add_clause({
+        fabko::sat::literal{2, false},
+        fabko::sat::literal{3, false}
+    });
+    s.add_clause({
+        fabko::sat::literal{2, false},
+        fabko::sat::literal{4, false}
+    });
+    s.add_clause({
+        fabko::sat::literal{3, false},
+        fabko::sat::literal{4, false}
+    });
 
     // only one color can be set region 2
-    s.add_clause({fabko::sat::literal{5, false}, fabko::sat::literal{6, false}});
-    s.add_clause({fabko::sat::literal{5, false}, fabko::sat::literal{7, false}});
-    s.add_clause({fabko::sat::literal{5, false}, fabko::sat::literal{8, false}});
-    s.add_clause({fabko::sat::literal{6, false}, fabko::sat::literal{7, false}});
-    s.add_clause({fabko::sat::literal{6, false}, fabko::sat::literal{8, false}});
-    s.add_clause({fabko::sat::literal{7, false}, fabko::sat::literal{8, false}});
+    s.add_clause({
+        fabko::sat::literal{5, false},
+        fabko::sat::literal{6, false}
+    });
+    s.add_clause({
+        fabko::sat::literal{5, false},
+        fabko::sat::literal{7, false}
+    });
+    s.add_clause({
+        fabko::sat::literal{5, false},
+        fabko::sat::literal{8, false}
+    });
+    s.add_clause({
+        fabko::sat::literal{6, false},
+        fabko::sat::literal{7, false}
+    });
+    s.add_clause({
+        fabko::sat::literal{6, false},
+        fabko::sat::literal{8, false}
+    });
+    s.add_clause({
+        fabko::sat::literal{7, false},
+        fabko::sat::literal{8, false}
+    });
 
     // at least one color has to be taken
-    s.add_clause({fabko::sat::literal{1, true}, fabko::sat::literal{2, true},
-                  fabko::sat::literal{3, true}, fabko::sat::literal{4, true}});
-    s.add_clause({fabko::sat::literal{5, true}, fabko::sat::literal{6, true},
-                  fabko::sat::literal{7, true}, fabko::sat::literal{8, true}});
+    s.add_clause({
+        fabko::sat::literal{1, true},
+        fabko::sat::literal{2, true},
+        fabko::sat::literal{3, true},
+        fabko::sat::literal{4, true}
+    });
+    s.add_clause({
+        fabko::sat::literal{5, true},
+        fabko::sat::literal{6, true},
+        fabko::sat::literal{7, true},
+        fabko::sat::literal{8, true}
+    });
 
     // make sure that region 1 and 2 are not coloured the same as they are neighbours
-    s.add_clause({fabko::sat::literal{1, false}, fabko::sat::literal{5, false}});
-    s.add_clause({fabko::sat::literal{2, false}, fabko::sat::literal{6, false}});
-    s.add_clause({fabko::sat::literal{3, false}, fabko::sat::literal{7, false}});
-    s.add_clause({fabko::sat::literal{4, false}, fabko::sat::literal{8, false}});
+    s.add_clause({
+        fabko::sat::literal{1, false},
+        fabko::sat::literal{5, false}
+    });
+    s.add_clause({
+        fabko::sat::literal{2, false},
+        fabko::sat::literal{6, false}
+    });
+    s.add_clause({
+        fabko::sat::literal{3, false},
+        fabko::sat::literal{7, false}
+    });
+    s.add_clause({
+        fabko::sat::literal{4, false},
+        fabko::sat::literal{8, false}
+    });
 
-    s.solve();// find all solutions
+    s.solve(); // find all solutions
 
     CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
     auto r = s.results();

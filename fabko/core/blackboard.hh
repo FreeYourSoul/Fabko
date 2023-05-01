@@ -50,4 +50,4 @@ private:
   std::unique_ptr<blackboard_impl> _pimpl;
 };
 
-}// namespace fabko
+} // namespace fabko

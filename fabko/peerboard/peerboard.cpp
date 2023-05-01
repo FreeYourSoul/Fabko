@@ -32,4 +32,4 @@ void peerboard::register_capability(capability to_add) {
   //  auto ser_cap = serialize(std::move(capability));
 }
 
-}// namespace fabko
+} // namespace fabko

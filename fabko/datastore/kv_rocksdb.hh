@@ -79,17 +79,13 @@ public:
       std::string value = get(key);
       if constexpr (std::is_same_v<std::string, T>) {
         return value;
-      }
-      else if constexpr (std::is_integral_v<T> && std::is_unsigned_v<T>) {
+      } else if constexpr (std::is_integral_v<T> && std::is_unsigned_v<T>) {
         return std::stoul(value);
-      }
-      else if constexpr (std::is_integral_v<T> && std::is_signed_v<T>) {
+      } else if constexpr (std::is_integral_v<T> && std::is_signed_v<T>) {
         return std::stoi(value);
-      }
-      else if constexpr (std::is_floating_point_v<T>) {
+      } else if constexpr (std::is_floating_point_v<T>) {
         return std::stod(value);
-      }
-      else {
+      } else {
         throw std::logic_error("get_as not implemented");
       }
     }
@@ -116,4 +112,4 @@ private:
 
 using kv_rocksdb_instance = kv_db<kv_rocksdb>;
 
-}// namespace fabko
+} // namespace fabko
