@@ -42,6 +42,7 @@ jobs:
         run: mkdir -p $VCPKG_DEFAULT_BINARY_CACHE
         shell: bash
 
+        if: matrix.os != 'windows-latest'
       - name: Set up GCC
         uses: egor-tensin/setup-gcc@v1
         with:
