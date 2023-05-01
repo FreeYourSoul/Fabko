@@ -101,10 +101,6 @@ private:
  * Configuration of the solver
  */
 struct solver_config {
-
-  using custom_allocator_literal = std::false_type;
-  using custom_allocator_clause  = std::false_type;
-
   /**
    * Byte field representing the different flags that could be set at the solver level
    */
@@ -122,11 +118,6 @@ struct solver_config {
  * Main solver class.
  *
  * This class is the entry point of the solver.
- *
- * @copyright
- *   This solver is based on the algorithm developed for [minisat](https://github.com/niklasso/minisat) project and is based
- *   on their released paper on their [website](http://minisat.se/).   None if not little of those algorithm is developed for
- *   the Fabko project.
  */
 class solver {
   struct sat_impl;
@@ -134,6 +125,14 @@ class solver {
 public:
   explicit solver(solver_config config);
   ~solver();
+
+  solver(solver&&) noexcept;
+  solver &operator=(solver&&) noexcept;
+
+  // remove copy construction
+  solver(const solver&) = delete;
+  solver &operator=(const solver&) = delete;
+
 
   /**
    * Reset the context of the sat solver.
@@ -180,6 +179,24 @@ public:
    * @return current status of the solver
    */
   [[nodiscard]] solver_status solving_status() const;
+
+  /**
+   * @return number of variable currently set in the SAT
+   */
+  [[nodiscard]] std::size_t nb_variables() const;
+
+  /**
+   * @return number of clauses currently set in the SAT
+   */
+  [[nodiscard]] std::size_t nb_clauses() const;
+
+  /**
+   * Convert the sat-solver into a dimacs file
+   *
+   * @param solver solver to convert
+   * @param file_path destination file to store the resulting dimacs
+   */
+  friend void to_dimacs(const solver& solver, const std::string& file_path);
 
 private:
   std::unique_ptr<sat_impl> _pimpl;

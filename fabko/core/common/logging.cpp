@@ -20,7 +20,7 @@
 
 namespace fabko {
 
-constexpr auto logger_pattern = "[%Y-%m-%d %H:%M:%S:%e][fabko][%^%l%$]: %v";
+constexpr auto logger_pattern = "[%Y-%m-%d %H:%M:%S:%e][fabko][%=7l%$]: %v";
 
 spdlog::level::level_enum logging_details::get_env_log() {
   // retrieve

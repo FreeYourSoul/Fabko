@@ -1,25 +1,15 @@
-// MIT License
+// Dual Licensing Either :
+// - AGPL
+// or
+// - Subscription license for commercial usage (without requirement of licensing propagation).
+//   please contact ballandfys@protonmail.com for additional information about this subscription commercial licensing.
 //
-// Created by FyS on 03/04/23. License 2022-2023
+// Created by FyS on 23/04/23. License 2022-2023
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-//         of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-//         to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-//         copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
+// In the case no license has been purchased for the use (modification or distribution in any way) of the software stack
+// the APGL license is applying.
 //
-// The above copyright notice and this permission notice shall be included in all
-//         copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-//         AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-//
+
 
 #include <algorithm>
 #include <ranges>
@@ -85,8 +75,7 @@ public:
     // 2 means True but not False
     // 3 means both have been tried
     // bitwise operation over the value 1 or 0 is made to set the flag
-    std::vector<int> attempt_flags{};
-    attempt_flags.resize(num_var);
+    std::vector<int> attempt_flags(num_var + 1, 0);
 
     sat::variable var = 1;
 
@@ -96,7 +85,7 @@ public:
 
       // nothing has been attempted :: backtracking
       if (!assignment_happened) {
-        // var cannot continue backtracking. Solver is in error if no result has been previously found.
+        // var cannot continue backtracking. Solver is cannot find additional solutions.
         if (var == 0) {
           return context.valid_result_assignments.empty() ? solver_status::UNSAT : solver_status::SAT;
         }
@@ -151,13 +140,15 @@ private:
     }
 
     for (const bool attempt : {false, true}) {
+
       if (bool((attempt_flags[var] >> static_cast<int>(attempt)) & 1)) {
+        log_trace("var {} skip attempt {}", var, attempt);
         continue;
       }
       // set the bit for the attempt on the var.
       attempt_flags[var] |= 1 << static_cast<int>(attempt);
 
-      log_debug("solve::try_assign_variable -- var :: {} - attempt :: {}", var, attempt);
+      log_debug("solve::try_assign_variable -- var::{} - attempt::{} - attempt_value::{}", var, attempt, attempt_flags[var]);
 
       // apply assignment
       context.cur_assignment.assign_variable(var, attempt);
@@ -263,6 +254,9 @@ sat_result::sat_result(std::vector<literal> data) : _data(std::move(data)) {
   std::ranges::partition(_data, [](const literal& lit) { return bool(lit); });
 }
 
+void to_dimacs(const solver& solver, const std::string& file_path) {
+}
+
 std::string to_string(const literal& lit) {
   return fmt::format("{}[{}]", lit.var(), bool(lit));
 }
@@ -274,6 +268,8 @@ std::string to_string(const sat_result& res) {
 }
 
 solver::~solver() = default;
+solver::solver(solver&&) noexcept = default;
+solver& solver::operator=(solver&&) noexcept = default;
 
 solver::solver(fabko::sat::solver_config config)
     : _pimpl(std::make_unique<sat_impl>(std::move(config))) {
@@ -355,6 +351,14 @@ std::vector<sat_result> solver::results() const {
     res.emplace_back(std::move(lit_res));
   }
   return res;
+}
+
+std::size_t solver::nb_variables() const {
+  return _pimpl->context.cur_assignment.nb_vars();
+}
+
+std::size_t solver::nb_clauses() const {
+  return _pimpl->clauses.size();
 }
 
 } // namespace fabko::sat

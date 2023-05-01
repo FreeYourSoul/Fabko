@@ -1,5 +1,10 @@
 {
   "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 22,
+    "patch": 0
+  },
   "buildPresets": [
     { "name": "x64-Debug-Linux", "configurePreset": "x64-Debug-Linux", "jobs": 4},
     { "name": "x64-Release-Linux", "configurePreset": "x64-Release-Linux", "jobs": 4 },
@@ -13,10 +18,14 @@
       "name": "base",
       "environment": {
         "FABKO_LINUX_CXX_FLAGS": "-Wall -Wextra -Wshadow -Wnon-virtual-dtor -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wold-style-cast  -pthread -gdwarf-4",
-        "FABKO_WIN_WARN_FLAGS": "/permissive- /W4 /w14640 /w14296"
+        "FABKO_WIN_WARN_FLAGS": "/permissive- /W4 /w14640 /w14296",
+        "VCPKG_ROOT": "./vcpkg"
       },
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "/home/perso/Documents/any/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "CMAKE_TOOLCHAIN_FILE": {
+          "type": "FILEPATH",
+          "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+        },
         "CMAKE_CXX_COMPILER": "/usr/bin/g++",
         "CMAKE_C_COMPILER": "/usr/bin/gcc"
       },
@@ -89,6 +98,38 @@
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_CONFIGURATION_TYPES": "Release"
       }
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "x64-Debug-Linux",
+      "configurePreset": "x64-Debug-Linux",
+      "description": "test on linux :: debug - x64"
+    },
+    {
+      "name": "x64-Release-Linux",
+      "configurePreset": "x64-Release-Linux",
+      "description": "test on linux :: release - x64"
+    },
+    {
+      "name": "x64-RelNoDebInfo-Linux",
+      "configurePreset": "x64-RelNoDebInfo-Linux",
+      "description": "test on linux :: release with debug info - x64"
+    },
+    {
+      "name": "x64-Debug-Windows",
+      "configurePreset": "x64-Debug-Windows",
+      "description": "test on linux :: release with debug info - x64"
+    },
+    {
+      "name": "x64-Release-Windows",
+      "configurePreset": "x64-Release-Windows",
+      "description": "test on linux :: release with debug info - x64"
+    },
+    {
+      "name": "x64-RelNoDebInfo-Windows",
+      "configurePreset": "x64-RelNoDebInfo-Windows",
+      "description": "test on linux :: release with debug info - x64"
     }
   ]
 }

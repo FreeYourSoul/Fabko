@@ -12,7 +12,7 @@
 #include <functional>
 
 #include "blackboard.hh"
-#include <common/utils.hh>
+#include <common/visitor_utils.hh>
 
 namespace fabko {
 

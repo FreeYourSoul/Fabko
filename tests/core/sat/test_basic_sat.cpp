@@ -15,6 +15,7 @@
 #include <ranges>
 #include <set>
 
+#include <fmt/core.h>
 #include <sat/solver.hh>
 
 TEST_CASE("test_literal_properties") {
@@ -88,7 +89,7 @@ TEST_CASE("basic_case_sat_solver_0_solution") {
 
   SECTION("Default :: Ask all solution :: find no solution") {
     // DIMACS
-    //   1  2
+    //   p cnf 1  2
     //   1  0
     //  ~1  0
 
@@ -101,6 +102,9 @@ TEST_CASE("basic_case_sat_solver_0_solution") {
     // clause
     // ~1  0
     s.add_clause({fabko::sat::literal{1, false}});
+
+    CHECK(s.nb_variables() == 1);
+    CHECK(s.nb_clauses() == 2);
 
     CHECK(s.solving_status() == fabko::sat::solver_status::BUILDING);
     s.solve();
@@ -130,7 +134,7 @@ TEST_CASE("basic_case_sat_solver_2_clauses_2_solution") {
   s.add_variables(3);
 
   // DIMACS
-  //   3  2
+  //   p cnf 3  2
   //   1     0
   //  ~1 ~2  0
 
@@ -146,6 +150,8 @@ TEST_CASE("basic_case_sat_solver_2_clauses_2_solution") {
       {fabko::sat::literal{1, false},
        fabko::sat::literal{2, false}});
 
+  CHECK(s.nb_variables() == 3);
+  CHECK(s.nb_clauses() == 2);
 
   SECTION("Default :: Ask all solution :: find two solution") {
     CHECK(s.solving_status() == fabko::sat::solver_status::BUILDING);
@@ -154,15 +160,20 @@ TEST_CASE("basic_case_sat_solver_2_clauses_2_solution") {
 
     CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
 
-    auto result = s.results();
-    CHECK(result.size() == 2);
-    CHECK(result[0].get_all()[0] == fabko::sat::literal{1, true});
-    CHECK(result[0].get_all()[1] == fabko::sat::literal{2, false});
-    CHECK(result[0].get_all()[2] == fabko::sat::literal{3, false});
+    auto results = s.results();
 
-    CHECK(result[1].get_all()[0] == fabko::sat::literal{1, true});
-    CHECK(result[1].get_all()[1] == fabko::sat::literal{3, true});
-    CHECK(result[1].get_all()[2] == fabko::sat::literal{2, false});
+    for (const auto& r : results) {
+      fmt::print("---> {}\n", to_string(r));
+    }
+
+    CHECK(results.size() == 2);
+    CHECK(results[0].get_all()[0] == fabko::sat::literal{1, true});
+    CHECK(results[0].get_all()[1] == fabko::sat::literal{2, false});
+    CHECK(results[0].get_all()[2] == fabko::sat::literal{3, false});
+
+    CHECK(results[1].get_all()[0] == fabko::sat::literal{1, true});
+    CHECK(results[1].get_all()[1] == fabko::sat::literal{3, true});
+    CHECK(results[1].get_all()[2] == fabko::sat::literal{2, false});
   }
 
   SECTION("Custom :: Ask one solution :: find one solution") {
@@ -172,11 +183,11 @@ TEST_CASE("basic_case_sat_solver_2_clauses_2_solution") {
 
     CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
 
-    auto result = s.results();
-    CHECK(result.size() == 1);
-    CHECK(result[0].get_all()[0] == fabko::sat::literal{1, true});
-    CHECK(result[0].get_all()[1] == fabko::sat::literal{2, false});
-    CHECK(result[0].get_all()[2] == fabko::sat::literal{3, false});
+    auto results = s.results();
+    CHECK(results.size() == 1);
+    CHECK(results[0].get_all()[0] == fabko::sat::literal{1, true});
+    CHECK(results[0].get_all()[1] == fabko::sat::literal{2, false});
+    CHECK(results[0].get_all()[2] == fabko::sat::literal{3, false});
   }
 
   SECTION("Custom :: Ask 42 solution :: find two solutions") {
@@ -186,16 +197,15 @@ TEST_CASE("basic_case_sat_solver_2_clauses_2_solution") {
 
     CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
 
-    auto result = s.results();
-    CHECK(result.size() == 2);
-    CHECK(bool(result[0].get_all()[0]));
-    CHECK(result[0].get_all()[0] == fabko::sat::literal{1, true});
-    CHECK(result[0].get_all()[1] == fabko::sat::literal{2, false});
-    CHECK(result[0].get_all()[2] == fabko::sat::literal{3, false});
+    auto results = s.results();
+    CHECK(results.size() == 2);
+    CHECK(results[0].get_all()[0] == fabko::sat::literal{1, true});
+    CHECK(results[0].get_all()[1] == fabko::sat::literal{2, false});
+    CHECK(results[0].get_all()[2] == fabko::sat::literal{3, false});
 
-    CHECK(result[1].get_all()[0] == fabko::sat::literal{1, true});
-    CHECK(result[1].get_all()[1] == fabko::sat::literal{3, true});
-    CHECK(result[1].get_all()[2] == fabko::sat::literal{2, false});
+    CHECK(results[1].get_all()[0] == fabko::sat::literal{1, true});
+    CHECK(results[1].get_all()[1] == fabko::sat::literal{3, true});
+    CHECK(results[1].get_all()[2] == fabko::sat::literal{2, false});
   }
 }
 
@@ -208,7 +218,7 @@ TEST_CASE("basic_case_sat_solver_3_clause_1_solutions") {
   s.add_variables(3);
 
   // DIMACS
-  //   3  3
+  //   p cnf 3  3
   //   1  2  0
   //   3 ~2  0
   //  ~3     0
@@ -230,6 +240,8 @@ TEST_CASE("basic_case_sat_solver_3_clause_1_solutions") {
   s.add_clause(
       {fabko::sat::literal{3, false}});
 
+  CHECK(s.nb_variables() == 3);
+  CHECK(s.nb_clauses() == 3);
 
   SECTION("Custom :: Ask one solution :: find one solutions") {
     CHECK(s.solving_status() == fabko::sat::solver_status::BUILDING);
@@ -238,11 +250,11 @@ TEST_CASE("basic_case_sat_solver_3_clause_1_solutions") {
 
     CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
 
-    auto result = s.results();
-    CHECK(result.size() == 1);
-    CHECK(result[0].get_all()[0] == fabko::sat::literal{1, true});
-    CHECK(result[0].get_all()[1] == fabko::sat::literal{2, false});
-    CHECK(result[0].get_all()[2] == fabko::sat::literal{3, false});
+    auto results = s.results();
+    CHECK(results.size() == 1);
+    CHECK(results[0].get_all()[0] == fabko::sat::literal{1, true});
+    CHECK(results[0].get_all()[1] == fabko::sat::literal{2, false});
+    CHECK(results[0].get_all()[2] == fabko::sat::literal{3, false});
   }
 
 
@@ -253,11 +265,11 @@ TEST_CASE("basic_case_sat_solver_3_clause_1_solutions") {
 
     CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
 
-    auto result = s.results();
-    CHECK(result.size() == 1);
-    CHECK(result[0].get_all()[0] == fabko::sat::literal{1, true});
-    CHECK(result[0].get_all()[1] == fabko::sat::literal{2, false});
-    CHECK(result[0].get_all()[2] == fabko::sat::literal{3, false});
+    auto results = s.results();
+    CHECK(results.size() == 1);
+    CHECK(results[0].get_all()[0] == fabko::sat::literal{1, true});
+    CHECK(results[0].get_all()[1] == fabko::sat::literal{2, false});
+    CHECK(results[0].get_all()[2] == fabko::sat::literal{3, false});
   }
 
   SECTION("Default :: Ask all solution :: find one solutions") {
@@ -267,11 +279,11 @@ TEST_CASE("basic_case_sat_solver_3_clause_1_solutions") {
 
     CHECK(s.solving_status() == fabko::sat::solver_status::SAT);
 
-    auto result = s.results();
-    CHECK(result.size() == 1);
-    CHECK(result[0].get_all()[0] == fabko::sat::literal{1, true});
-    CHECK(result[0].get_all()[1] == fabko::sat::literal{2, false});
-    CHECK(result[0].get_all()[2] == fabko::sat::literal{3, false});
+    auto results = s.results();
+    CHECK(results.size() == 1);
+    CHECK(results[0].get_all()[0] == fabko::sat::literal{1, true});
+    CHECK(results[0].get_all()[1] == fabko::sat::literal{2, false});
+    CHECK(results[0].get_all()[2] == fabko::sat::literal{3, false});
   }
 }
 
