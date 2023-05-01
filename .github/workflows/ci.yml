@@ -42,12 +42,15 @@ jobs:
         run: mkdir -p $VCPKG_DEFAULT_BINARY_CACHE
         shell: bash
 
+      # Unix specifics
         if: matrix.os != 'windows-latest'
       - name: Set up GCC
-        uses: egor-tensin/setup-gcc@v1
-        with:
-          version: latest
-          platform: x64
+        run: |
+          g++ --version
+          sudo apt-get install build-essential
+          sudo apt -y install g++-12
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 10
+          sudo update-alternatives --config g++
 
       - uses: lukka/get-cmake@latest
 
