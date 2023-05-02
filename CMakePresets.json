@@ -26,6 +26,25 @@
           "type": "FILEPATH",
           "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
         },
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+        "SANITIZE": false
+      },
+      "hidden": true
+    },
+    {
+      "name": "windows_base",
+      "inherits": "base",
+      "generator": "Visual Studio 17 2022",
+      "architecture": { "value": "x64", "strategy": "set" },
+      "cacheVariables": {
+      },
+      "hidden": true
+    },
+    {
+      "name": "linux_base",
+      "inherits": "base",
+      "generator": "Ninja",
+      "cacheVariables": {
         "CMAKE_CXX_COMPILER": "/usr/bin/g++",
         "CMAKE_C_COMPILER": "/usr/bin/gcc"
       },
@@ -35,7 +54,7 @@
       "name": "x64-Debug-Linux",
       "displayName": "x64-Debug-Linux",
       "generator": "Ninja",
-      "inherits": "base",
+      "inherits": "linux_base",
       "binaryDir": "${sourceDir}/build/.cmake/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
@@ -46,8 +65,7 @@
     {
       "name": "x64-Release-Linux",
       "displayName": "x64-Release-Linux",
-      "generator": "Ninja",
-      "inherits": "base",
+      "inherits": "linux_base",
       "binaryDir": "${sourceDir}/build/.cmake/x64-Release-Linux",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
@@ -58,7 +76,7 @@
     {
       "name": "x64-RelNoDebInfo-Linux",
       "displayName": "x64-RelNoDebInfo-Linux",
-      "inherits": "base",
+      "inherits": "linux_base",
       "binaryDir": "${sourceDir}/build/.cmake/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
@@ -69,9 +87,8 @@
     {
       "name": "x64-Debug-Windows",
       "displayName": "x64-Debug-Windows",
-      "generator": "Visual Studio 17 2022",
+      "inherits": "windows_base",
       "binaryDir": "${sourceDir}/build/.cmake/${presetName}",
-      "architecture": { "value": "x64", "strategy": "set" },
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_CONFIGURATION_TYPES": "Debug"
@@ -80,9 +97,7 @@
     {
       "name": "x64-Release-Windows",
       "displayName": "x64-Release-Windows",
-      "generator": "Visual Studio 17 2022",
       "binaryDir": "${sourceDir}/build/.cmake/x64-Release-Windows",
-      "architecture": { "value": "x64", "strategy": "set" },
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CMAKE_CONFIGURATION_TYPES": "RelWithDebInfo"
@@ -91,9 +106,7 @@
     {
       "name": "x64-RelNoDebInfo-Windows",
       "displayName": "x64-RelNoDebInfo-Windows",
-      "generator": "Visual Studio 17 2022",
       "binaryDir": "${sourceDir}/build/.cmake/${presetName}",
-      "architecture": { "value": "x64", "strategy": "set" },
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_CONFIGURATION_TYPES": "Release"

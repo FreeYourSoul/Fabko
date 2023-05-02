@@ -56,8 +56,14 @@ void compare_dimacs_files(const std::filesystem::path& f1, const std::filesystem
 TEST_CASE("test sat::solver::from_dimacs") {
   fabko::init_logger();
 
+  // p cnf 1 1
+  //  1 0
+  // -1 0
   auto testing_dimacs_path = std::filesystem::path(TEST_ASSETS_PATH) / "test.dimacs";
   fabko::sat::solver s     = fabko::sat::from_dimacs(testing_dimacs_path);
+
+  s.solve();
+  CHECK(s.solving_status() == fabko::sat::solver_status::UNSAT);
 
   auto result_destination = std::filesystem::temp_directory_path() / "result.dimacs";
   to_dimacs(s, result_destination);

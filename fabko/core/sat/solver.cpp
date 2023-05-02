@@ -10,7 +10,6 @@
 // the APGL license is applying.
 //
 
-
 #include <algorithm>
 #include <ranges>
 #include <unordered_map>
@@ -267,8 +266,8 @@ std::string to_string(const sat_result& res) {
       fmt::join(std::ranges::views::transform(res.get_all(), [](const literal& lit) { return to_string(lit); }), ", "));
 }
 
-solver::~solver() = default;
-solver::solver(solver&&) noexcept = default;
+solver::~solver()                            = default;
+solver::solver(solver&&) noexcept            = default;
 solver& solver::operator=(solver&&) noexcept = default;
 
 solver::solver(fabko::sat::solver_config config)

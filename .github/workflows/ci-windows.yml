@@ -12,12 +12,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ windows-latest ]
         include:
-          - os: ubuntu-latest
-            triplet: x64-linux
-          - os: macos-latest
-            triplet: x64-osx
           - os: windows-latest
             triplet: x64-windows
     env:
@@ -41,16 +37,6 @@ jobs:
       - name: "Create directory '${{ env.VCPKG_DEFAULT_BINARY_CACHE }}'"
         run: mkdir -p $VCPKG_DEFAULT_BINARY_CACHE
         shell: bash
-
-      # Unix specifics
-        if: matrix.os != 'windows-latest'
-      - name: Set up GCC
-        run: |
-          g++ --version
-          sudo apt-get install build-essential
-          sudo apt -y install g++-12
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 10
-          sudo update-alternatives --config g++
 
       - uses: lukka/get-cmake@latest
 
@@ -80,12 +66,12 @@ jobs:
       # store the built packages artifacts.
       - name: Restore from cache the dependencies and generate project files
         run: |
-          cmake --preset x64-Debug-Linux
+          cmake --preset x64-Debug-Windows
 
       - name: Build
         run: |
-          cmake --build --preset x64-Debug-Linux
+          cmake --build --preset x64-Debug-Windows
 
       - name: Test
         run: |
-          ctest --preset x64-Debug-Linux
+          ctest --preset x64-Debug-Windows
