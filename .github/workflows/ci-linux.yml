@@ -1,6 +1,6 @@
 # https://github.com/marketplace/actions/run-vcpkg#use-vcpkg-as-a-submodule-of-your-repository
 # https://github.com/lukka/CppCMakeVcpkgTemplate/blob/v11/.github/workflows/hosted-pure-workflow.yml
-name: "Build"
+name: "Build Linux"
 on:
   pull_request:
   push:

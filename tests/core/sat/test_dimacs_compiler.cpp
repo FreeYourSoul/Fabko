@@ -15,6 +15,7 @@
 #include <filesystem>
 #include <fstream>
 
+#include "common/string_utils.hh"
 #include <common/logging.hh>
 #include <sat/dimacs_compiler.hh>
 
@@ -33,12 +34,15 @@ void compare_dimacs_files(const std::filesystem::path& f1, const std::filesystem
     std::getline(file1, string1);
     std::getline(file2, string2);
 
-    const bool compare_line = string1 != string2;
+    string1 = fabko::trim_string(string1);
+    string2 = fabko::trim_string(string2);
+
+    const bool compare_line = string1 == string2;
     if (!compare_line) {
       fabko::log_error(
           "difference line {}\n"
-          " -- file1::{} -- {}\n",
-          " -- file2::{} -- {}\n",
+          " -- file1::{} -- '{}'\n"
+          " -- file2::{} -- '{}'\n",
           line,
           std::string(f1), string1,
           std::string(f2), string2);

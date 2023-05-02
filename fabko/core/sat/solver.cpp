@@ -16,6 +16,9 @@
 #include <utility>
 #include <vector>
 
+#include <fmt/format.h>
+#include <fmt/os.h>
+
 #include <common/logging.hh>
 #include <common/ranges_to.hh>
 #include <sat/assignment_bitset.hh>
@@ -254,6 +257,15 @@ sat_result::sat_result(std::vector<literal> data) : _data(std::move(data)) {
 }
 
 void to_dimacs(const solver& solver, const std::string& file_path) {
+  auto out = fmt::output_file(file_path);
+
+  out.print("p cnf {} {}\n", solver.nb_variables(), solver.nb_clauses());
+  for (const auto& clause : solver._pimpl->clauses) {
+    for (const auto& lit : clause) {
+      out.print("{} ", std::to_string(long(lit.var()) * (bool(lit) ? 1 : -1)));
+    }
+    out.print("0\n");
+  }
 }
 
 std::string to_string(const literal& lit) {

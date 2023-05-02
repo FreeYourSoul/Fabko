@@ -1,6 +1,6 @@
 # https://github.com/marketplace/actions/run-vcpkg#use-vcpkg-as-a-submodule-of-your-repository
 # https://github.com/lukka/CppCMakeVcpkgTemplate/blob/v11/.github/workflows/hosted-pure-workflow.yml
-name: "Build"
+name: "Build MacOS"
 on:
   pull_request:
   push:
@@ -14,12 +14,8 @@ jobs:
       matrix:
         os: [ macos-latest ]
         include:
-          - os: ubuntu-latest
-            triplet: x64-linux
           - os: macos-latest
             triplet: x64-osx
-          - os: windows-latest
-            triplet: x64-windows
     env:
       VCPKG_ROOT: ${{ github.workspace }}/vcpkg
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
