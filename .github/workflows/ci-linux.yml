@@ -77,7 +77,7 @@ jobs:
 
       - name: Clang-Tidy
         run: |
-          run-clang-tidy -p ${{ github.workspace }}/build/compile_commands.json -checks='-*,modernize-use-override' || echo ignore
+          run-clang-tidy -p ${{ github.workspace }}/build/.cmake/x64-Debug-Linux -checks='-*,modernize-use-override' || echo ignore
 
       - name: Clang-Format
         run: |
