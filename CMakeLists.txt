@@ -1,10 +1,15 @@
 cmake_minimum_required(VERSION 3.22)
 
-set(project_version 0.0.1)
 set(project_description "Fabko is a set of library for server / client execution of distributed multi-agent application.")
 
+include(cmake/utils.cmake)
+
+fabko_extract_version()
+
+message("Version Fabko :: ${FABKO_VERSION}\n")
+
 project(fabko
-        VERSION ${project_version}
+        VERSION ${FABKO_VERSION}
         DESCRIPTION ${project_description}
         LANGUAGES CXX)
 
