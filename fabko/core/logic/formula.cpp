@@ -37,58 +37,58 @@ using visit_flag = std::variant<visit_op_flag, visit_op_enter_flag, visit_op_exi
 
 template<std::invocable<expression, visit_flag> Callable>
 void visit(expression f, Callable&& handler) {
-  auto* cur = std::get_if<std::shared_ptr<formula>>(&f);
+    auto* cur = std::get_if<std::shared_ptr<formula>>(&f);
 
-  if (cur == nullptr) {
-    handler(std::get<variable>(f), visit_var);
-    return;
-  }
+    if (cur == nullptr) {
+        handler(std::get<variable>(f), visit_var);
+        return;
+    }
 
-  // callback entering the formula
-  handler((*cur), visit_op_enter);
+    // callback entering the formula
+    handler((*cur), visit_op_enter);
 
-  visit((*cur)->get_lhs(), handler);
-  handler((*cur), visit_op);
-  visit((*cur)->get_rhs(), handler);
+    visit((*cur)->get_lhs(), handler);
+    handler((*cur), visit_op);
+    visit((*cur)->get_rhs(), handler);
 
-  // callback exiting the formula
-  handler((*cur), visit_op_exit);
+    // callback exiting the formula
+    handler((*cur), visit_op_exit);
 }
 
 } // namespace
 
 std::string formula::express_cnf_string() {
-  std::string res;
-  visit(
-      shared_from_this(),
-      overloaded{
-          [&res](auto&&, visit_op_enter_flag) { res += "("; },
-          [&res](auto&&, visit_op_exit_flag) { res += ")"; },
-          [&res](auto&& f, visit_var_flag) { res += f.token; },
-          [&res](auto&& f, visit_op_flag) {
-            std::visit(overloaded{
-                           [&res](op::conjunction) { res += " ∧ "; },
-                           [&res](op::disjunction) { res += " ∨ "; }},
-                       f->get_op());
-          },
-          [](auto&&, auto&&) {}});
-  return res;
+    std::string res;
+    visit(
+        shared_from_this(),
+        overloaded{
+            [&res](auto&&, visit_op_enter_flag) { res += "("; },
+            [&res](auto&&, visit_op_exit_flag) { res += ")"; },
+            [&res](auto&& f, visit_var_flag) { res += f.token; },
+            [&res](auto&& f, visit_op_flag) {
+                std::visit(overloaded{
+                               [&res](op::conjunction) { res += " ∧ "; },
+                               [&res](op::disjunction) { res += " ∨ "; }},
+                           f->get_op());
+            },
+            [](auto&&, auto&&) {}});
+    return res;
 }
 
 std::vector<sat::literal> formula::express_cnf_literals() const {
-  return {};
+    return {};
 }
 
 expression formula::get_lhs() const {
-  return _lhs;
+    return _lhs;
 }
 
 expression formula::get_rhs() const {
-  return _rhs;
+    return _rhs;
 }
 
 op::operand formula::get_op() const {
-  return _op;
+    return _op;
 }
 
 } // namespace fabko::logic

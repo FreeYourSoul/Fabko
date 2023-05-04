@@ -15,19 +15,19 @@
 namespace fabko {
 
 std::string com::p2p::instantiate_black_board(const std::string&) {
-  return {};
+    return {};
 }
 
 std::string com::online::instantiate_black_board(const std::string&) {
-  return {};
+    return {};
 }
 
 std::future<com::propositions> com::online::request_propositions(const std::string&) {
-  return {};
+    return {};
 }
 
 com::decision_status com::online::commit_decision(const std::string&) {
-  return com::decision_status::RETRY;
+    return com::decision_status::RETRY;
 }
 
 } // namespace fabko

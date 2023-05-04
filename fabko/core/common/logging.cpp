@@ -23,25 +23,25 @@ namespace fabko {
 constexpr auto logger_pattern = "[%Y-%m-%d %H:%M:%S:%e][fabko][%=7l%$]: %v";
 
 spdlog::level::level_enum logging_details::get_env_log() {
-  // retrieve
-  return spdlog::level::trace;
+    // retrieve
+    return spdlog::level::trace;
 }
 
 void init_logger(spdlog::level::level_enum level, const std::string& log_file) {
 
-  if (spdlog::get(logging_details::global_logger_name) != nullptr) {
-    return;
-  }
+    if (spdlog::get(logging_details::global_logger_name) != nullptr) {
+        return;
+    }
 
-  std::vector<spdlog::sink_ptr> sinks{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()};
+    std::vector<spdlog::sink_ptr> sinks{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()};
 
-  if (!log_file.empty()) {
-    sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_file, true));
-  }
-  auto logger = std::make_shared<spdlog::logger>(logging_details::global_logger_name, sinks.begin(), sinks.end());
-  logger->set_pattern(logger_pattern);
-  logger->set_level(level);
-  spdlog::register_logger(logger);
+    if (!log_file.empty()) {
+        sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_file, true));
+    }
+    auto logger = std::make_shared<spdlog::logger>(logging_details::global_logger_name, sinks.begin(), sinks.end());
+    logger->set_pattern(logger_pattern);
+    logger->set_level(level);
+    spdlog::register_logger(logger);
 }
 
 } // namespace fabko

@@ -15,7 +15,7 @@
 namespace fabko::sat {
 
 unsigned get_lit_index_for_variable(variable var, bool assignment) {
-  return (var << 1) | static_cast<unsigned>(assignment);
+    return (var << 1) | static_cast<unsigned>(assignment);
 }
 
 } // namespace fabko::sat

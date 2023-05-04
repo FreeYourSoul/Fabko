@@ -18,17 +18,17 @@ namespace fabko {
 
 struct blackboard::blackboard_impl {
 
-  explicit blackboard_impl(com::c_board_com auto&& bc, blackboard_data data)
-      : bc(std::forward<decltype(bc)>(bc)), data(std::move(data)) {}
+    explicit blackboard_impl(com::c_board_com auto&& bc, blackboard_data data)
+        : bc(std::forward<decltype(bc)>(bc)), data(std::move(data)) {}
 
-  blackboard_data instantiate_black_board(const std::string& request) {
-    data.id = std::visit(
-        overloaded{[&request](auto& b) -> std::string { return b.instantiate_black_board(request); }}, bc);
-    return data;
-  }
+    blackboard_data instantiate_black_board(const std::string& request) {
+        data.id = std::visit(
+            overloaded{[&request](auto& b) -> std::string { return b.instantiate_black_board(request); }}, bc);
+        return data;
+    }
 
-  com::board_protocol bc;
-  blackboard_data data;
+    com::board_protocol bc;
+    blackboard_data data;
 };
 
 blackboard::~blackboard() = default;
@@ -39,11 +39,11 @@ blackboard::blackboard(BoardCommunication bc, com::request initial_request)
 }
 
 com::propositions blackboard::request_propositions(const com::request& request) {
-  return {};
+    return {};
 }
 
 com::decision_status blackboard::submit_decision(const std::string& decision) {
-  return {};
+    return {};
 }
 
 } // namespace fabko
