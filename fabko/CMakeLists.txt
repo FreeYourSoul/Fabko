@@ -16,6 +16,8 @@ target_sources(core
         core/common/ranges_to.hh
         core/common/visitor_utils.hh
         core/common/string_utils.hh
+        core/logic/formula.cpp
+        core/logic/formula.hh
         core/sat/dimacs_compiler.cpp
         core/sat/dimacs_compiler.hh
         core/sat/solver.cpp
