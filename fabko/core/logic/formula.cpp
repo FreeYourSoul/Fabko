@@ -24,14 +24,6 @@ namespace fabko::logic {
 
 namespace {
 
-template<typename T>
-bool is_variable(T&) {
-  if constexpr (std::same_as<T, variable>) {
-    return true;
-  } else {
-    return false;
-  }
-}
 struct visit_op_enter_flag {};
 struct visit_op_exit_flag {};
 struct visit_op_flag {};
@@ -70,31 +62,16 @@ std::string formula::express_cnf_string() {
   visit(
       shared_from_this(),
       overloaded{
-          [&res](auto, visit_op_enter_flag) {
-            res += "(";
+          [&res](auto&&, visit_op_enter_flag) { res += "("; },
+          [&res](auto&&, visit_op_exit_flag) { res += ")"; },
+          [&res](auto&& f, visit_var_flag) { res += f.token; },
+          [&res](auto&& f, visit_op_flag) {
+            std::visit(overloaded{
+                           [&res](op::conjunction) { res += " ∧ "; },
+                           [&res](op::disjunction) { res += " ∨ "; }},
+                       f->get_op());
           },
-          [&res](std::shared_ptr<formula> f, visit_op_flag) {
-            std::visit(
-                overloaded{
-                    [&res]<typename T>(T&&) {
-                      if constexpr (std::same_as<T, op::conjunction>) {
-                        res += " ∧ ";
-                      }
-                      if constexpr (std::same_as<T, op::disjunction>) {
-                        res += " ∨ ";
-                      }
-                    }},
-                f->get_op());
-          },
-          [&res](auto, visit_op_exit_flag) {
-            res += ")";
-          },
-          [&res](variable f, visit_var_flag) {
-            res += f.token;
-          },
-          [](auto, auto) {
-            throw std::runtime_error("should not happens");
-          }});
+          [](auto&&, auto&&) {}});
   return res;
 }
 
