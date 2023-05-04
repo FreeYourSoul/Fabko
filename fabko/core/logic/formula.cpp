@@ -1,4 +1,4 @@
-`` // Dual Licensing Either :
+// Dual Licensing Either :
 // - AGPL
 // or
 // - Subscription license for commercial usage (without requirement of licensing propagation).
@@ -11,72 +11,107 @@
 //
 
 #include <stack>
+#include <stdexcept>
+#include <variant>
 
 #include <fmt/format.h>
 #include <sat/solver.hh>
 
+#include "common/visitor_utils.hh"
 #include "formula.hh"
 
-    namespace fabko::logic {
+namespace fabko::logic {
 
-  namespace {
+namespace {
 
-  template<typename T>
-  bool is_variable(T&) {
-    if constexpr (std::same_as<T, variable>) {
-      return true;
-    } else {
-      return false;
-    }
+template<typename T>
+bool is_variable(T&) {
+  if constexpr (std::same_as<T, variable>) {
+    return true;
+  } else {
+    return false;
+  }
+}
+struct visit_op_enter_flag {};
+struct visit_op_exit_flag {};
+struct visit_op_flag {};
+struct visit_var_flag {};
+constexpr visit_var_flag visit_var{};
+constexpr visit_op_flag visit_op{};
+constexpr visit_op_exit_flag visit_op_exit{};
+constexpr visit_op_enter_flag visit_op_enter{};
+
+using visit_flag = std::variant<visit_op_flag, visit_op_enter_flag, visit_op_exit_flag, visit_var_flag>;
+
+template<std::invocable<expression, visit_flag> Callable>
+void visit(expression f, Callable&& handler) {
+  auto* cur = std::get_if<std::shared_ptr<formula>>(&f);
+
+  if (cur == nullptr) {
+    handler(std::get<variable>(f), visit_var);
+    return;
   }
 
-  template<std::invocable<formula&> Callable>
-  void visit(expression f, Callable&& handler) {
-    while(!is_variable(f)) {
-      auto& cur = std::get<std::shared_ptr<formula>>(f);
+  // callback entering the formula
+  handler((*cur), visit_op_enter);
 
-      visit(cur->get_lhs(), handler);
-      visit(cur->get_rhs(), handler);
-      handler(*cur);
-    }
-  }
+  visit((*cur)->get_lhs(), handler);
+  handler((*cur), visit_op);
+  visit((*cur)->get_rhs(), handler);
 
-  } // namespace
+  // callback exiting the formula
+  handler((*cur), visit_op_exit);
+}
 
-  std::string formula::express_cnf_string() const {
-    std::string res;
-    visit(shared_from_this(), [](formula& f) {
-      
-    });
-    return res;
-  }
+} // namespace
 
-  std::vector<sat::literal> formula::express_cnf_literals() const {
-    return {};
-  }
+std::string formula::express_cnf_string() {
+  std::string res;
+  visit(
+      shared_from_this(),
+      overloaded{
+          [&res](auto, visit_op_enter_flag) {
+            res += "(";
+          },
+          [&res](std::shared_ptr<formula> f, visit_op_flag) {
+            std::visit(
+                overloaded{
+                    [&res]<typename T>(T&&) {
+                      if constexpr (std::same_as<T, op::conjunction>) {
+                        res += " ∧ ";
+                      }
+                      if constexpr (std::same_as<T, op::disjunction>) {
+                        res += " ∨ ";
+                      }
+                    }},
+                f->get_op());
+          },
+          [&res](auto, visit_op_exit_flag) {
+            res += ")";
+          },
+          [&res](variable f, visit_var_flag) {
+            res += f.token;
+          },
+          [](auto, auto) {
+            throw std::runtime_error("should not happens");
+          }});
+  return res;
+}
 
-  expression& formula::get_lhs() {
-    return _lhs;
-  }
+std::vector<sat::literal> formula::express_cnf_literals() const {
+  return {};
+}
 
-  const expression& formula::get_lhs() const {
-    return _lhs;
-  }
+expression formula::get_lhs() const {
+  return _lhs;
+}
 
-  expression& formula::get_rhs() {
-    return _lhs;
-  }
+expression formula::get_rhs() const {
+  return _rhs;
+}
 
-  const expression& formula::get_rhs() const {
-    return _lhs;
-  }
+op::operand formula::get_op() const {
+  return _op;
+}
 
-  op::operand& formula::get_op() {
-    return _op;
-  }
-
-  const op::operand& formula::get_op() const {
-    return _op;
-  }
-
-} // namespace fabko::logic``
+} // namespace fabko::logic

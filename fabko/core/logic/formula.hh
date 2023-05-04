@@ -37,36 +37,27 @@ namespace op {
 
 struct conjunction {};
 struct disjunction {};
-struct at_least_one {};
 
 using operand = std::variant<
-    at_least_one,
     conjunction,
     disjunction>;
 } // namespace op
 
 constexpr op::conjunction conjunction{};
 constexpr op::disjunction disjunction{};
-constexpr op::at_least_one at_least_one{};
 
-class formula : std::enable_shared_from_this<formula> {
+class formula : public std::enable_shared_from_this<formula> {
 
 public:
   formula(expression lhs, op::operand op, expression rhs)
       : _lhs(std::move(lhs)), _rhs(std::move(rhs)), _op(op) {}
 
-  [[nodiscard]] std::string express_cnf_string() const;
+  [[nodiscard]] std::string express_cnf_string();
   [[nodiscard]] std::vector<sat::literal> express_cnf_literals() const;
 
-
-  expression &get_lhs();
-  const expression &get_lhs() const;
-
-  expression &get_rhs();
-  const expression &get_rhs() const;
-
-  op::operand &get_op();
-  const op::operand &get_op() const;
+  expression get_lhs() const;
+  expression get_rhs() const;
+  op::operand get_op() const;
 
 private:
   expression _lhs;
@@ -74,8 +65,8 @@ private:
   op::operand _op;
 };
 
-static auto make_formula(expression lhs, const op::operand& op, expression rhs) {
-  return std::make_shared<formula>(std::move(lhs), op, std::move(rhs));
+static auto make_formula(expression lhs, op::operand op, expression rhs) {
+  return std::make_shared<formula>(std::move(lhs), std::move(op), std::move(rhs));
 }
 
 } // namespace fabko::logic
