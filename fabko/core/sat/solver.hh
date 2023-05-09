@@ -74,6 +74,11 @@ enum class solver_status : unsigned {
 };
 
 /**
+ * A clause is a set of literals linked by disjunction (∨)
+ */
+using clause = std::vector<literal>;
+
+/**
  * A specific result of a sat solver execution
  */
 class sat_result {
@@ -160,7 +165,7 @@ public:
    *
    * @param clause_literals disjunction literals forming a clause (each individual clause are conjunctions)
    */
-  void add_clause(std::vector<literal> clause_literals);
+  void add_clause(clause clause_literals);
 
   /**
    * Start the resolution of the SAT solver.

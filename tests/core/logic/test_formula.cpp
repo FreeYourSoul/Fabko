@@ -17,7 +17,7 @@
 namespace fl        = fabko::logic;
 static const auto e = fl::make_formula;
 
-TEST_CASE("test_formula :: basic logic symbol") {
+TEST_CASE("test_formula :: express_formula_string :: basic logic symbol") {
   auto dada  = fl::variable{"dada"};
   auto dede  = fl::variable{"dede"};
   auto choco = fl::variable{"choco"};
@@ -25,7 +25,7 @@ TEST_CASE("test_formula :: basic logic symbol") {
   SECTION("test disjunction") {
     auto form = e(dada, fl::disjunction, dede);
 
-    std::string form_str = form->express_cnf_string();
+    std::string form_str = express_formula_string(form);
     CHECK("(dada ∨ dede)" == form_str);
   }
 
@@ -33,14 +33,14 @@ TEST_CASE("test_formula :: basic logic symbol") {
     auto form = e(
         e(dada, fl::disjunction, dede), fl::disjunction, choco);
 
-    std::string form_str = form->express_cnf_string();
+    std::string form_str = express_formula_string(form);
     CHECK("((dada ∨ dede) ∨ choco)" == form_str);
   }
 
   SECTION("test conjunction") {
     auto form = e(dada, fl::conjunction, dede);
 
-    std::string form_str = form->express_cnf_string();
+    std::string form_str = express_formula_string(form);
     CHECK("(dada ∧ dede)" == form_str);
   }
 
@@ -48,7 +48,7 @@ TEST_CASE("test_formula :: basic logic symbol") {
     auto form = e(
         e(dada, fl::conjunction, dede), fl::conjunction, choco);
 
-    std::string form_str = form->express_cnf_string();
+    std::string form_str = express_formula_string(form);
     CHECK("((dada ∧ dede) ∧ choco)" == form_str);
   }
 
@@ -56,7 +56,7 @@ TEST_CASE("test_formula :: basic logic symbol") {
     auto form = e(
         e(dada, fl::conjunction, dede), fl::disjunction, choco);
 
-    std::string form_str = form->express_cnf_string();
+    std::string form_str = express_formula_string(form);
     CHECK("((dada ∧ dede) ∨ choco)" == form_str);
   }
 }

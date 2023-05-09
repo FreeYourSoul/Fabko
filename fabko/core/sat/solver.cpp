@@ -31,8 +31,6 @@ namespace fabko::sat {
 // SAT Solver implementation details
 //
 
-using clause = std::vector<literal>;
-
 struct variable_watched {
     variable v{};
     std::optional<bool> assign{};

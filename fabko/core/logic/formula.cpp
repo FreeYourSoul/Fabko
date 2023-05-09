@@ -57,10 +57,10 @@ void visit(expression f, Callable&& handler) {
 
 } // namespace
 
-std::string formula::express_cnf_string() {
+std::string express_formula_string(const formula_ptr& form) {
     std::string res;
     visit(
-        shared_from_this(),
+        form,
         overloaded{
             [&res](auto&&, visit_op_enter_flag) { res += "("; },
             [&res](auto&&, visit_op_exit_flag) { res += ")"; },
@@ -75,8 +75,22 @@ std::string formula::express_cnf_string() {
     return res;
 }
 
-std::vector<sat::literal> formula::express_cnf_literals() const {
-    return {};
+auto apply_tseytin_transformation(const formula_ptr& form) {
+    std::vector<sat::clause> res;
+    visit(
+        form,
+        overloaded{
+            [&res](auto&&, visit_op_enter_flag) {  },
+            [&res](auto&&, visit_op_exit_flag) {  },
+            [&res](auto&& f, visit_var_flag) { },
+            [&res](auto&& f, visit_op_flag) {
+                std::visit(overloaded{
+                               [&res](op::conjunction) {  },
+                               [&res](op::disjunction) {  }},
+                           f->get_op());
+            },
+            [](auto&&, auto&&) {}});
+    return res;
 }
 
 expression formula::get_lhs() const {
