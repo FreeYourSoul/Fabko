@@ -105,4 +105,7 @@ op::operand formula::get_op() const {
     return _op;
 }
 
+set::set(std::initializer_list<std::string> possible_variable) : {
+
+}
 } // namespace fabko::logic

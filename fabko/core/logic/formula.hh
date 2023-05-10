@@ -68,6 +68,14 @@ private:
   op::operand _op;
 };
 
+class set : public formula {
+public:
+  explicit set(std::initializer_list<std::string> possible_variable);
+
+private:
+
+};
+
 static auto make_formula(expression lhs, op::operand op, expression rhs) {
   return std::make_shared<formula>(std::move(lhs), std::move(op), std::move(rhs));
 }
