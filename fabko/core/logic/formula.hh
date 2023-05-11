@@ -68,9 +68,9 @@ private:
   op::operand _op;
 };
 
-class set : public formula {
+class set {
 public:
-  explicit set(std::initializer_list<std::string> possible_variable);
+  explicit set(std::size_t var_number);
 
 private:
 

@@ -12,7 +12,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include <logic/formula.hh>
+#include "logic/formula.hh"
 
 namespace fl        = fabko::logic;
 static const auto e = fl::make_formula;

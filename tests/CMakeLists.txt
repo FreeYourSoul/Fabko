@@ -27,8 +27,8 @@ target_sources(test_core
         PRIVATE
         core/common/test_assignment_bitset.cpp
         core/common/test_algo_utils.cpp
-        core/logic/test_formula.cpp
-        core/logic/test_set.cpp
+        core/sat/test_formula.cpp
+        core/sat/test_set.cpp
         core/sat/test_dimacs_compiler.cpp
         core/sat/test_basic_sat.cpp
         core/sat/test_sat_coloring.cpp
