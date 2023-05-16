@@ -80,13 +80,13 @@ auto apply_tseytin_transformation(const formula_ptr& form) {
     visit(
         form,
         overloaded{
-            [&res](auto&&, visit_op_enter_flag) {  },
-            [&res](auto&&, visit_op_exit_flag) {  },
-            [&res](auto&& f, visit_var_flag) { },
+            [&res](auto&&, visit_op_enter_flag) {},
+            [&res](auto&&, visit_op_exit_flag) {},
+            [&res](auto&& f, visit_var_flag) {},
             [&res](auto&& f, visit_op_flag) {
                 std::visit(overloaded{
-                               [&res](op::conjunction) {  },
-                               [&res](op::disjunction) {  }},
+                               [&res](op::conjunction) {},
+                               [&res](op::disjunction) {}},
                            f->get_op());
             },
             [](auto&&, auto&&) {}});
@@ -106,6 +106,14 @@ op::operand formula::get_op() const {
 }
 
 set::set(std::size_t var_number) {
+}
 
+variable& set::operator[](unsigned index) {
+    return _set_var[index];
+}
+
+std::span<variable> set::operator[](unsigned index_begin, unsigned index_end) {
+    return std::span<variable>(_set_var.begin() + static_cast<long>(index_begin),
+                               _set_var.begin() + static_cast<long>(index_end));
 }
 } // namespace fabko::logic

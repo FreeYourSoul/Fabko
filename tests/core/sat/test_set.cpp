@@ -29,7 +29,7 @@ TEST_CASE("test_formula :: basic test on set") {
         }
 
         SECTION("with restriction") {
-            line.splice(0, 1).add_and_constraint("B");
+            line[0, 1].add_and_constraint("B");
             // BAC
             // BCA
             // only (3 - 1)^1*1 = 2 options -- -1 because one variable is fixed
@@ -40,25 +40,25 @@ TEST_CASE("test_formula :: basic test on set") {
         auto line = fabko::logic::set({"1", "2", "3"});
 
         // end of splice to large
-        CHECK_THROWS(line.splice(0, 4));
+        CHECK_THROWS(line[0, 4]);
         // beginning of splice impossible
-        CHECK_THROWS(line.splice(4, 5));
+        CHECK_THROWS(line[4, 5]);
         // first value bigger than second
-        CHECK_THROWS(line.splice(2, 0));
+        CHECK_THROWS(line[2, 0]);
     }
 
     SECTION("9 value set 3 splices with constraint") {
 
         auto line = fabko::logic::set(9);
 
-        auto view_set_1 = line.splice(0, 3);
+        auto view_set_1 = line[0, 3];
         view_set_1.add_or_constraint({"2", "4", "6", "8"});
 
-        auto view_set_2 = line.splice(3, 6);
+        auto view_set_2 = line[3, 6];
         view_set_1.add_and_constraint({"2"});
         view_set_1.add_or_constraint({"2", "1", "3", "5"});
 
-        auto view_set_3 = line.splice(6, 9);
+        auto view_set_3 = line[6, 9];
 
         // all those options are per-mutable. And thus x^2*y options is possible
         // with x the number of variable and y the number of possible assignment
