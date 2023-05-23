@@ -15,6 +15,7 @@
 #include <variant>
 
 #include <fmt/format.h>
+#include <ranges>
 #include <sat/solver.hh>
 
 #include "common/visitor_utils.hh"
@@ -105,15 +106,38 @@ op::operand formula::get_op() const {
     return _op;
 }
 
-set::set(std::size_t var_number) {
+set::set(std::size_t var_number)
+: _set_var(var_number) {
+    for (std::size_t i = 0; i < var_number; ++i) {
+        _set_var[i].token = fmt::format("{}", i);
+    }
 }
 
-variable& set::operator[](unsigned index) {
-    return _set_var[index];
-}
+//variable& set::operator[](unsigned index) {
+//    return _set_var[index];
+//}
 
 std::span<variable> set::operator[](unsigned index_begin, unsigned index_end) {
     return std::span<variable>(_set_var.begin() + static_cast<long>(index_begin),
                                _set_var.begin() + static_cast<long>(index_end));
+}
+
+//variable &conj(variable&, std::vector<std::string> token) {
+//    fmt::print("dood");
+//}
+//
+//variable &disj(variable&, std::vector<std::string> token) {
+//    fmt::print("dood");
+//}
+
+variable &conj(std::span<variable> vars, std::vector<std::string> token) {
+    fmt::print("dada :: conj {}\n", std::size(vars));
+    for (const auto& variable : vars) {
+        fmt::print(" -- {}\n", variable.token);
+    }
+}
+
+variable &disj(std::span<variable> vars, std::vector<std::string> token) {
+    fmt::print("dada :: dis\n");
 }
 } // namespace fabko::logic

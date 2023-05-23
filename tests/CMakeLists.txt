@@ -34,7 +34,7 @@ target_sources(test_core
         core/sat/test_basic_sat.cpp
         core/sat/test_sat_coloring.cpp
         )
-target_compile_definitions(test_core PUBLIC cxx_std_23)
+target_compile_definitions(test_core PUBLIC cxx_std_2b)
 target_compile_definitions(test_core
         PRIVATE -DTEST_ASSETS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/_assets")
 target_link_libraries(test_core
