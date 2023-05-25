@@ -29,11 +29,11 @@ namespace fabko::logic {
 
 struct variable {
 
-//    friend variable &conj(variable&, std::vector<std::string> token);
-//    friend variable &disj(variable& var, std::vector<std::string> token);
+    friend variable &conj(variable&, std::vector<std::string> token);
+    friend variable &disj(variable& var, std::vector<std::string> token);
 
-    friend variable conj(std::span<variable>, std::vector<std::string> token);
-    friend variable disj(std::span<variable>, std::vector<std::string> token);
+    friend std::span<variable> conj(std::span<variable>, std::vector<std::string> token);
+    friend std::span<variable> disj(std::span<variable>, std::vector<std::string> token);
 
     std::string token;
 };
@@ -80,7 +80,7 @@ class set {
   public:
     explicit set(std::size_t var_number);
 
-//    variable &operator[](unsigned index);
+    variable &operator[](unsigned index);
     std::span<variable> operator[](unsigned index_begin, unsigned index_end);
 
   private:

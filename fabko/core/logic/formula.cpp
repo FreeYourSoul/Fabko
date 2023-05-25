@@ -18,6 +18,7 @@
 #include <ranges>
 #include <sat/solver.hh>
 
+#include "common/exception.hh"
 #include "common/visitor_utils.hh"
 #include "formula.hh"
 
@@ -113,29 +114,33 @@ set::set(std::size_t var_number)
     }
 }
 
-//variable& set::operator[](unsigned index) {
-//    return _set_var[index];
-//}
+variable& set::operator[](unsigned index) {
+    return _set_var[index];
+}
 
 std::span<variable> set::operator[](unsigned index_begin, unsigned index_end) {
+    fabko_assert(index_begin < index_end,
+                 fmt::format("operator[] error : index_begin ({}) should be smaller that index_end ({})", index_begin, index_end));
+    fabko_assert(index_end <= _set_var.size(),
+                 fmt::format("operator[] error : index_begin ({}) and index_end ({}) should be in acceptable range of the set", index_begin, index_end));
     return {
         _set_var.begin() + static_cast<long>(index_begin),
         _set_var.begin() + static_cast<long>(index_end)};
 }
 
-//variable &conj(variable&, std::vector<std::string> token) {
-//    fmt::print("dood");
-//}
-//
-//variable &disj(variable&, std::vector<std::string> token) {
-//    fmt::print("dood");
-//}
-
-variable conj(std::span<variable> vars, std::vector<std::string> token) {
-    return variable{"conj"};
+variable& conj(variable& var, std::vector<std::string> token) {
+    return var;
 }
 
-variable disj(std::span<variable> vars, std::vector<std::string> token) {
-    fmt::print("dada :: dis\n");
+variable& disj(variable& var, std::vector<std::string> token) {
+    return var;
+}
+
+std::span<variable> conj(std::span<variable> vars, std::vector<std::string> token) {
+    return vars;
+}
+
+std::span<variable> disj(std::span<variable> vars, std::vector<std::string> token) {
+    return vars;
 }
 } // namespace fabko::logic
