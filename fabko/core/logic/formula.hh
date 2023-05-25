@@ -32,8 +32,8 @@ struct variable {
 //    friend variable &conj(variable&, std::vector<std::string> token);
 //    friend variable &disj(variable& var, std::vector<std::string> token);
 
-    friend variable &conj(std::span<variable>, std::vector<std::string> token);
-    friend variable &disj(std::span<variable>, std::vector<std::string> token);
+    friend variable conj(std::span<variable>, std::vector<std::string> token);
+    friend variable disj(std::span<variable>, std::vector<std::string> token);
 
     std::string token;
 };

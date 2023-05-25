@@ -12,6 +12,7 @@
 
 
 #include <catch2/catch_test_macros.hpp>
+#include <fmt/core.h>
 
 #include "logic/formula.hh"
 
@@ -31,9 +32,7 @@ TEST_CASE("test_formula :: basic test on set") {
         }
 
         SECTION("with restriction") {
-            auto dada = line[0, 1];
-
-            conj(dada, std::vector{"B"s});
+            conj(line[0, 1], std::vector{"B"s});
             // BAC
             // BCA
             // only (3 - 1)^1*1 = 2 options -- -1 because one variable is fixed

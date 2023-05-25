@@ -107,7 +107,7 @@ op::operand formula::get_op() const {
 }
 
 set::set(std::size_t var_number)
-: _set_var(var_number) {
+    : _set_var(var_number) {
     for (std::size_t i = 0; i < var_number; ++i) {
         _set_var[i].token = fmt::format("{}", i);
     }
@@ -118,8 +118,9 @@ set::set(std::size_t var_number)
 //}
 
 std::span<variable> set::operator[](unsigned index_begin, unsigned index_end) {
-    return std::span<variable>(_set_var.begin() + static_cast<long>(index_begin),
-                               _set_var.begin() + static_cast<long>(index_end));
+    return {
+        _set_var.begin() + static_cast<long>(index_begin),
+        _set_var.begin() + static_cast<long>(index_end)};
 }
 
 //variable &conj(variable&, std::vector<std::string> token) {
@@ -130,14 +131,11 @@ std::span<variable> set::operator[](unsigned index_begin, unsigned index_end) {
 //    fmt::print("dood");
 //}
 
-variable &conj(std::span<variable> vars, std::vector<std::string> token) {
-    fmt::print("dada :: conj {}\n", std::size(vars));
-    for (const auto& variable : vars) {
-        fmt::print(" -- {}\n", variable.token);
-    }
+variable conj(std::span<variable> vars, std::vector<std::string> token) {
+    return variable{"conj"};
 }
 
-variable &disj(std::span<variable> vars, std::vector<std::string> token) {
+variable disj(std::span<variable> vars, std::vector<std::string> token) {
     fmt::print("dada :: dis\n");
 }
 } // namespace fabko::logic
