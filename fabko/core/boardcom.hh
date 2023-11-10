@@ -29,6 +29,7 @@ enum class request_process : int {
   INIT        = 0,
   IN_PROGRESS = 1,
   DONE        = 2,
+  WONT_DO     = 3,
 };
 
 struct propositions {

@@ -23,7 +23,7 @@
 #include <fmt/format.h>
 
 #include <common/exception.hh>
-#include <sat/solver.hh>
+#include <logic/sat/solver.hh>
 
 namespace sr = std::ranges;
 

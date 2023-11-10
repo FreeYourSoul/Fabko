@@ -34,8 +34,8 @@ struct blackboard::blackboard_impl {
 blackboard::~blackboard() = default;
 
 template<com::c_board_com BoardCommunication>
-blackboard::blackboard(BoardCommunication bc, com::request initial_request)
-    : _pimpl(std::move<BoardCommunication>(bc), {.initial_request = std::move(initial_request)}) {
+blackboard::blackboard(BoardCommunication&& bc, com::request initial_request)
+    : _pimpl(std::forward<BoardCommunication>(bc), {.initial_request = std::move(initial_request)}) {
 }
 
 com::propositions blackboard::request_propositions(const com::request& request) {

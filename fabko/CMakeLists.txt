@@ -18,13 +18,13 @@ target_sources(core
         core/common/string_utils.hh
         core/logic/formula.cpp
         core/logic/formula.hh
-        core/sat/dimacs_compiler.cpp
-        core/sat/dimacs_compiler.hh
-        core/sat/solver.cpp
-        core/sat/solver.hh
+        core/logic/sat/dimacs_compiler.cpp
+        core/logic/sat/dimacs_compiler.hh
+        core/logic/sat/solver.cpp
+        core/logic/sat/solver.hh
         PRIVATE
-        core/sat/helpers.hh
-        core/sat/helpers.cpp
+        core/logic/sat/helpers.hh
+        core/logic/sat/helpers.cpp
         )
 target_include_directories(core
         PRIVATE

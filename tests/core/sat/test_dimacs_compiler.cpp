@@ -17,7 +17,7 @@
 
 #include "common/string_utils.hh"
 #include <common/logging.hh>
-#include <sat/dimacs_compiler.hh>
+#include <logic/sat/dimacs_compiler.hh>
 
 namespace {
 

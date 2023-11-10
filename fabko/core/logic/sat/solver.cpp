@@ -21,7 +21,7 @@
 
 #include <common/logging.hh>
 #include <common/ranges_to.hh>
-#include <sat/assignment_bitset.hh>
+#include <logic/sat/assignment_bitset.hh>
 
 #include "solver.hh"
 

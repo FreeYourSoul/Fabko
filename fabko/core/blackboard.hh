@@ -23,9 +23,9 @@
 namespace fabko {
 
 struct blackboard_data {
-  std::string id{};
-  com::request initial_request;
-  com::propositions propositions{};
+    std::string id{};
+    com::request initial_request;
+    com::propositions propositions{};
 };
 
 /**
@@ -34,20 +34,20 @@ struct blackboard_data {
  */
 class blackboard {
 
-private:
-  struct blackboard_impl;
+  private:
+    struct blackboard_impl;
 
-public:
-  ~blackboard();
+  public:
+    ~blackboard();
 
-  template<com::c_board_com BoardCommunication>
-  explicit blackboard(BoardCommunication bc, com::request initial_request);
+    template<com::c_board_com BoardCommunication>
+    explicit blackboard(BoardCommunication&& bc, com::request initial_request);
 
-  [[nodiscard]] com::propositions request_propositions(const com::request& request);
-  [[nodiscard]] com::decision_status submit_decision(const std::string& decision);
+    [[nodiscard]] com::propositions request_propositions(const com::request& request);
+    [[nodiscard]] com::decision_status submit_decision(const std::string& decision);
 
-private:
-  std::unique_ptr<blackboard_impl> _pimpl;
+  private:
+    std::unique_ptr<blackboard_impl> _pimpl;
 };
 
 } // namespace fabko

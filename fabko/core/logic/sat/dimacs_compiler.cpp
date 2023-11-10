@@ -14,7 +14,7 @@
 
 #include <common/exception.hh>
 #include <common/logging.hh>
-#include <sat/solver.hh>
+#include <logic/sat/solver.hh>
 
 #include "common/string_utils.hh"
 #include "dimacs_compiler.hh"

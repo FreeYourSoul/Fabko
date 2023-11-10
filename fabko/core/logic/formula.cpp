@@ -16,7 +16,7 @@
 
 #include <fmt/format.h>
 #include <ranges>
-#include <sat/solver.hh>
+#include <logic/sat/solver.hh>
 
 #include "common/exception.hh"
 #include "common/visitor_utils.hh"

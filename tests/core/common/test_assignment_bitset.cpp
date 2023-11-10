@@ -12,8 +12,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "sat/assignment_bitset.hh"
-#include "sat/solver.hh"
+#include "logic/sat/assignment_bitset.hh"
 
 TEST_CASE("bitset") {
   std::bitset<5> d{};

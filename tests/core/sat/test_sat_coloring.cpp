@@ -13,7 +13,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <fmt/core.h>
-#include <sat/solver.hh>
+#include <logic/sat/solver.hh>
 
 /**
  * Representation of the 4 coloring problem: https://en.wikipedia.org/wiki/Four_color_theorem

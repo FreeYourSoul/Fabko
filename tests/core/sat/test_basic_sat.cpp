@@ -16,7 +16,7 @@
 #include <set>
 
 #include <fmt/core.h>
-#include <sat/solver.hh>
+#include <logic/sat/solver.hh>
 
 TEST_CASE("test_literal_properties") {
   //
