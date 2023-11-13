@@ -10,6 +10,7 @@ target_sources(core
         core/blackboard.hh
         core/boardcom.cpp
         core/boardcom.hh
+        core/acl.hh
         core/common/logging.cpp
         core/common/logging.hh
         core/common/exception.hh

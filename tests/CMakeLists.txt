@@ -26,6 +26,7 @@ catch_discover_tests(test_datastore)
 add_executable(test_core)
 target_sources(test_core
         PRIVATE
+        core/test_acl.cpp
         core/common/test_assignment_bitset.cpp
         core/common/test_algo_utils.cpp
         core/sat/test_formula.cpp

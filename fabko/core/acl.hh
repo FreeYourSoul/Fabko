@@ -13,9 +13,11 @@
 #pragma once
 
 #include <optional>
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 #include <vector>
+
+#include <nlohmann/json.hpp>
 
 namespace fabko::acl {
 
@@ -66,7 +68,7 @@ enum class message_type : unsigned {
     subscribe        = 18,
 
     // A macro action for sender to inform the receiver the object which corresponds to a definite descriptor (e.g. a name).
-    inform_ref       = 19, // macro act
+    inform_ref = 19, // macro act
 };
 
 constexpr bool is_negotiation(message_type type) {
@@ -94,7 +96,7 @@ constexpr bool is_error_handling(message_type type) {
 }
 
 struct acc {
-    unsigned id;
+    unsigned identifier;
 
     // communication protocol : which can be used in other to define different ways to communicate between the agents
     std::string protocol;
@@ -103,13 +105,33 @@ struct acc {
     // the sender fill the reply_with field in order to have an expectation for the receiver to reply with a certain data.
     // this can be used in order to recognise a specific thread of communication out of a single agent communication channel
     std::optional<std::string> reply_with = std::nullopt;
-    std::optional<std::string> reply_by = std::nullopt;
+    std::optional<std::string> reply_by   = std::nullopt;
 
+    friend void to_json(nlohmann::json& serializer, const acc& obj) {
+        serializer["protocol"] = obj.protocol;
+        if (obj.reply_with.has_value()) {
+            serializer["reply_with"] = obj.reply_with.value();
+        }
+        if (obj.reply_by.has_value()) {
+            serializer["reply_by"] = obj.reply_by.value();
+        }
+    }
+
+    friend void from_json(const nlohmann::json& serializer, acc& obj) {
+        serializer.at("protocol").get_to(obj.protocol);
+        if (obj.reply_with.has_value()) {
+            obj.reply_with = serializer.at("reply_with").get<std::string>();
+        }
+        if (obj.reply_by.has_value()) {
+            obj.reply_by = serializer.at("reply_by").get<std::string>();
+        }
+    }
 };
 
 template<typename MessageContent>
 struct message {
-    message_type type;
+
+    message_type type = message_type::not_understood;
     std::string sender;
     std::vector<std::string> receivers;
 
@@ -125,6 +147,83 @@ struct message {
 
     // conversation information that could be transmitted in order to initiate or continue an Agent Communication Channel (ACC)
     std::optional<acc> communication = std::nullopt;
+
+    friend void to_json(nlohmann::json& serializer, const message& obj) {
+        serializer["type"]      = obj.type;
+        serializer["sender"]    = obj.sender;
+        serializer["receivers"] = obj.receivers;
+        serializer["content"]   = obj.content;
+        serializer["ontology"]  = obj.ontology;
+        if (obj.communication.has_value()) {
+            serializer["communication"] = obj.communication.value();
+        }
+    }
+
+    friend void from_json(const nlohmann::json& serializer, message& obj) {
+        serializer.at("type").get_to(obj.type);
+        serializer.at("sender").get_to(obj.sender);
+        serializer.at("receivers").get_to(obj.receivers);
+        serializer.at("content").get_to(obj.content);
+        serializer.at("ontology").get_to(obj.ontology);
+        if (obj.communication.has_value()) {
+            obj.communication = serializer.at("communication").get<acc>();
+        }
+    }
 };
 
+using serializer = nlohmann::json;
+
+template<typename ToSerialize>
+std::vector<std::uint8_t> to_binary(ToSerialize&& to_serialize) {
+    serializer ser = std::forward<ToSerialize>(to_serialize);
+    return serializer::to_cbor(ser);
+}
+
+template<typename ToSerialize>
+std::string to_json(ToSerialize&& to_serialize) {
+    serializer ser = std::forward<ToSerialize>(to_serialize);
+    return ser.dump();
+}
+
+template<typename Serializer, typename ToDeserialize>
+    requires std::convertible_to<Serializer, std::string>
+          or std::convertible_to<Serializer, std::vector<std::uint8_t>>
+          or std::convertible_to<Serializer, serializer>
+void deserialize(Serializer&& s, ToDeserialize& into) {
+    serializer ser;
+    if constexpr (std::convertible_to<Serializer, std::vector<std::uint8_t>>) {
+        ser = ser.from_cbor(std::forward<Serializer>(s));
+    }
+    else if constexpr (std::convertible_to<Serializer, std::string>) {
+        ser = serializer::parse(std::forward<Serializer>(s));
+    }
+    else {
+        ser = std::forward<Serializer>(s);
+    }
+    ser.get_to(into);
+}
+
 } // namespace fabko::acl
+
+// optionals has to be explicitly handled through an ADL specialization in order to properly work
+namespace nlohmann {
+template<typename T>
+struct adl_serializer<std::optional<T>> {
+    static void to_json(json& j, const std::optional<T>& opt) {
+        if (opt.has_value()) {
+            j = nullptr;
+        } else {
+            j = opt.value(); // this will call adl_serializer<T>::to_json which will
+                             // find the free function to_json in T's namespace!
+        }
+    }
+
+    static void from_json(const json& j, std::optional<T>& opt) {
+        if (j.is_null()) {
+            opt = std::nullopt;
+        } else {
+            opt = j.get<T>();
+        }
+    }
+};
+} // namespace nlohmann
