@@ -96,7 +96,7 @@ constexpr bool is_error_handling(message_type type) {
 }
 
 struct acc {
-    unsigned identifier;
+    unsigned identifier{};
 
     // communication protocol : which can be used in other to define different ways to communicate between the agents
     std::string protocol;

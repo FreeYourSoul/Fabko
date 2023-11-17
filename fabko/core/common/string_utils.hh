@@ -20,7 +20,7 @@
 namespace fabko {
 
 template<typename Handler>
-void split_string(const std::string& input, const std::string& separator, Handler&& handler, int limitation = -1) {
+void split_string(std::string_view input, std::string_view separator, Handler&& handler, int limitation = -1) {
 
   std::size_t pos_start = 0;
   std::size_t pos_end;
@@ -37,7 +37,7 @@ void split_string(const std::string& input, const std::string& separator, Handle
 }
 
 template<typename Handler>
-void split_string(const std::string& input, const std::vector<std::string>& separators, Handler&& handler, int limitation = -1) {
+void split_string(std::string_view input, const std::vector<std::string_view>& separators, Handler&& handler, int limitation = -1) {
 
   std::size_t pos_start = 0;
   std::size_t pos_end;

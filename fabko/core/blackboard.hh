@@ -18,14 +18,14 @@
 #include <string>
 #include <vector>
 
-#include "boardcom.hh"
+#include "protocol/boardcom.hh"
+#include "protocol/fap_request.hh"
 
 namespace fabko {
 
 struct blackboard_data {
-    std::string id{};
-    com::request initial_request;
-    com::propositions propositions{};
+    agent_protocol::request initial_request;
+    agent_protocol::propositions propositions{};
 };
 
 /**
@@ -40,11 +40,11 @@ class blackboard {
   public:
     ~blackboard();
 
-    template<com::c_board_com BoardCommunication>
-    explicit blackboard(BoardCommunication&& bc, com::request initial_request);
+    template<agent_protocol::c_board_com BoardCommunication>
+    explicit blackboard(BoardCommunication&& bc, agent_protocol::request initial_request);
 
-    [[nodiscard]] com::propositions request_propositions(const com::request& request);
-    [[nodiscard]] com::decision_status submit_decision(const std::string& decision);
+    [[nodiscard]] agent_protocol::propositions request_propositions(const agent_protocol::request& request);
+    [[nodiscard]] agent_protocol::decision_status submit_decision(const std::string& decision);
 
   private:
     std::unique_ptr<blackboard_impl> _pimpl;

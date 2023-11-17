@@ -8,9 +8,10 @@ target_sources(core
         PUBLIC
         core/blackboard.cpp
         core/blackboard.hh
-        core/boardcom.cpp
-        core/boardcom.hh
         core/acl.hh
+        core/protocol/fap_request.hh
+        core/protocol/boardcom.cpp
+        core/protocol/boardcom.hh
         core/common/logging.cpp
         core/common/logging.hh
         core/common/exception.hh
@@ -49,13 +50,14 @@ add_library(agent OBJECT)
 target_sources(agent
         PRIVATE
         agent/agent.cpp
+        agent/action.hh
         PUBLIC
         agent/agent.hh)
 target_include_directories(agent PUBLIC
         agent
         )
-target_link_libraries(agent PRIVATE fabko::core)
 target_compile_definitions(agent PUBLIC cxx_std_23)
+target_link_libraries(agent PRIVATE fabko::core)
 add_library(fabko::agent ALIAS agent)
 
 
