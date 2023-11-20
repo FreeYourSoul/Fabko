@@ -12,11 +12,11 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include <acl.hh>
+#include <protocol/acl.hh>
 
 struct fake_content {
 
-    unsigned id;
+    unsigned id{};
     std::string name;
 
     friend void to_json(nlohmann::json& serializer, const fake_content& obj) {

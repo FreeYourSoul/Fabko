@@ -12,22 +12,14 @@
 
 #include "boardcom.hh"
 
-namespace fabko {
+namespace fabko::agent_protocol::p2p {
 
-std::string agent_protocol::p2p::instantiate_black_board(const std::string&) {
+std::string board_protocol::instantiate_black_board(const std::string&) {
     return {};
 }
 
-std::string agent_protocol::online::instantiate_black_board(const std::string&) {
+std::future<agent_protocol::propositions> board_protocol::request_propositions(const std::string&) {
     return {};
-}
-
-std::future<agent_protocol::propositions> agent_protocol::online::request_propositions(const std::string&) {
-    return {};
-}
-
-agent_protocol::decision_status agent_protocol::online::commit_decision(const std::string&) {
-    return agent_protocol::decision_status::RETRY;
 }
 
 } // namespace fabko

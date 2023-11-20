@@ -17,7 +17,7 @@
 #include <variant>
 #include <vector>
 
-#include <blackboard.hh>
+#include "blackboard.hh"
 
 namespace fabko {
 

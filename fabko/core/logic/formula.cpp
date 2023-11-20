@@ -15,8 +15,8 @@
 #include <variant>
 
 #include <fmt/format.h>
-#include <ranges>
 #include <logic/sat/solver.hh>
+#include <ranges>
 
 #include "common/exception.hh"
 #include "common/visitor_utils.hh"
@@ -128,19 +128,19 @@ std::span<variable> set::operator[](unsigned index_begin, unsigned index_end) {
         _set_var.begin() + static_cast<long>(index_end)};
 }
 
-variable& conj(variable& var, std::vector<std::string> token) {
+variable& conj(variable& var, std::vector<std::string>) {
     return var;
 }
 
-variable& disj(variable& var, std::vector<std::string> token) {
+variable& disj(variable& var, std::vector<std::string>) {
     return var;
 }
 
-std::span<variable> conj(std::span<variable> vars, std::vector<std::string> token) {
+std::span<variable> conj(std::span<variable> vars, std::vector<std::string>) {
     return vars;
 }
 
-std::span<variable> disj(std::span<variable> vars, std::vector<std::string> token) {
+std::span<variable> disj(std::span<variable> vars, std::vector<std::string>) {
     return vars;
 }
 } // namespace fabko::logic

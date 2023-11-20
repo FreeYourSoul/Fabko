@@ -13,36 +13,32 @@
 #pragma once
 
 #include <concepts>
-#include <memory>
 #include <expected>
+#include <functional>
+#include <memory>
 
 namespace fabko {
 
-template<typename action>
 class agent {
     struct impl;
 
   public:
+    template<typename action>
+        requires std::is_invocable_v<action, agent&>
+    explicit agent(action func) : _callback_on_action(std::move(func)) {}
+
     ~agent() = default;
 
-    // extract requirement of the type on a static assertion as agent symbol is not available to the compiler at the
-    // template declaration level.
-    static_assert(
-        std::is_invocable_v<action, agent&>,
-        "The action function provided to the agent has to be with the following signature: void(agent&)");
-
-
-    [[nodiscard]] std::expected<>
+    //    [[nodiscard]] std::expected<>;
 
   private:
     void execute_action() {
         _callback_on_action(*this);
     }
 
-    action _callback_on_action;
+    std::function<void(agent&)> _callback_on_action;
 
     std::unique_ptr<impl> _pimpl;
-
 };
 
 } // namespace fabko
