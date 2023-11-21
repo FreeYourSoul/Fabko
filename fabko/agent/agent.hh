@@ -16,6 +16,7 @@
 #include <expected>
 #include <functional>
 #include <memory>
+#include <thread>
 
 namespace fabko {
 
@@ -26,19 +27,24 @@ class agent {
     template<typename action>
         requires std::is_invocable_v<action, agent&>
     explicit agent(action func) : _callback_on_action(std::move(func)) {}
+    ~agent();
 
-    ~agent() = default;
-
-    //    [[nodiscard]] std::expected<>;
+    void execute();
 
   private:
-    void execute_action() {
-        _callback_on_action(*this);
-    }
+    std::function<std::vector<int>(agent&)> _callback_on_action;
 
-    std::function<void(agent&)> _callback_on_action;
+};
 
-    std::unique_ptr<impl> _pimpl;
+class agent_runner {
+
+  public:
+    void run();
+    void add_agent(agent&& agent);
+
+  private:
+    std::jthread _runner_thread;
+    std::vector<agent> _agents;
 };
 
 } // namespace fabko

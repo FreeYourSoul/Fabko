@@ -10,15 +10,15 @@
 // the APGL license is applying.
 //
 
-#include "boardcom.hh"
+#include "agent_com.hh"
 
 namespace fabko::agent_protocol::p2p {
 
-std::string board_protocol::instantiate_black_board(const std::string&) {
+std::string agent_com::instantiate_black_board(const std::string&) {
     return {};
 }
 
-std::future<agent_protocol::propositions> board_protocol::request_propositions(const std::string&) {
+std::future<agent_protocol::propositions> agent_com::request_propositions(const std::string&) {
     return {};
 }
 

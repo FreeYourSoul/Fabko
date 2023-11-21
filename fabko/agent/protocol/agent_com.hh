@@ -44,15 +44,16 @@ enum class decision_status {
  * @tparam T
  */
 template<typename T>
-concept c_board_com =
+concept c_communicate =
     requires(T a) {
         { T::make_board(request{}) } -> std::convertible_to<std::string>;
         { a.propositions(std::string{}) } -> std::convertible_to<std::future<propositions>>;
         { a.commit_decision(std::string{}) } -> std::convertible_to<decision_status>;
+        { a.commit_decision(std::string{}) } -> std::convertible_to<decision_status>;
     } && std::movable<T>;
 
 namespace p2p {
-class board_protocol {
+class agent_com {
   public:
     static std::string instantiate_black_board(const std::string&);
     std::future<propositions> request_propositions(const std::string&);
@@ -61,12 +62,12 @@ class board_protocol {
 } // namespace p2p
 
 namespace local {
-class board_protocol {
+class agent_com {
     struct impl;
 
   public:
-    ~board_protocol();
-    board_protocol();
+    ~agent_com();
+    agent_com();
 
     static std::string instantiate_black_board(const std::string&);
     std::future<propositions> request_propositions(const std::string&);
@@ -77,6 +78,6 @@ class board_protocol {
  };
 } // namespace local
 
-using board_protocol = std::variant<local::board_protocol, p2p::board_protocol>;
+using agent_com = std::variant<local::agent_com, p2p::agent_com>;
 
 } // namespace fabko::agent_protocol

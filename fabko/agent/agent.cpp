@@ -10,25 +10,37 @@
 // the APGL license is applying.
 //
 
-#include <array>
-
 #include "agent.hh"
-
-#include "protocol/fap_request.hh"
+#include <thread>
 
 namespace fabko {
 
 constexpr std::size_t MAX_QUEUED_SIZE = 10;
 
-//! implementation details of the agent
-struct impl {
-
-
-    /**
-     * list of actions that the agent is going to do. The list is ordered by priority
-     */
-    std::array<agent_protocol::request, MAX_QUEUED_SIZE> action_list;  // implementation as a ring buffer may prove beneficial
+struct agent::impl {
 
 };
 
+agent::~agent() = default;
+
+void agent_runner::run() {
+    _runner_thread.request_stop();
+    std::jthread([this](const std::stop_token& stoken) {
+        while (!stoken.stop_requested()) {
+            for (auto& agent : this->_agents) {
+                agent.execute();
+            }
+        }
+    }).swap(_runner_thread);
 }
+
+void agent_runner::add_agent(agent&& agent) {
+    _agents.emplace_back(std::move(agent));
+}
+
+void agent::execute() {
+    auto msg_return = _callback_on_action(*this);
+
+}
+
+} // namespace fabko

@@ -10,29 +10,29 @@
 
 #include <agent.hh>
 
-#include "boardcom.hh"
+#include "agent_com.hh"
 
 namespace fabko::agent_protocol::local {
 
-struct board_protocol::impl {
+struct agent_com::impl {
     std::vector<std::shared_ptr<agent>> _agent_ring;
 };
 
-board_protocol::~board_protocol() = default;
+agent_com::~agent_com() = default;
 
-std::string board_protocol::instantiate_black_board(const std::string&) {
+std::string agent_com::instantiate_black_board(const std::string&) {
     return {};
 }
 
-std::future<propositions> board_protocol::request_propositions(const std::string&) {
+std::future<propositions> agent_com::request_propositions(const std::string&) {
     return std::future<propositions>();
 }
 
-agent_protocol::decision_status board_protocol::commit_decision(const std::string&) {
+agent_protocol::decision_status agent_com::commit_decision(const std::string&) {
     return agent_protocol::decision_status::RETRY;
 }
 
-board_protocol::board_protocol(): _impl(std::make_unique<impl>()) {
+agent_com::agent_com(): _impl(std::make_unique<impl>()) {
 }
 
 }

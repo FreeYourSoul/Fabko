@@ -27,47 +27,72 @@ namespace fabko::acl {
 //   http://www.fipa.org/specs/fipa00018/OC00018.pdf
 
 enum class message_type : unsigned {
-    // The action of accepting a previously submitted proposal to perform an action.
+    //! The action of accepting a previously submitted proposal to perform an action.
     accept_proposal = 0,
 
-    // The action of agreeing to perform some action, possibly in the future.
+    //! The action of agreeing to perform some action, possibly in the future.
     agree = 1,
 
-    // The action of cancelling some previously requested action which has temporal extent (i.e. is not instantaneous).
+    //! The action of cancelling some previously requested action which has temporal extent (i.e. is not instantaneous).
     cancel = 2,
 
-    // The action of calling for proposals to perform a given action.
+    //! The action of calling for proposals to perform a given action.
     cfp = 3,
 
-    // The sender informs the receiver that a given proposition is true, where the receiver is
-    // known to be uncertain about the proposition.
+    //! The sender informs the receiver that a given proposition is true, where the receiver is
+    //! known to be uncertain about the proposition.
     confirm = 4,
 
-    // The sender informs the receiver that a given proposition is false, where the receiver
-    // is known to believe, or believe it likely that, the proposition is true.
+    //! The sender informs the receiver that a given proposition is false, where the receiver
+    //! is known to believe, or believe it likely that, the proposition is true.
     disconfirm = 5,
 
-    // The action of telling another agent that an action was attempted but the attempt failed.
+    //! The action of telling another agent that an action was attempted but the attempt failed.
     failure = 6,
 
-    // The sender informs the receiver that a given proposition is true.
+    //! The sender informs the receiver that a given proposition is true.
     inform = 7,
 
-    // A macro action for the agent of the action to inform the recipient whether a proposition is true
+    //! A macro action for the agent of the action to inform the recipient whether a proposition is true
     inform_if = 8,
 
+    //! The sender of the act (e.g. i) informs the receiver (e.g. j) that it perceived that j performed some action, but that
+    //! i did not understand what j just did. A particular common case is that i tells j that i did not understand the message
+    //! that j has just sent to i.
     not_understood   = 9,
+
+    //! The action of submitting a proposal to perform a certain action, given certain
+    //! preconditions.
     propose          = 10,
+
+    //! The action of asking another agent whether or not a given proposition is true.
     query_if         = 11, // macro act
+
+    //! The action of asking another agent for the object referred to by an expression.
     query_ref        = 12,
+
+    //! The action of refusing to perform a given action, and explaining the reason for the refusal.
     refuse           = 13,
+
+    //! The action of rejecting a proposal to perform some action during a negotiation.
     reject_proposal  = 14,
+
+    //! The sender requests the receiver to perform some action.
+    //! One important class of uses of the request act is to request the receiver to perform another communicative act.
     request          = 15,
+
+    //! The sender wants the receiver to perform some action when some given proposition becomes true.
     request_when     = 16,
+
+    //! The sender wants the receiver to perform some action as soon as some proposition becomes true and thereafter
+    //! each time the proposition becomes true again.
     request_whenever = 17,
+
+    //! The act of requesting a persistent intention to notify the sender of the value of a reference, and to notify again
+    //! whenever the object identified by the reference changes.
     subscribe        = 18,
 
-    // A macro action for sender to inform the receiver the object which corresponds to a definite descriptor (e.g. a name).
+    //! A macro action for sender to inform the receiver the object which corresponds to a definite descriptor (e.g. a name).
     inform_ref = 19, // macro act
 };
 
@@ -128,7 +153,6 @@ struct acc {
     }
 };
 
-template<typename MessageContent>
 struct message {
 
     message_type type = message_type::not_understood;
@@ -139,7 +163,8 @@ struct message {
     // of the message or just a metadata bank for the message itself (time sent etc..)
     std::unordered_map<std::string, std::string> envelope;
 
-    MessageContent content;
+    // payload content
+    std::string content;
 
     // define a domain of application the message is for. An agent receiving a message coming from a not understood ontology should
     // either learn from it if it has something to gain from it. Or discard the message accordingly.

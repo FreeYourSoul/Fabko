@@ -6,20 +6,20 @@ cmake_minimum_required(VERSION 3.22)
 add_library(core STATIC)
 target_sources(core
         PUBLIC
-        core/common/logging.cpp
         core/common/logging.hh
         core/common/exception.hh
         core/common/ranges_to.hh
         core/common/visitor_utils.hh
         core/common/string_utils.hh
         # SAT solving logic (not sure its ever going to be useful)
-        core/logic/formula.cpp
         core/logic/formula.hh
-        core/logic/sat/dimacs_compiler.cpp
         core/logic/sat/dimacs_compiler.hh
-        core/logic/sat/solver.cpp
         core/logic/sat/solver.hh
         PRIVATE
+        core/common/logging.cpp
+        core/logic/formula.cpp
+        core/logic/sat/solver.cpp
+        core/logic/sat/dimacs_compiler.cpp
         core/logic/sat/helpers.hh
         core/logic/sat/helpers.cpp
 )
@@ -49,13 +49,13 @@ target_sources(agent
         agent/action.hh
         agent/protocol/acl.hh
         agent/protocol/fap_request.hh
-        agent/protocol/boardcom.hh
+        agent/protocol/agent_com.hh
         PRIVATE
         agent/agent.cpp
         agent/blackboard.cpp
         agent/blackboard.hh
-        agent/protocol/boardcom_local.cpp
-        agent/protocol/boardcom_p2p.cpp
+        agent/protocol/agent_com_local.cpp
+        agent/protocol/agent_com_p2p.cpp
 )
 target_include_directories(agent PUBLIC agent)
 target_compile_definitions(agent PUBLIC cxx_std_23)

@@ -24,13 +24,13 @@ struct blackboard::blackboard_impl {
         return data;
     }
 
-    agent_protocol::board_protocol bc;
+    agent_protocol::agent_com bc;
     blackboard_data data;
 };
 
 blackboard::~blackboard() = default;
 
-template<agent_protocol::c_board_com BoardCommunication>
+template<agent_protocol::c_communicate BoardCommunication>
 blackboard::blackboard(BoardCommunication&& bc, agent_protocol::request initial_request)
     : _pimpl{std::forward<BoardCommunication>(bc), {.initial_request = std::move(initial_request)}} {
 }

@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include "protocol/boardcom.hh"
+#include "protocol/agent_com.hh"
 #include "protocol/fap_request.hh"
 
 namespace fabko {
@@ -40,7 +40,7 @@ class blackboard {
   public:
     ~blackboard();
 
-    template<agent_protocol::c_board_com BoardCommunication>
+    template<agent_protocol::c_communicate BoardCommunication>
     explicit blackboard(BoardCommunication&& bc, agent_protocol::request initial_request);
 
     [[nodiscard]] agent_protocol::propositions request_propositions(const agent_protocol::request& request);
