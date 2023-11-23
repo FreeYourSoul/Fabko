@@ -12,9 +12,9 @@
 
 #pragma once
 
+#include <string>
 #include <variant>
 #include <vector>
-#include <string>
 
 namespace fabko::agent_protocol {
 
@@ -30,9 +30,9 @@ using comparator = std::variant<lesser_or_eq, lesser_than, greater_than, greater
 enum class status : char {
     awaiting = 0,
     on_going = 1,
-    done = 2,
-    wont_do = 3,
-    cancel = 4
+    done     = 2,
+    wont_do  = 3,
+    cancel   = 4
 };
 
 struct resource {
@@ -57,4 +57,4 @@ struct request {
     std::vector<option> options;
 };
 
-}
+} // namespace fabko::agent_protocol
