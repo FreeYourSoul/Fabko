@@ -16,24 +16,29 @@
 #include <expected>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <thread>
 
 namespace fabko {
+
+// forward declaration
+namespace acl {
+struct message;
+}
 
 class agent {
     struct impl;
 
   public:
     template<typename action>
-        requires std::is_invocable_v<action, agent&>
+        requires std::is_invocable_v<action, agent&, std::optional<fabko::acl::message>>
     explicit agent(action func) : _callback_on_action(std::move(func)) {}
     ~agent();
 
     void execute();
 
   private:
-    std::function<std::vector<int>(agent&)> _callback_on_action;
-
+    std::function<std::vector<fabko::acl::message>(agent&, std::optional<fabko::acl::message>)> _callback_on_action;
 };
 
 class agent_runner {

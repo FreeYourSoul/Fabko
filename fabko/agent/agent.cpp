@@ -10,8 +10,12 @@
 // the APGL license is applying.
 //
 
-#include "agent.hh"
 #include <thread>
+#include <optional>
+
+#include <protocol/acl.hh>
+
+#include "agent.hh"
 
 namespace fabko {
 
@@ -35,12 +39,11 @@ void agent_runner::run() {
 }
 
 void agent_runner::add_agent(agent&& agent) {
-    _agents.emplace_back(std::move(agent));
+    _agents.push_back(std::move(agent));
 }
 
 void agent::execute() {
-    auto msg_return = _callback_on_action(*this);
-
+    auto msg_return = _callback_on_action(*this, std::nullopt);
 }
 
 } // namespace fabko

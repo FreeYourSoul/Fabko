@@ -164,7 +164,7 @@ struct message {
     std::unordered_map<std::string, std::string> envelope;
 
     // payload content
-    std::string content;
+    std::vector<std::uint8_t> content;
 
     // define a domain of application the message is for. An agent receiving a message coming from a not understood ontology should
     // either learn from it if it has something to gain from it. Or discard the message accordingly.
@@ -172,6 +172,19 @@ struct message {
 
     // conversation information that could be transmitted in order to initiate or continue an Agent Communication Channel (ACC)
     std::optional<acc> communication = std::nullopt;
+
+    constexpr std::string content_as_string() const {
+        std::string s{};
+        for (std::uint8_t c : content) {
+            if (c >= 32 && c <= 126) {
+                s += static_cast<char>(c);
+            }
+            else {
+                s += '.';
+            }
+        }
+        return s;
+    }
 
     friend void to_json(nlohmann::json& serializer, const message& obj) {
         serializer["type"]      = obj.type;
