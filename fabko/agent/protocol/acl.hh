@@ -4,7 +4,7 @@
 // - Subscription license for commercial usage (without requirement of licensing propagation).
 //   please contact ballandfys@protonmail.com for additional information about this subscription commercial licensing.
 //
-// Created by FyS on 23/04/23. License 2022-2023
+// Created by FyS on 23/04/23. License 2022-2024
 //
 // In the case no license has been purchased for the use (modification or distribution in any way) of the software stack
 // the APGL license is applying.
@@ -21,7 +21,7 @@
 
 namespace fabko::acl {
 
-// ACL standard is followed in a binary format (and a backward compatibility should be following afterwards on the actual
+// ACL standard is followed in a binary format (and a backward compatibility should be following afterward on the actual
 // textual standard:
 // reference to the standard used for the Agent Communication Language (ACL):
 //   http://www.fipa.org/specs/fipa00018/OC00018.pdf
@@ -177,7 +177,7 @@ struct message {
         std::string s{};
         for (std::uint8_t c : content) {
             if (c >= 32 && c <= 126) {
-                s += static_cast<char>(c);
+                s += static_cast<char>(c);  
             }
             else {
                 s += '.';

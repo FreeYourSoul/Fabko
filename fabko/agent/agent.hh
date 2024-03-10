@@ -4,7 +4,7 @@
 // - Subscription license for commercial usage (without requirement of licensing propagation).
 //   please contact ballandfys@protonmail.com for additional information about this subscription commercial licensing.
 //
-// Created by FyS on 23/04/23. License 2022-2023
+// Created by FyS on 23/04/23. License 2022-2024
 //
 // In the case no license has been purchased for the use (modification or distribution in any way) of the software stack
 // the APGL license is applying.
@@ -26,6 +26,9 @@ namespace acl {
 struct message;
 }
 
+/**
+ * @brief agent
+ */
 class agent {
     struct impl;
 
@@ -41,6 +44,9 @@ class agent {
     std::function<std::vector<fabko::acl::message>(agent&, std::optional<fabko::acl::message>)> _callback_on_action;
 };
 
+/**
+ * @brief agent_runner
+ */
 class agent_runner {
 
   public:

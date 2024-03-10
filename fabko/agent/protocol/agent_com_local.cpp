@@ -3,7 +3,7 @@
 // - Subscription license for commercial usage (without requirement of licensing propagation).
 //   please contact ballandfys@protonmail.com for additional information about this subscription commercial licensing.
 //
-// Created by FyS on 23/04/23. License 2022-2023
+// Created by FyS on 23/04/23. License 2022-2024
 //
 // In the case no license has been purchased for the use (modification or distribution in any way) of the software stack
 // the APGL license is applying.
@@ -20,15 +20,15 @@ struct agent_com::impl {
 
 agent_com::~agent_com() = default;
 
-std::string agent_com::instantiate_black_board(const std::string&) {
+std::string agent_com::instantiate_blackboard(const acl::message&) {
     return {};
 }
 
-std::future<propositions> agent_com::request_propositions(const std::string&) {
+std::future<propositions> agent_com::request_propositions(const acl::message&) {
     return std::future<propositions>();
 }
 
-agent_protocol::decision_status agent_com::commit_decision(const std::string&) {
+agent_protocol::decision_status agent_com::commit_decision(const acl::message&) {
     return agent_protocol::decision_status::RETRY;
 }
 
