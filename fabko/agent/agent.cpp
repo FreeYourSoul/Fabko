@@ -10,8 +10,8 @@
 // the APGL license is applying.
 //
 
-#include <thread>
 #include <optional>
+#include <thread>
 
 #include <protocol/acl.hh>
 
@@ -22,7 +22,6 @@ namespace fabko {
 static constexpr std::size_t MAX_QUEUED_SIZE = 10;
 
 struct agent::impl {
-
 };
 
 agent::~agent() = default;
@@ -33,6 +32,7 @@ void agent_runner::run() {
         while (!token.stop_requested()) {
             for (auto& agent : this->_agents) {
                 agent.execute();
+                std::this_thread::sleep_for(std::chrono::milliseconds{10});
             }
         }
     }).swap(_runner_thread);
@@ -43,7 +43,10 @@ void agent_runner::add_agent(agent&& agent) {
 }
 
 void agent::execute() {
-    auto msg_return = _callback_on_action(*this, std::nullopt);
+    const auto msg_return = _callback_on_action(*this, std::nullopt);
+    for (const auto& msg : msg_return) {
+        // todo : send message back
+    }
 }
 
 } // namespace fabko

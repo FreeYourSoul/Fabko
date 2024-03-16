@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "blackboard.hh"
 #include <concepts>
 #include <expected>
 #include <functional>
@@ -37,6 +38,11 @@ class agent {
         requires std::is_invocable_v<action, agent&, std::optional<fabko::acl::message>>
     explicit agent(action func) : _callback_on_action(std::move(func)) {}
     ~agent();
+
+    agent(const agent&)                = delete;
+    agent(agent&&) noexcept            = default;
+    agent& operator=(const agent&)     = delete;
+    agent& operator=(agent&&) noexcept = default;
 
     void execute();
 

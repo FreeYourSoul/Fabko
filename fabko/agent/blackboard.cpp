@@ -18,7 +18,7 @@ namespace fabko {
 
 struct blackboard::blackboard_impl {
 
-    blackboard_data instantiate_black_board(const std::string& request) {
+    blackboard_data instantiate_black_board(const acl::message& request) {
         std::visit(
             overloaded{[&request](auto& b) -> std::string { return b.instantiate_blackboard(request); }}, bc);
         return data;
