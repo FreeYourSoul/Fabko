@@ -31,11 +31,9 @@ struct message;
  * @brief agent
  */
 class agent {
-    struct impl;
-
   public:
     template<typename action>
-        requires std::is_invocable_v<action, agent&, std::optional<fabko::acl::message>>
+        requires std::is_invocable_v<action, std::optional<fabko::acl::message>>
     explicit agent(action func) : _callback_on_action(std::move(func)) {}
     ~agent();
 
@@ -47,7 +45,7 @@ class agent {
     void execute();
 
   private:
-    std::function<std::vector<fabko::acl::message>(agent&, std::optional<fabko::acl::message>)> _callback_on_action;
+    std::function<std::vector<fabko::acl::message>(std::optional<fabko::acl::message>)> _callback_on_action;
 };
 
 /**

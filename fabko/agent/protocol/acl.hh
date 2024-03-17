@@ -59,30 +59,30 @@ enum class message_type : unsigned {
     //! The sender of the act (e.g. i) informs the receiver (e.g. j) that it perceived that j performed some action, but that
     //! i did not understand what j just did. A particular common case is that i tells j that i did not understand the message
     //! that j has just sent to i.
-    not_understood   = 9,
+    not_understood = 9,
 
     //! The action of submitting a proposal to perform a certain action, given certain
     //! preconditions.
-    propose          = 10,
+    propose = 10,
 
     //! The action of asking another agent whether or not a given proposition is true.
-    query_if         = 11, // macro act
+    query_if = 11, // macro act
 
     //! The action of asking another agent for the object referred to by an expression.
-    query_ref        = 12,
+    query_ref = 12,
 
     //! The action of refusing to perform a given action, and explaining the reason for the refusal.
-    refuse           = 13,
+    refuse = 13,
 
     //! The action of rejecting a proposal to perform some action during a negotiation.
-    reject_proposal  = 14,
+    reject_proposal = 14,
 
     //! The sender requests the receiver to perform some action.
     //! One important class of uses of the request act is to request the receiver to perform another communicative act.
-    request          = 15,
+    request = 15,
 
     //! The sender wants the receiver to perform some action when some given proposition becomes true.
-    request_when     = 16,
+    request_when = 16,
 
     //! The sender wants the receiver to perform some action as soon as some proposition becomes true and thereafter
     //! each time the proposition becomes true again.
@@ -90,7 +90,7 @@ enum class message_type : unsigned {
 
     //! The act of requesting a persistent intention to notify the sender of the value of a reference, and to notify again
     //! whenever the object identified by the reference changes.
-    subscribe        = 18,
+    subscribe = 18,
 
     //! A macro action for sender to inform the receiver the object which corresponds to a definite descriptor (e.g. a name).
     inform_ref = 19, // macro act
@@ -121,14 +121,15 @@ constexpr bool is_error_handling(message_type type) {
 }
 
 struct acc {
+    //! identifier of the conversation (identify the blackboard number)
     unsigned identifier{};
 
-    // communication protocol : which can be used in other to define different ways to communicate between the agents
+    //! communication protocol : which can be used in other to define different ways to communicate between the agents
     std::string protocol;
 
-    // reply_by / reply_with is a protocol agnostic way to handle communication between a sender and a receiver.
-    // the sender fill the reply_with field in order to have an expectation for the receiver to reply with a certain data.
-    // this can be used in order to recognise a specific thread of communication out of a single agent communication channel
+    //! reply_by / reply_with is a protocol agnostic way to handle communication between a sender and a receiver.
+    //! the sender fill the reply_with field in order to have an expectation for the receiver to reply with a certain data.
+    //! this can be used in order to recognise a specific thread of communication out of a single agent communication channel
     std::optional<std::string> reply_with = std::nullopt;
     std::optional<std::string> reply_by   = std::nullopt;
 
@@ -159,30 +160,24 @@ struct message {
     std::string sender;
     std::vector<std::string> receivers;
 
-    // can be used as a metadata holder for the message. Depending on the protocol used. The envelope can be a crucial header part
-    // of the message or just a metadata bank for the message itself (time sent etc..)
+    //! can be used as a metadata holder for the message. Depending on the protocol used. The envelope can be a crucial header part
+    //! of the message or just a metadata bank for the message itself (time sent etc..)
     std::unordered_map<std::string, std::string> envelope;
 
-    // payload content
-    std::vector<std::uint8_t> content;
+    //! payload content
+    std::vector<std::byte> content;
 
-    // define a domain of application the message is for. An agent receiving a message coming from a not understood ontology should
-    // either learn from it if it has something to gain from it. Or discard the message accordingly.
+    //! define a domain of application the message is for. An agent receiving a message coming from a not understood ontology should
+    //! either learn from it if it has something to gain from it. Or discard the message accordingly.
     std::string ontology;
 
-    // conversation information that could be transmitted in order to initiate or continue an Agent Communication Channel (ACC)
+    //! conversation information that could be transmitted in order to initiate or continue an Agent Communication Channel (ACC)
     std::optional<acc> communication = std::nullopt;
 
     constexpr std::string content_as_string() const {
-        std::string s{};
-        for (std::uint8_t c : content) {
-            if (c >= 32 && c <= 126) {
-                s += static_cast<char>(c);  
-            }
-            else {
-                s += '.';
-            }
-        }
+        std::string s;
+        std::transform(content.begin(), content.end(), std::back_inserter(s), //
+                       [](std::byte c) { return static_cast<char>(c); });
         return s;
     }
 
@@ -231,11 +226,9 @@ void deserialize(Serializer&& s, ToDeserialize& into) {
     serializer ser;
     if constexpr (std::convertible_to<Serializer, std::vector<std::uint8_t>>) {
         ser = ser.from_cbor(std::forward<Serializer>(s));
-    }
-    else if constexpr (std::convertible_to<Serializer, std::string>) {
+    } else if constexpr (std::convertible_to<Serializer, std::string>) {
         ser = serializer::parse(std::forward<Serializer>(s));
-    }
-    else {
+    } else {
         ser = std::forward<Serializer>(s);
     }
     ser.get_to(into);

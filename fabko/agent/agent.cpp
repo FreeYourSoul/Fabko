@@ -21,9 +21,6 @@ namespace fabko {
 
 static constexpr std::size_t MAX_QUEUED_SIZE = 10;
 
-struct agent::impl {
-};
-
 agent::~agent() = default;
 
 void agent_runner::run() {
