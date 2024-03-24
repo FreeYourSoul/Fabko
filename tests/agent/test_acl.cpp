@@ -2,7 +2,7 @@
 // - AGPL
 // or
 // - Subscription license for commercial usage (without requirement of licensing propagation).
-//   please contact ballandfys@protonmail.com for additional information about this subscription commercial licensing.
+//   please contact ballandfys@pronmail.com for additional information about this subscription commercial licensing.
 //
 // Created by FyS on 10/11/2023. License 2022-2024
 //
@@ -92,7 +92,6 @@ TEST_CASE("ACL serialization / deserialization") {
     } // End section : de/serialize in binary
 
 } // End TestCase : ACL serialization / deserialization
-
 
 #include <iostream>
 #include <optional>
