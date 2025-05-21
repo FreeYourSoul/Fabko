@@ -35,7 +35,7 @@ Position :: struct {
   y: int@bit_size(MAX_BOARD); // the bit_size function is a function to retrieve the minimum number of bytes required for the provided number (here 8, which would be 4 bits)
 };
 
-Queen :: actor {
+Queen :: struct {
   position: Position
 };
   
@@ -44,20 +44,20 @@ queen1 alias Queen[0];
 
 // (var, var) -> { /*predicates;*/ }  : this represent a lambda predicate 
 all_of(queens, (i: int, q: Queen) -> { // all_of is a foreach loop where every condition inside must be truee for the predicate
-   q.position.x <= MAX_BOARD;
-   q.position.x >= MIN_BOARD;
+    q.position.x <= MAX_BOARD;
+    q.position.x >= MIN_BOARD;
    
-   or (
-   { i == j; }, 
-   {
-        all_of(queens, (j: int, qq: Queen) -> {
-                  q.position.x != qq.position.x; 
-                  q.position.x != qq.position.x; 
-            });
-        all_of(queens, (index: int, _: Queen) -> { // diaogonal checks
-                  a.position.x + index != q.position.x;
-                  a.position.y + index != q.position.y;
-            });  
-   });
+    all_of(queens, 
+        (j: int, qq: Queen) -> { i == j; }, // optional conditions on all_of, if predicate is filled, then the generation of constraint occurs
+        (j: int, qq: Queen) -> {
+          { q.position.x != qq.position.x;  q.position.y != qq.position.y; };     // positions cannot be equal
+          { q.position.x + j != qq.position.x;  q.position.y == qq.position.y; }; // position cannot be on the same line
+          { q.position.y + j != qq.position.y;  q.position.x == qq.position.x; }; // position cannot be on the same collumn
+          { q.position.x + j != qq.position.x;  q.position.y + j != qq.position.y; });  // no other queen on the diaogonals down right
+          { q.position.x - j != qq.position.x;  q.position.y - j != qq.position.y; });  // no other queen on the diaogonals up left
+          { q.position.x + j != qq.position.x;  q.position.y - j != qq.position.y; });  // no other queen on the diaogonals up right
+          { q.position.x - j != qq.position.x;  q.position.y + j != qq.position.y; });  // no other queen on the diaogonals down left
+    });
+});
 
 ```
