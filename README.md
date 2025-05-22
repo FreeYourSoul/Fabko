@@ -2,7 +2,7 @@
 [![Build MacOs](https://github.com/FreeYourSoul/Fabko/actions/workflows/ci-macosx.yml/badge.svg)](https://github.com/FreeYourSoul/Fabko/actions/workflows/ci-macosx.yml)
 [![Build Windows](https://github.com/FreeYourSoul/Fabko/actions/workflows/ci-windows.yml/badge.svg)](https://github.com/FreeYourSoul/Fabko/actions/workflows/ci-windows.yml)
 
-# FabKo
+# FabKo.  
 
 Free Agent Board operative is an agent / blackboard library that enables distributed resolution of a problem among Agents.
 
