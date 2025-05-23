@@ -2,7 +2,7 @@
 [![Build MacOs](https://github.com/FreeYourSoul/Fabko/actions/workflows/ci-macosx.yml/badge.svg)](https://github.com/FreeYourSoul/Fabko/actions/workflows/ci-macosx.yml)
 [![Build Windows](https://github.com/FreeYourSoul/Fabko/actions/workflows/ci-windows.yml/badge.svg)](https://github.com/FreeYourSoul/Fabko/actions/workflows/ci-windows.yml)
 
-# FabKo.  
+# FabKo
 
 Free Agent Board operative is an agent / blackboard library that enables distributed resolution of a problem among Agents.
 
@@ -53,10 +53,7 @@ all_of(queens, (i: int, q: Queen) -> { // all_of is a foreach loop where every c
           { q.position.x != qq.position.x;  q.position.y != qq.position.y; };     // positions cannot be equal
           { q.position.x + j != qq.position.x;  q.position.y == qq.position.y; }; // position cannot be on the same line
           { q.position.y + j != qq.position.y;  q.position.x == qq.position.x; }; // position cannot be on the same collumn
-          { q.position.x + j != qq.position.x;  q.position.y + j != qq.position.y; });  // no other queen on the diaogonals down right
-          { q.position.x - j != qq.position.x;  q.position.y - j != qq.position.y; });  // no other queen on the diaogonals up left
-          { q.position.x + j != qq.position.x;  q.position.y - j != qq.position.y; });  // no other queen on the diaogonals up right
-          { q.position.x - j != qq.position.x;  q.position.y + j != qq.position.y; });  // no other queen on the diaogonals down left
+          { abs(q.position.x - qq.position.x) != abs(q.position.y - qq.position.y); });  // no other queen on the diaogonals
     });
 });
 
