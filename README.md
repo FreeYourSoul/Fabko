@@ -36,7 +36,7 @@ Position :: struct {
 };
 
 Queen :: struct {
-  position: Position
+  position: Position;
 };
   
 queens: Queen[9];
