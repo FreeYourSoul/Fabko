@@ -13,6 +13,7 @@ target_sources(core
         core/common/string_utils.hh
         # SAT solving logic (not sure its ever going to be useful)
         core/logic/formula.hh
+        core/logic/sat/clause.hh
         core/logic/sat/dimacs_compiler.hh
         core/logic/sat/solver.hh
         PRIVATE
@@ -29,7 +30,7 @@ target_include_directories(core
         PUBLIC
         core
 )
-target_compile_definitions(core PUBLIC cxx_std_23)
+target_compile_definitions(core PUBLIC cxx_std_26)
 target_link_libraries(core
         PUBLIC
         RocksDB::rocksdb fmt::fmt
@@ -58,7 +59,7 @@ target_sources(agent
         agent/protocol/agent_com_p2p.cpp
 )
 target_include_directories(agent PUBLIC agent)
-target_compile_definitions(agent PUBLIC cxx_std_23)
+target_compile_definitions(agent PUBLIC cxx_std_26)
 target_link_libraries(agent PRIVATE fabko::core)
 add_library(fabko::agent ALIAS agent)
 
@@ -81,7 +82,7 @@ target_include_directories(peerboard PUBLIC
         core
 )
 target_link_libraries(peerboard PRIVATE fabko::agent fabko::core)
-target_compile_definitions(peerboard PUBLIC cxx_std_23)
+target_compile_definitions(peerboard PUBLIC cxx_std_26)
 add_library(fabko::peerboard ALIAS peerboard)
 
 
@@ -96,4 +97,4 @@ target_sources(fabko
 )
 target_include_directories(fabko PUBLIC include)
 target_link_libraries(fabko PRIVATE fabko::peerboard)
-target_compile_definitions(fabko PUBLIC cxx_std_23)
+target_compile_definitions(fabko PUBLIC cxx_std_26)

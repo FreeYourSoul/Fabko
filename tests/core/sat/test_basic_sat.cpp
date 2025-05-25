@@ -38,7 +38,7 @@ TEST_CASE("test_literal_properties") {
   CHECK(opposite != l_pos);
   CHECK(opposite == l_neg);
 
-  // check at bigger scale
+  // check at a bigger scale
   std::set<unsigned> set_check_unique{};
 
   for (unsigned v : std::ranges::views::iota(1u, 1001u)) {

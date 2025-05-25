@@ -23,7 +23,7 @@ namespace {
 
 void compare_dimacs_files(const std::filesystem::path& f1, const std::filesystem::path& f2) {
 
-  // validate existence of the two file
+  // validate the existence of the two files
   CHECK(std::filesystem::exists(f1));
   CHECK(std::filesystem::exists(f2));
 
@@ -44,8 +44,8 @@ void compare_dimacs_files(const std::filesystem::path& f1, const std::filesystem
           " -- file1::{} -- '{}'\n"
           " -- file2::{} -- '{}'\n",
           line,
-          std::string(f1), string1,
-          std::string(f2), string2);
+          f1.string(), string1,
+          f2.string(), string2);
     }
     CHECK(compare_line);
   }
@@ -64,13 +64,13 @@ TEST_CASE("test sat::solver::from_dimacs") {
   //  1 0
   // -1 0
   auto testing_dimacs_path = std::filesystem::path(TEST_ASSETS_PATH) / "test.dimacs";
-  fabko::sat::solver s     = fabko::sat::from_dimacs(testing_dimacs_path);
+  fabko::sat::solver s     = fabko::sat::from_dimacs(testing_dimacs_path.string());
 
   s.solve();
   CHECK(s.solving_status() == fabko::sat::solver_status::UNSAT);
 
   auto result_destination = std::filesystem::temp_directory_path() / "result.dimacs";
-  to_dimacs(s, result_destination);
+  to_dimacs(s, result_destination.string());
 
   compare_dimacs_files(testing_dimacs_path, result_destination);
 }

@@ -21,8 +21,8 @@
 
 namespace {
 
-inline std::pair<std::string_view, std::string_view> next_token(std::string_view buffer) {
-    const auto it_find = std::find_if(buffer.begin(), buffer.end(), [](char c) { return std::isspace(c) || c == '\n'; });
+std::pair<std::string_view, std::string_view> next_token(std::string_view buffer) {
+    const auto it_find = std::ranges::find_if(buffer, [](char c) { return std::isspace(c) || c == '\n'; });
     return {
         {buffer.begin(), it_find     },
         fabko::trim_string({it_find,        buffer.end()}
@@ -30,7 +30,7 @@ inline std::pair<std::string_view, std::string_view> next_token(std::string_view
     };
 }
 
-inline std::vector<fabko::sat::literal> parse_clause(std::size_t line_number, long nb_variable, std::string& line) {
+std::vector<fabko::sat::literal> parse_clause(std::size_t line_number, long nb_variable, std::string& line) {
     std::string token;
     std::vector<fabko::sat::literal> literals;
 
@@ -50,7 +50,7 @@ inline std::vector<fabko::sat::literal> parse_clause(std::size_t line_number, lo
     return literals;
 }
 
-inline std::pair<long, long> parse_dimacs_header(std::string& line) {
+std::pair<long, long> parse_dimacs_header(std::string& line) {
     std::string token;
 
     std::tie(token, line) = next_token(line);
@@ -76,7 +76,7 @@ solver from_dimacs(const std::string& file_path) {
     log_info("parse dimacs file {} into sat::solver", file_path);
 
     std::ifstream infile(file_path);
-    fabko_assert(bool(infile), "File doesn't exists :: an existing path should be provided to the function `from_dimacs`");
+    fabko_assert(static_cast<bool>(infile), "File doesn't exists :: an existing path should be provided to the function `from_dimacs`");
 
     std::optional<std::pair<long, long>> dimacs_header{};
     std::string line;

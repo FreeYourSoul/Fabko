@@ -64,7 +64,6 @@ class formula : public std::enable_shared_from_this<formula> {
         : _lhs(std::move(lhs)), _rhs(std::move(rhs)), _op(op) {}
 
     friend std::string express_formula_string(const formula_ptr& form);
-    friend auto apply_tseytin_transformation(const formula_ptr& form);
 
     expression get_lhs() const;
     expression get_rhs() const;

@@ -13,8 +13,11 @@
 #pragma once
 
 #include <string>
+#include <utility>
 
 #include <spdlog/spdlog.h>
+
+#include "logic/sat/clause.hh"
 
 namespace fabko {
 
@@ -28,14 +31,13 @@ spdlog::level::level_enum get_env_log();
 /**
  * Initialize the logger of fabko.
  *
- * @note Should be called before any usage of Fabko in order to ensure a proper logging of the
+ * @note Should be called before any usage of Fabko to ensure a proper logging of the
  * library when functioning.
  *
- * Some component of the fabko library initialize the logger automatically. It is however recommended
- * to make an explicit call to init_logger in order to set a logging file.
- * Only the log level can be set by environment variable.
+ * Some component of the fabko library initializes the logger automatically. It is, however, recommended to make an explicit
+ * call to init_logger to set a logging file. Only the log level can be set by the environment variable.
  *
- * The component initializing the logger if not already done are the following :
+ * The component initializing the logger if not already done is the following:
  *   - SAT solver (instantiation)
  *
  * @param level logging level at which the application is set
@@ -73,8 +75,8 @@ void log_trace(spdlog::format_string_t<Args...> log, Args... packs) {
  * @param packs parameter pack in case of formatting usage via fmt library
  */
 template<typename... Args>
-void log_debug(spdlog::format_string_t<Args...> log, Args... packs) {
-  spdlog::get(logging_details::global_logger_name)->debug(std::move(log), std::forward<Args>(packs)...);
+void log_debug(spdlog::format_string_t<Args...> log, Args&&... packs) {
+    spdlog::get(logging_details::global_logger_name)->debug(std::move(log), std::forward<Args>(packs)...);
 }
 
 /**
@@ -83,9 +85,8 @@ void log_debug(spdlog::format_string_t<Args...> log, Args... packs) {
  * @param log message to log
  * @param packs parameter pack in case of formatting usage via fmt library
  */
-template<typename... Args>
-void log_warn(spdlog::format_string_t<Args...> log, Args... packs) {
-  spdlog::get(logging_details::global_logger_name)->warn(std::move(log), std::forward<Args>(packs)...);
+template<typename... Args> void log_warn(spdlog::format_string_t<Args...> log, Args&&... packs) {
+    spdlog::get(logging_details::global_logger_name)->warn(std::move(log), std::forward<Args>(packs)...);
 }
 
 /**
@@ -94,9 +95,8 @@ void log_warn(spdlog::format_string_t<Args...> log, Args... packs) {
  * @param log message to log
  * @param packs parameter pack in case of formatting usage via fmt library
  */
-template<typename... Args>
-void log_error(spdlog::format_string_t<Args...> log, Args... packs) {
-  spdlog::get(logging_details::global_logger_name)->error(std::move(log), std::forward<Args>(packs)...);
+template<typename... Args> void log_error(spdlog::format_string_t<Args...> log, Args&&... packs) {
+    spdlog::get(logging_details::global_logger_name)->error(std::move(log), std::forward<Args>(packs)...);
 }
 
 }// namespace fabko

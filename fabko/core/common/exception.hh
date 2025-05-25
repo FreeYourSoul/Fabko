@@ -44,14 +44,26 @@ private:
   std::error_code _ec;
 };
 
-static inline void fabko_assert(bool assertion, std::error_code ec, const std::string& msg = "") {
-  if (!assertion) {
-    throw exception(ec, msg);
-  }
+static void fabko_assert(bool assertion, std::error_code ec, const std::string& msg = "") {
+
+#ifndef NDEBUG
+    if (!assertion) {
+        throw exception(ec, msg);
+    }
+#else
+    (void)assertion;
+    (void)ec;
+    (void)msg;
+#endif
 }
 
-static inline void fabko_assert(bool assertion, const std::string& msg = "") {
-  fabko_assert(assertion, {42, except_cat::fbk{}}, msg);
+static void fabko_assert(bool assertion, const std::string& msg = "") {
+#ifndef NDEBUG
+    fabko_assert(assertion, {42, except_cat::fbk{}}, msg);
+#else
+    (void)assertion;
+    (void)msg;
+#endif
 }
 
 } // namespace fabko

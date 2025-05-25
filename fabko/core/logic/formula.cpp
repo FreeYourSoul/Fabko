@@ -77,24 +77,6 @@ std::string express_formula_string(const formula_ptr& form) {
     return res;
 }
 
-auto apply_tseytin_transformation(const formula_ptr& form) {
-    std::vector<sat::clause> res;
-    visit(
-        form,
-        overloaded{
-            [&res](auto&&, visit_op_enter_flag) {},
-            [&res](auto&&, visit_op_exit_flag) {},
-            [&res](auto&& f, visit_var_flag) {},
-            [&res](auto&& f, visit_op_flag) {
-                std::visit(overloaded{
-                               [&res](op::conjunction) {},
-                               [&res](op::disjunction) {}},
-                           f->get_op());
-            },
-            [](auto&&, auto&&) {}});
-    return res;
-}
-
 expression formula::get_lhs() const {
     return _lhs;
 }

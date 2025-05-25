@@ -14,7 +14,7 @@ target_sources(test_datastore
         PRIVATE
         peerboard/test_kv_rocksdb.cpp
 )
-target_compile_definitions(test_datastore PUBLIC cxx_std_23)
+target_compile_definitions(test_datastore PUBLIC cxx_std_26)
 target_link_libraries(test_datastore
         PRIVATE Catch2::Catch2WithMain fabko::peerboard)
 
@@ -28,7 +28,7 @@ target_sources(test_agent
         PRIVATE
         agent/test_acl.cpp
 )
-target_compile_definitions(test_agent PUBLIC cxx_std_23)
+target_compile_definitions(test_agent PUBLIC cxx_std_26)
 target_link_libraries(test_agent
         PRIVATE Catch2::Catch2WithMain fabko::agent)
 
@@ -48,7 +48,7 @@ target_sources(test_core
         core/sat/test_basic_sat.cpp
         core/sat/test_sat_coloring.cpp
 )
-target_compile_definitions(test_core PUBLIC cxx_std_23)
+target_compile_definitions(test_core PUBLIC cxx_std_26)
 target_compile_definitions(test_core
         PRIVATE -DTEST_ASSETS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/_assets")
 target_link_libraries(test_core
