@@ -87,8 +87,8 @@ pub cap_sell :: cap (item: Item, price: int) { // pub make it so that cap_sell c
 
 move_from_to :: cap (from: Position, to: Position) {
   constraint {
-    this.position == from
-    that.position == from
+    this.position == from;
+    that.position == from;
   },
   side_effect {
     this.position = to;
