@@ -27,23 +27,24 @@ class clause_watcher;
  *
  * @note clause can be learned using Conflict-Driven Clause Learning (CDCL) techniques
  */
-class solver_context {
-  public:
+struct solver_context {
     struct configuration {
 
         //! after a certain number of conflicts, restart the resolution of the sat solver to avoid the algorithm to
         //! being stuck in a bad path of the resolution domain.
         std::uint32_t restart_threshold;
+        std::uint32_t restart_multiplier; //!< multiplier that is applied on the threshold when hit
 
         // VSIDS (Variable State Independent Decaying Sum) configurations
-        std::int32_t vsids_increment;   //!< value used for the increment of the vsids value in case a conflict occurs
-        std::int32_t vsids_decay_ratio; //!< ratio to decrease the importance of the vsids value over time
-        std::int32_t decay_interval;    //!< number of ticks before decaying the vsids (to favor recent conflict)
+
+        //! value used for the increment of the vsids value in case a conflict occurs
+        std::int32_t vsids_increment = 10;
+        std::int32_t decay_interval  = 100;  //!< number of ticks before decaying the vsids (to favor recent conflict)
+        float vsids_decay_ratio      = 0.95; //!< ratio to decrease the importance of the vsids value over time
     };
 
     explicit solver_context(const model& model);
 
-  private:
     std::vector<impl_details::solver_solution> solutions_found_;
 
     std::vector<impl_details::literal_assigned> trail_;

@@ -10,6 +10,8 @@
 #include "common/exception.hh"
 #include "solver.hh"
 
+#include <iostream>
+
 namespace fabko::compiler::sat {
 
 solver_context::solver_context(const model& model)
@@ -89,7 +91,29 @@ conflict_resolution_result resolve_conflict(const clause& conflict_clause) {
 bool literal_assigned::is_decision() const { return !clause_propagation_.has_value(); }
 bool literal_assigned::is_propagated() const { return clause_propagation_.has_value(); }
 
-std::optional<solver::result> solve_sat(solver_context& ctx, const model& model) { return std::nullopt; }
+std::optional<solver::result> solve_sat(solver_context& ctx, const model& model) {
+    std::optional<solver::result> solved;
+    while (!solved.has_value()) {
+        if (ctx.conflict_count_ >= ctx.config_.restart_threshold) {
+
+            // Restart by backtracking to decision level 0
+            backtrack(0);
+
+            // Update restart threshold for next restart
+            ctx.config_.restart_threshold *= static_cast<int>(ctx.config_.restart_multiplier);
+            restarts++;
+        }
+
+        bool conflict = unit_propagation();
+        if (conflict) {
+            ++ctx.conflict_count_;
+            conflict_resolution_result res = resolve_conflict(conflict_clause);
+            learned_clause                 = res.learned_clause;
+            backtrack_level                = res.backtrack_level;
+        }
+    }
+    return solved;
+}
 
 } // namespace impl_details
 } // namespace fabko::compiler::sat
