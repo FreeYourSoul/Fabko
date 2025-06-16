@@ -50,7 +50,7 @@ class clause {
     [[nodiscard]] const std::vector<literal_view>& literals() const { return literals_; }
 
   private:
-    std::int64_t id_;
+    std::int64_t id_{0};
     std::vector<literal_view> literals_;
 
     std::shared_ptr<compiler_context> debug_info_;
@@ -71,6 +71,13 @@ struct model {
     solver_context::configuration conf;
 };
 
+/**
+ * @brief The solver class for solving SAT models.
+ *
+ * This class provides functionality to solve a satisfiability problem given a model. It uses
+ * an internal solver_context to handle the solving process and produces results as a list of
+ * literal assignments.
+ */
 class solver {
   public:
     struct result {
@@ -82,7 +89,7 @@ class solver {
     std::vector<result> solve(std::int32_t expected = -1);
 
   private:
-    solver_context context_;
+    solver_context context_; // !< The context for the solver, containing configuration and state.
     model model_;
 };
 

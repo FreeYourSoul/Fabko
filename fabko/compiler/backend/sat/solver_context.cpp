@@ -67,7 +67,6 @@ class literal_assigned {
     [[nodiscard]] bool is_decision() const;
     [[nodiscard]] bool is_propagated() const;
 
-  private:
     literal_view literal_ref_;    //!< literal assigned
     std::uint8_t assignment_;     //!< assignment made on 2 bit (0 no attempt, 1 true attempted, 2 false attempted)
     std::int64_t vsids_activity_; //!< VSIDS (Variable State Independent Decaying Sum) activity value type
@@ -88,6 +87,17 @@ conflict_resolution_result resolve_conflict(const clause& conflict_clause) {
     return {std::move(learned_clause), backtrack_level};
 }
 
+bool backtrack(solver_context& ctx, std::size_t level) {
+    while (ctx.trail_.empty()) {
+        const auto& node = ctx.trail_.back();
+        if (node.decision_level_ > level) {}
+    }
+}
+
+bool unit_propagation() {
+    return false;
+}
+
 bool literal_assigned::is_decision() const { return !clause_propagation_.has_value(); }
 bool literal_assigned::is_propagated() const { return clause_propagation_.has_value(); }
 
@@ -97,19 +107,16 @@ std::optional<solver::result> solve_sat(solver_context& ctx, const model& model)
         if (ctx.conflict_count_ >= ctx.config_.restart_threshold) {
 
             // Restart by backtracking to decision level 0
-            backtrack(0);
+            backtrack(ctx, 0);
 
             // Update restart threshold for next restart
             ctx.config_.restart_threshold *= static_cast<int>(ctx.config_.restart_multiplier);
-            restarts++;
+            ctx.statistics_.restarts++;
         }
 
-        bool conflict = unit_propagation();
-        if (conflict) {
+        if (bool conflict = unit_propagation()) {
             ++ctx.conflict_count_;
-            conflict_resolution_result res = resolve_conflict(conflict_clause);
-            learned_clause                 = res.learned_clause;
-            backtrack_level                = res.backtrack_level;
+            auto& [learned_clause, backtrack_level] = resolve_conflict(conflict_clause);
         }
     }
     return solved;

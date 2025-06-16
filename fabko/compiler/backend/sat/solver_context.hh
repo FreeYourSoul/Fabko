@@ -7,6 +7,7 @@
 
 #include <bitset>
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 namespace fabko::compiler::sat {
@@ -16,6 +17,7 @@ namespace impl_details {
 class solver_solution;
 class literal_assigned;
 class clause_watcher;
+struct statistics;
 } // namespace impl_details
 
 /**
@@ -43,14 +45,23 @@ struct solver_context {
         float vsids_decay_ratio      = 0.95; //!< ratio to decrease the importance of the vsids value over time
     };
 
+    struct statistics {
+        std::size_t restarts;     //!< number of restarts that occurred
+        std::size_t conflicts;    //!< number of conflicts that occurred in the overall execution of the solver
+        std::size_t propagations; //!< amount of propagation that occurred
+        std::size_t decisions;    //!< number of decisions taken
+        std::size_t backtracks;   //!< number of backtracking that occurred
+    };
+
     explicit solver_context(const model& model);
 
     std::vector<impl_details::solver_solution> solutions_found_;
-
     std::vector<impl_details::literal_assigned> trail_;
     std::vector<impl_details::clause_watcher> clauses_watcher_;
     std::size_t conflict_count_;
     std::size_t current_decision_level_;
+
+    statistics statistics_; //!< resolution statistics of the solver
 
     configuration config_{};
 };
