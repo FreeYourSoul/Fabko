@@ -18,40 +18,29 @@ class compiler_context;
 namespace fabko::compiler::sat {
 
 class literal {
-    friend class literal_view;
+    friend class literal;
 
   public:
     explicit literal(std::int64_t value, std::shared_ptr<compiler_context> debug_info = nullptr)
-        : value_(value), debug_info_(std::move(debug_info)) {}
+        : value_(std::abs(value)), debug_info_(std::move(debug_info)) {}
 
   private:
     std::int64_t value_;
     std::shared_ptr<compiler_context> debug_info_;
 };
 
-class literal_view {
-
-  public:
-    explicit literal_view(const literal& literal) : literal_(literal) {}
-
-    [[nodiscard]] std::int64_t get_value() const { return literal_.get().value_; }
-    [[nodiscard]] std::int64_t get_literal_id() const { return std::abs(literal_.get().value_); }
-
-  private:
-    std::reference_wrapper<const literal> literal_;
-};
-
 class clause {
     friend class clause_view;
 
   public:
-    explicit clause(std::vector<literal_view> literals) : literals_(std::move(literals)) {}
+    explicit clause(std::vector<literal> literals) : literals_(std::move(literals)) {}
 
-    [[nodiscard]] const std::vector<literal_view>& literals() const { return literals_; }
+    [[nodiscard]] bool is_empty() const { return literals_.empty(); }
+    [[nodiscard]] const std::vector<literal>& literals() const { return literals_; }
 
   private:
     std::int64_t id_{0};
-    std::vector<literal_view> literals_;
+    std::vector<literal> literals_;
 
     std::shared_ptr<compiler_context> debug_info_;
 };
@@ -69,6 +58,11 @@ struct model {
     std::vector<literal> literals;
 
     solver_context::configuration conf;
+};
+
+enum class sat_error {
+    unsatisfiable,   //!< The SAT problem is unsatisfiable.
+    error           //!< An error occurred during the solving process.
 };
 
 /**

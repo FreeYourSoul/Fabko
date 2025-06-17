@@ -11,6 +11,7 @@
 #include <vector>
 
 namespace fabko::compiler::sat {
+class clause;
 struct model;
 
 namespace impl_details {
@@ -55,10 +56,17 @@ struct solver_context {
 
     explicit solver_context(const model& model);
 
+    std::reference_wrapper<const model> model_; //!< reference to the model being solved
+
+    // fil::soa<literal, assignment_context, trail_index> var_;
+
     std::vector<impl_details::solver_solution> solutions_found_;
     std::vector<impl_details::literal_assigned> trail_;
     std::vector<impl_details::clause_watcher> clauses_watcher_;
-    std::size_t conflict_count_;
+
+    std::vector<clause> clauses_; //!< clauses learned during the resolution process
+
+    std::size_t conflict_count_since_last_restart_; //!< current number of conflicts since last restart
     std::size_t current_decision_level_;
 
     statistics statistics_; //!< resolution statistics of the solver
