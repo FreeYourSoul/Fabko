@@ -13,8 +13,10 @@
 #ifndef SOA_H
 #define SOA_H
 
+#include <algorithm>
 #include <cstdint>
 #include <functional>
+#include <ostream>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -108,14 +110,16 @@ template<nothrow_movable... struct_types> class soa {
     /**
      * @brief erase an element via a specific structure id
      * @param id structure id to be removed from the soa class
+     * @return true if erase succeeded, false otherwise
      */
-    void erase(struct_id id);
+    bool erase(struct_id id);
 
     /**
      * @brief ease an element via a provided iterator
      * @param it iterator designating the element to remove from the soa class
+     * @return true if erase succeeded, false otherwise
      */
-    void erase(const_iterator it);
+    bool erase(const_iterator it);
 
     /**
      * @brief reserve memory for each vector of the soa
@@ -124,10 +128,7 @@ template<nothrow_movable... struct_types> class soa {
     void reserve(std::size_t size);
 
     [[nodiscard]] soa_struct operator[](struct_id);
-    [[nodiscard]] soa_struct operator[](std::size_t);
-
     [[nodiscard]] const_soa_struct operator[](struct_id) const;
-    [[nodiscard]] const_soa_struct operator[](std::size_t) const;
 
     // [[nodiscard]] const_row operator[](row_id k) const;
 
@@ -190,8 +191,8 @@ template<nothrow_movable... struct_types> template<typename T> class soa<struct_
 
     bool operator==(const iterator_t& t) const noexcept { return data_ == t.data_ && offset_ == t.offset_; }
     bool operator==(sentinel) const noexcept { return offset_ == data_->size(); }
-    value_type operator*() const noexcept { return (*data_)[data_.reverse_indexes_[offset_]]; }
-    value_type operator*() noexcept { return (*data_)[offset_]; }
+    value_type operator*() const noexcept { return (*data_)[data_->reverse_indexes_[offset_]]; }
+    value_type operator*() noexcept { return (*data_)[data_->reverse_indexes_[offset_]]; }
 
     iterator_t& operator++() noexcept {
         ++offset_;
@@ -241,8 +242,6 @@ template<typename T> typename T::struct_id soa_struct_t<T>::struct_id() const { 
 
 template<nothrow_movable... struct_types> template<typename... Us> soa<struct_types...>::struct_id soa<struct_types...>::insert(Us... us) {
 
-    const auto data_idx = static_cast<std::uint32_t>(reverse_indexes_.size());
-
     std::invoke(
         [this]<std::size_t... Is, typename T>(std::index_sequence<Is...>, T to_insert) {
             (std::get<Is>(data_).emplace_back(std::get<Is>(std::forward<T>(to_insert))), ...);
@@ -257,31 +256,57 @@ template<nothrow_movable... struct_types> template<typename... Us> soa<struct_ty
         return indexes_.back();
     }
 
-    auto index_exchanged = std::exchange(next_free_index_, indexes_[next_free_index_.offset]);
-    // indexes_[index_exchanged.offset] = struct_id {data_idx, index_exchanged.generation};
-    // reverse_indexes_[next_free_index_].push_back(indexes_[index_exchanged.offset]);
+    const auto data_idx              = static_cast<std::uint32_t>(reverse_indexes_.size());
+    auto index_exchanged             = std::exchange(next_free_index_, indexes_[next_free_index_.offset]);
+    indexes_[index_exchanged.offset] = struct_id {data_idx, index_exchanged.generation};
+    reverse_indexes_.push_back(indexes_[index_exchanged.offset]);
+
     return index_exchanged;
 }
 // soa definition
 //
-template<nothrow_movable... struct_types> void soa<struct_types...>::erase(struct_id id) {}
-template<nothrow_movable... struct_types> void soa<struct_types...>::erase(const_iterator i) {}
-template<nothrow_movable... struct_types> void soa<struct_types...>::reserve(std::size_t size) {}
-template<nothrow_movable... struct_types> soa_struct_t<soa<struct_types...>> soa<struct_types...>::operator[](struct_id k) {
-    return {this, indexes_[k.offset_]};
+template<nothrow_movable... struct_types> bool soa<struct_types...>::erase(struct_id id) {
+    if (!has_id(id))
+        return false;
+
+    const auto id_removed  = id.offset;
+    const auto offset_data = reverse_indexes_[id_removed].offset;
+
+    auto swap_all_data = [this, offset_data]<std::size_t... Is>(std::index_sequence<Is...>) {
+        auto swap_one_vec = [this, offset_data]<typename T>(T& vec) { //
+            std::swap(vec[offset_data], vec.back());
+            vec.pop_back();
+        };
+        (std::invoke(swap_one_vec, std::get<Is>(data_)), ...);
+    };
+    std::invoke(swap_all_data, struct_number {});
+
+    std::swap(reverse_indexes_[id_removed], reverse_indexes_.back());
+    indexes_[id_removed] = next_free_index_;
+    next_free_index_     = reverse_indexes_.back();
+    ++next_free_index_.generation;
+    reverse_indexes_.pop_back();
+    return true;
 }
-template<nothrow_movable... struct_types> soa_struct_t<soa<struct_types...>> soa<struct_types...>::operator[](std::size_t i) {
-    return {this, i};
+template<nothrow_movable... struct_types> bool soa<struct_types...>::erase(const_iterator it) { return erase(*it); }
+template<nothrow_movable... struct_types> void soa<struct_types...>::reserve(std::size_t size) {
+    std::invoke([this, size]<std::size_t... Is>(std::index_sequence<Is...>) { (std::get<Is>(data_).reserve(size), ...); },
+                struct_number {});
+
+    indexes_.reserve(size);
+    reverse_indexes_.reserve(size);
+    next_free_index_ = struct_id {static_cast<std::uint32_t>(size), 0};
+}
+template<nothrow_movable... struct_types> soa_struct_t<soa<struct_types...>> soa<struct_types...>::operator[](struct_id k) {
+    return {this, indexes_[k.offset].offset};
 }
 template<nothrow_movable... struct_types>
 typename soa<struct_types...>::const_soa_struct soa<struct_types...>::operator[](struct_id k) const {
-    return {this, indexes_[k.offset_]};
+    return {this, indexes_[k.offset].offset};
 }
-template<nothrow_movable... struct_types>
-typename soa<struct_types...>::const_soa_struct soa<struct_types...>::operator[](std::size_t i) const {
-    return {this, i};
+template<nothrow_movable... struct_types> bool soa<struct_types...>::has_id(struct_id id) const {
+    return std::ranges::any_of(reverse_indexes_, [id](auto& i) { return i == id; });
 }
-template<nothrow_movable... struct_types> bool soa<struct_types...>::has_id(struct_id id) const { return false; }
 template<nothrow_movable... struct_types> typename soa<struct_types...>::iterator soa<struct_types...>::begin() { return {this, 0}; }
 template<nothrow_movable... struct_types> typename soa<struct_types...>::const_iterator soa<struct_types...>::begin() const {
     return {this, 0};
@@ -291,6 +316,9 @@ template<nothrow_movable... struct_types> typename soa<struct_types...>::const_i
 }
 template<nothrow_movable... struct_types> typename soa<struct_types...>::sentinel soa<struct_types...>::end() const { return {}; }
 template<nothrow_movable... struct_types> typename soa<struct_types...>::sentinel soa<struct_types...>::cend() const { return {}; }
+
+// ------------------------------------------------------------------------------------------------------------------------------------
+// utility functions
 
 constexpr auto soa_apply = []<typename F>(F&& func) {
     return [&]<typename T>(T&& t) {                                                                                                 //
@@ -302,18 +330,17 @@ constexpr auto soa_apply = []<typename F>(F&& func) {
     };
 };
 
+template<std::size_t... Ts>
+requires(sizeof...(Ts) > 0)
+auto select(auto&& func) {
+    return [&]<typename T>(T&& t) { return std::invoke(func, get<Ts>(t)...); };
+};
+
 } // namespace fil
 
 //
 // specialization tuple operation for sao_struct_t
 namespace std {
-
-// template<typename T>
-// struct tuple_size<fil::soa_struct_t<T>> : std::integral_constant<std::size_t, std::remove_cvref_t<T>::struct_types_size> {};
-//
-// template<std::size_t I, typename T> struct tuple_element<I, fil::soa_struct_t<T>> {
-//     using type = typename std::remove_cvref_t<T>::template struct_type_at<I>;
-// };
 
 template<typename T> struct tuple_size<fil::soa_struct_t<T>> : std::integral_constant<std::size_t, T::struct_types_size> {};
 
