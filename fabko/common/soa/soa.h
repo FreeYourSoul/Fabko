@@ -256,12 +256,12 @@ template<nothrow_movable... struct_types> template<typename... Us> soa<struct_ty
         return indexes_.back();
     }
 
-    const auto data_idx              = static_cast<std::uint32_t>(reverse_indexes_.size());
-    auto index_exchanged             = std::exchange(next_free_index_, indexes_[next_free_index_.offset]);
-    indexes_[index_exchanged.offset] = struct_id {data_idx, index_exchanged.generation};
-    reverse_indexes_.push_back(indexes_[index_exchanged.offset]);
+    auto free_index_offset = next_free_index_.offset;
+    reverse_indexes_.push_back(next_free_index_);
+    next_free_index_                   = indexes_[free_index_offset];
+    indexes_[free_index_offset].offset = reverse_indexes_.size() - 1;
 
-    return index_exchanged;
+    return indexes_[next_free_index_.offset];
 }
 // soa definition
 //
@@ -282,9 +282,10 @@ template<nothrow_movable... struct_types> bool soa<struct_types...>::erase(struc
     std::invoke(swap_all_data, struct_number {});
 
     std::swap(reverse_indexes_[id_removed], reverse_indexes_.back());
-    indexes_[id_removed] = next_free_index_;
-    next_free_index_     = reverse_indexes_.back();
-    ++next_free_index_.generation;
+    indexes_[reverse_indexes_.back().offset]             = next_free_index_;
+    indexes_[reverse_indexes_[id_removed].offset].offset = id_removed;
+    next_free_index_                                     = reverse_indexes_.back();
+    ++reverse_indexes_.back().generation;
     reverse_indexes_.pop_back();
     return true;
 }
