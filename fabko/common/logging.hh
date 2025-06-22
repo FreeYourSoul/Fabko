@@ -4,7 +4,7 @@
 // - Subscription license for commercial usage (without requirement of licensing propagation).
 //   please contact ballandfys@protonmail.com for additional information about this subscription commercial licensing.
 //
-// Created by FyS on 30/04/23. License 2022-2024
+// Created by FyS on 30/04/23. License 2022-2025
 //
 // In the case no license has been purchased for the use (modification or distribution in any way) of the software stack
 // the APGL license is applying.
@@ -17,8 +17,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include "logic/sat/clause.hh"
-
 namespace fabko {
 
 namespace logging_details {
@@ -26,7 +24,7 @@ constexpr auto global_logger_name = "fabko";
 
 spdlog::level::level_enum get_env_log();
 
-}
+} // namespace logging_details
 
 /**
  * Initialize the logger of fabko.
@@ -43,7 +41,7 @@ spdlog::level::level_enum get_env_log();
  * @param level logging level at which the application is set
  * @param log_file file into which the log should be stored
  */
-void init_logger(spdlog::level::level_enum level=logging_details::get_env_log(), const std::string& log_file = "");
+void init_logger(spdlog::level::level_enum level = logging_details::get_env_log(), const std::string& log_file = "");
 
 /**
  * log an informative message
@@ -51,10 +49,8 @@ void init_logger(spdlog::level::level_enum level=logging_details::get_env_log(),
  * @param log message to log
  * @param packs parameter pack in case of formatting usage via fmt library
  */
-template<typename... Args>
-void log_info(spdlog::format_string_t<Args...> log, Args... packs) {
-  spdlog::get(logging_details::global_logger_name)->info(std::move(log), std::forward<Args>(packs)...);
-
+template<typename... Args> void log_info(spdlog::format_string_t<Args...> log, Args&&... packs) {
+    spdlog::get(logging_details::global_logger_name)->info(std::move(log), std::forward<Args>(packs)...);
 }
 
 /**
@@ -63,9 +59,8 @@ void log_info(spdlog::format_string_t<Args...> log, Args... packs) {
  * @param log message to log
  * @param packs parameter pack in case of formatting usage via fmt library
  */
-template<typename... Args>
-void log_trace(spdlog::format_string_t<Args...> log, Args... packs) {
-  spdlog::get(logging_details::global_logger_name)->trace(std::move(log), std::forward<Args>(packs)...);
+template<typename... Args> void log_trace(spdlog::format_string_t<Args...> log, Args&&... packs) {
+    spdlog::get(logging_details::global_logger_name)->trace(std::move(log), std::forward<Args>(packs)...);
 }
 
 /**
@@ -74,8 +69,7 @@ void log_trace(spdlog::format_string_t<Args...> log, Args... packs) {
  * @param log message to log
  * @param packs parameter pack in case of formatting usage via fmt library
  */
-template<typename... Args>
-void log_debug(spdlog::format_string_t<Args...> log, Args&&... packs) {
+template<typename... Args> void log_debug(spdlog::format_string_t<Args...> log, Args&&... packs) {
     spdlog::get(logging_details::global_logger_name)->debug(std::move(log), std::forward<Args>(packs)...);
 }
 
@@ -99,4 +93,4 @@ template<typename... Args> void log_error(spdlog::format_string_t<Args...> log, 
     spdlog::get(logging_details::global_logger_name)->error(std::move(log), std::forward<Args>(packs)...);
 }
 
-}// namespace fabko
+} // namespace fabko

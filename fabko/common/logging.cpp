@@ -4,7 +4,7 @@
 // - Subscription license for commercial usage (without requirement of licensing propagation).
 //   please contact ballandfys@protonmail.com for additional information about this subscription commercial licensing.
 //
-// Created by FyS on 30/04/23. License 2022-2024
+// Created by FyS on 30/04/23. License 2022-2025
 //
 // In the case no license has been purchased for the use (modification or distribution in any way) of the software stack
 // the APGL license is applying.
@@ -33,7 +33,7 @@ void init_logger(spdlog::level::level_enum level, const std::string& log_file) {
         return;
     }
 
-    std::vector<spdlog::sink_ptr> sinks{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()};
+    std::vector<spdlog::sink_ptr> sinks {std::make_shared<spdlog::sinks::stdout_color_sink_mt>()};
 
     if (!log_file.empty()) {
         sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_file, true));

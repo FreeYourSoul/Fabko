@@ -18,6 +18,10 @@ target_include_directories(common
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
+target_link_libraries(common
+        PUBLIC
+        spdlog::spdlog
+        fmt::fmt)
 
 add_library(compiler STATIC)
 target_sources(compiler
@@ -46,7 +50,8 @@ add_library(fabko::compiler ALIAS compiler)
 #
 # Agent library
 #
-add_library(agent OBJECT)
+add_library(agent OBJECT
+        common/soa/soa.h)
 target_sources(agent
         PUBLIC
         agent/agent.hh
