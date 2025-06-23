@@ -1,6 +1,7 @@
 { lib
 , stdenv
 , cmake
+, ninja
 , fmt
 , spdlog
 , rocksdb
@@ -9,27 +10,32 @@
 , liburing
 }:
 
+let
+    version = builtins.readFile ../VERSION;
+    import-from-json = import ./import-from-json.nix { };
+    fil = import-from-json {
+      sourcesFile = ./nix-dep.json;
+      dependencyName = "fil";
+    };
+in
 stdenv.mkDerivation rec {
   pname = "fabko";
-  version = "0.1.0";
+  inherit version;
 
   src = ../.;
 
   nativeBuildInputs = [
-    cmake
+    cmake ninja
   ];
 
   buildInputs = [
     fmt
+    fil
     spdlog
     rocksdb
     catch2_3
     nlohmann_json
     liburing
-  ];
-
-  cmakeFlags = [
-    "-DCMAKE_BUILD_TYPE=Release"
   ];
 
   meta = with lib; {

@@ -10,6 +10,7 @@ pkgs.mkShell {
     pkg-config
     vcpkg
     gcc
+    ninja
     gdb
     
     # Include the project's runtime dependencies

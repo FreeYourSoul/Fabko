@@ -5,6 +5,7 @@ AlignAfterOpenBracket: Align
 AlignConsecutiveAssignments: true
 AlignOperands: AlignAfterOperator
 AllowAllArgumentsOnNextLine: true
+BreakFunctionDefinitionParameters: false
 AllowAllParametersOfDeclarationOnNextLine: true
 AllowShortBlocksOnASingleLine: Never
 AllowShortCaseLabelsOnASingleLine: true
@@ -30,13 +31,14 @@ BraceWrapping:
   SplitEmptyFunction: false
   SplitEmptyRecord: true
 BinPackArguments: false
-BinPackParameters: OnePerLine
+BinPackParameters: BinPack
 BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeTernaryOperators: false
 BreakConstructorInitializers: BeforeComma
 BreakInheritanceList: BeforeComma
-ColumnLimit: 140
+ColumnLimit: 180
 CompactNamespaces: false
+AlignConsecutiveDeclarations: false
 ContinuationIndentWidth: 4
 IndentCaseLabels: true
 IndentPPDirectives: None
