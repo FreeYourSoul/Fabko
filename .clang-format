@@ -1,7 +1,7 @@
 # Generated from CLion C/C++ Code Style settings
 BasedOnStyle: LLVM
 AccessModifierOffset: -2
-AlignAfterOpenBracket: Align
+AlignAfterOpenBracket: DontAlign
 AlignConsecutiveAssignments: true
 AlignOperands: AlignAfterOperator
 AllowAllArgumentsOnNextLine: true
@@ -78,7 +78,7 @@ LambdaBodyIndentation: Signature
 TabWidth: 4
 UseTab: Never
 AlignConsecutiveBitFields:
-  Enabled: true
+  Enabled: false
   AcrossEmptyLines: true
 RequiresClausePosition: OwnLine
 RequiresExpressionIndentation: OuterScope

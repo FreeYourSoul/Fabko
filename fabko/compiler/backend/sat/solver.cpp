@@ -10,10 +10,10 @@
 // the APGL license is applying.
 //
 
-#include "solver.hh"
-
 #include <algorithm>
 #include <optional>
+
+#include "solver.hh"
 
 namespace fabko::compiler::sat {
 

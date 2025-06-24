@@ -20,10 +20,12 @@ target_include_directories(common
 )
 target_link_libraries(common
         PUBLIC
+        fys::fil
         spdlog::spdlog
         fmt::fmt)
 
-add_library(compiler STATIC)
+add_library(compiler STATIC
+        compiler/backend/metadata.h)
 target_sources(compiler
         PUBLIC
         compiler/backend/sat/solver.hh
@@ -50,8 +52,7 @@ add_library(fabko::compiler ALIAS compiler)
 #
 # Agent library
 #
-add_library(agent OBJECT
-        common/soa/soa.h)
+add_library(agent OBJECT)
 target_sources(agent
         PUBLIC
         agent/agent.hh

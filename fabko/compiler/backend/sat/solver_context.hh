@@ -5,21 +5,51 @@
 #ifndef SOLVER_CONTEXT_HH
 #define SOLVER_CONTEXT_HH
 
-#include <bitset>
 #include <cstdint>
 #include <memory>
 #include <vector>
 
-namespace fabko::compiler::sat {
-class clause;
-struct model;
+#include <fil/datastructure/soa.hh>
 
-namespace impl_details {
-class solver_solution;
-class literal_assigned;
-class clause_watcher;
+#include "compiler/backend/metadata.h"
+
+//
+// Forward declarations
+namespace fabko::compiler::sat {
+
+class assignment_context;
+
 struct statistics;
-} // namespace impl_details
+class clause;
+class literal;
+class clause_watcher;
+enum class assignment;
+struct model;
+} // namespace fabko::compiler::sat
+// end forward declarations
+//
+
+namespace fabko::compiler::sat {
+
+class solver_solution {
+    std::vector<literal> literals_solving_;                                             //!< literals that solve the SAT problem
+};
+
+using var_soa    = fil::soa<literal, assignment, assignment_context, compiler_context>; //!< structure of arrays representing a variable
+using clause_soa = fil::soa<clause, clause_watcher, compiler_context>;                  //!< structure of arrays representing a clause
+
+enum var_values {
+    soa_literal          = 0,
+    soa_assignment       = 1,
+    soa_assignment_ctx   = 2,
+    soa_var_compiler_ctx = 3,
+};
+
+enum clause_values {
+    soa_clause              = 0,
+    soa_watcher             = 1,
+    soa_clause_compiler_ctx = 2,
+};
 
 /**
  * @brief Represents the context for managing the state of a SAT solver
@@ -56,24 +86,21 @@ struct solver_context {
 
     explicit solver_context(const model& model);
 
-    std::reference_wrapper<const model> model_; //!< reference to the model being solved
+    configuration config_ {};                           //!< configuration of the solver
+    std::reference_wrapper<const model> model_;         //!< reference to the model being solved
 
-    // fil::soa<literal, assignment_context, trail_index> var_;
+    var_soa vars_soa_;                                  //!< variables of the SAT solver, containing their assignment and context
+    clause_soa clauses_soa_;                            //!< clauses of the SAT solver, containing their watchers and context
+    std::vector<var_soa::struct_id> trail_ {};          //!< trail of assigned literals and their context
 
-    std::vector<impl_details::solver_solution> solutions_found_;
-    std::vector<impl_details::literal_assigned> trail_;
-    std::vector<impl_details::clause_watcher> clauses_watcher_;
+    std::size_t conflict_count_since_last_restart_ {0}; //!< current number of conflicts since last restart
+    std::size_t current_decision_level_ {0};
 
-    std::vector<clause> clauses_; //!< clauses learned during the resolution process
+    statistics statistics_ {};                          //!< resolution statistics of the solver
 
-    std::size_t conflict_count_since_last_restart_; //!< current number of conflicts since last restart
-    std::size_t current_decision_level_;
-
-    statistics statistics_; //!< resolution statistics of the solver
-
-    configuration config_{};
+    std::vector<solver_solution> solutions_found_ {};   //!< final solutions found by the solver
 };
 
 } // namespace fabko::compiler::sat
 
-#endif //SOLVER_CONTEXT_HH
+#endif // SOLVER_CONTEXT_HH
