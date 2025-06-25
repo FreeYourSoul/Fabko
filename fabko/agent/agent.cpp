@@ -13,7 +13,7 @@
 #include <optional>
 #include <thread>
 
-#include <protocol/acl.hh>
+#include <agent/protocol/acl.hh>
 
 #include "agent.hh"
 
@@ -29,21 +29,19 @@ void agent_runner::run() {
         while (!token.stop_requested()) {
             for (auto& agent : this->_agents) {
                 agent.execute();
-                std::this_thread::sleep_for(std::chrono::milliseconds{10});
+                std::this_thread::sleep_for(std::chrono::milliseconds {10});
             }
         }
     }).swap(_runner_thread);
 }
 
-void agent_runner::add_agent(agent&& agent) {
-    _agents.push_back(std::move(agent));
-}
+void agent_runner::add_agent(agent&& agent) { _agents.push_back(std::move(agent)); }
 
 void agent::execute() {
-    const auto msg_return = _callback_on_action(*this, std::nullopt);
-    for (const auto& msg : msg_return) {
-        // todo : send message back
-    }
+    // const auto msg_return = _callback_on_action(*this, std::nullopt);
+    // for (const auto& msg : msg_return) {
+    //     // todo : send message back
+    // }
 }
 
 } // namespace fabko

@@ -12,6 +12,4 @@
 
 #pragma once
 
-namespace fabko {
-
-}
+namespace fabko {}

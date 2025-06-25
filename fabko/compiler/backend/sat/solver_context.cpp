@@ -42,21 +42,20 @@ std::optional<clause_soa::struct_id> unit_propagation(solver_context& ctx) {
 
     std::optional<clause_soa::struct_id> conflict;
     [[maybe_unused]] auto propagate = [&](const auto& clause_struct) {
+        if (conflict.has_value())
+            return false;
+
         const auto& [clause, assignment, _]                   = clause_struct;
         const std::vector<var_soa::struct_id>& clause_var_ids = clause.vars();
-        const std::vector<literal> literal_unassigned         = std::reduce( //
-            clause_var_ids.begin(),
-            clause_var_ids.end(),
-            std::vector<literal> {},
-            [&ctx](var_soa::struct_id var_id, auto& res) {
-                const auto& [literal, assignment, assignment_context, compiler_context] = ctx.vars_soa_[var_id];
-                if (assignment != assignment::off) {
-                    return res;
-                }
-                // res.push_back(literal);
-                // ctx.trail_.push_back(s.);
+        const std::vector<literal> literal_unassigned         = std::ranges::fold_right(clause_var_ids, std::vector<literal> {}, [&ctx](var_soa::struct_id var_id, auto res) {
+            const auto& [literal, assignment, assignment_context, compiler_context] = ctx.vars_soa_[var_id];
+            if (assignment != assignment::off) {
                 return res;
-            });
+            }
+            // res.push_back(literal);
+            // ctx.trail_.push_back(s.);
+            return res;
+        });
 
         if (literal_unassigned.empty()) {
             conflict = clause_struct.struct_id(); // no literal is assigned, this clause is a conflict
@@ -138,7 +137,7 @@ solver_context::solver_context(const model& model)
         clauses.reserve(model.clauses.size());
 
         for (const std::vector<literal>& model_clause : model.clauses) {
-            auto all_clause_ids = std::reduce(model_clause.begin(), model_clause.end(), std::vector<var_soa::struct_id> {}, [&, this](auto& res, const literal& l) { //
+            auto all_clause_ids = std::ranges::fold_right(model_clause, std::vector<var_soa::struct_id> {}, [&, this](const literal& l, auto res) { //
                 auto it = std::ranges::find_if(vars_soa_, fil::soa_select<soa_literal>([&, this](const literal& lit) { return lit == l; }));
                 fabko_assert(it != vars_soa_.end(), "a clause cannot contains a non-defined literal");
                 res.push_back((*it).struct_id());

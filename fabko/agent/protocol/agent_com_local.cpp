@@ -8,7 +8,7 @@
 // In the case no license has been purchased for the use (modification or distribution in any way) of the software stack
 // the APGL license is applying.
 
-#include <agent.hh>
+#include <agent/agent.hh>
 
 #include "agent_com.hh"
 
@@ -20,19 +20,13 @@ struct agent_com::impl {
 
 agent_com::~agent_com() = default;
 
-std::string agent_com::instantiate_blackboard(const acl::message&) {
-    return {};
-}
+std::string agent_com::instantiate_blackboard(const acl::message&) { return {}; }
 
-std::future<propositions> agent_com::request_propositions(const acl::message&) {
-    return std::future<propositions>();
-}
+std::future<propositions> agent_com::request_propositions(const acl::message&) { return std::future<propositions>(); }
 
-agent_protocol::decision_status agent_com::commit_decision(const acl::message&) {
-    return agent_protocol::decision_status::RETRY;
-}
+agent_protocol::decision_status agent_com::commit_decision(const acl::message&) { return agent_protocol::decision_status::RETRY; }
 
-agent_com::agent_com(): _impl(std::make_unique<impl>()) {
-}
+agent_com::agent_com()
+    : _impl(std::make_unique<impl>()) {}
 
-}
+} // namespace fabko::agent_protocol::local
