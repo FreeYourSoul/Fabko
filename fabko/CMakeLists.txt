@@ -34,7 +34,8 @@ add_subdirectory(agent)
 #
 # Fabko
 #
-add_executable(fabko)
+add_executable(fabko
+        cli_base.hh)
 
 target_sources(fabko
         PRIVATE

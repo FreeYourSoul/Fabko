@@ -1,4 +1,5 @@
-add_library(compiler STATIC)
+add_library(compiler STATIC
+        backend/sat/cli.hh)
 target_sources(compiler
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/backend/sat/solver.hh
