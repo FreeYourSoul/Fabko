@@ -11,7 +11,11 @@
 //
 
 #include <algorithm>
+#include <filesystem>
+#include <fstream>
 #include <optional>
+#include <set>
+#include <stdexcept>
 
 #include "solver.hh"
 
@@ -20,6 +24,69 @@ namespace fabko::compiler::sat {
 namespace impl_details {
 std::optional<solver::result> solve_sat(solver_context& ctx, const model& model);
 } // namespace impl_details
+
+model make_model_from_cnf_file(const std::filesystem::path& cnf_file) {
+    if (!std::filesystem::exists(cnf_file)) {
+        throw std::runtime_error("CNF file does not exist");
+    }
+
+    std::ifstream file(cnf_file);
+    if (!file.is_open()) {
+        throw std::runtime_error("Could not open CNF file");
+    }
+
+    std::string line;
+    std::vector<std::vector<literal>> clauses;
+    std::vector<literal> literals;
+    std::set<literal> literals_unique;
+
+    while (std::getline(file, line)) {
+        if (line.empty() || line[0] == 'c') {
+            continue; // Skip comments and empty lines
+        }
+
+        if (line[0] == 'p') {
+            if (clauses.capacity() > 0) {
+                throw std::runtime_error("Unexpected 'p' is specified twice");
+            }
+
+            std::istringstream iss(line);
+            std::string p, cnf;
+            std::size_t num_variables;
+            std::size_t num_clauses;
+
+            iss >> p >> cnf >> num_variables >> num_clauses;
+            if (p != "p" || cnf != "cnf") {
+                throw std::runtime_error("Invalid CNF format");
+            }
+            literals.reserve(num_variables);
+            clauses.reserve(num_clauses);
+            continue;
+        }
+
+        std::istringstream iss(line);
+        std::vector<literal> clause;
+        std::int64_t lit;
+        while (iss >> lit && lit != 0) {
+            clause.emplace_back(lit);
+            literals_unique.insert(literal {std::abs(lit)});
+        }
+
+        if (!clause.empty()) {
+            clauses.push_back(std::move(clause));
+        }
+    }
+
+    fabko_assert(literals_unique.size() == literals.capacity(), //
+        fmt::format("More literals than expected, expected {} but got {}", literals.capacity(), literals_unique.size()));
+
+    fabko_assert(clauses.size() == clauses.capacity(),          //
+        fmt::format("More clauses than expected, expected {} but got {}", clauses.capacity(), clauses.size()));
+
+    std::ranges::transform(literals_unique, std::back_inserter(literals), [](const literal& l) { return l; });
+
+    return model {std::move(literals), std::move(clauses)};
+}
 
 solver::solver(model m)
     : context_(m)

@@ -49,7 +49,7 @@ void init_logger(spdlog::level::level_enum level = logging_details::get_env_log(
  * @param log message to log
  * @param packs parameter pack in case of formatting usage via fmt library
  */
-template<typename... Args> void log_info(spdlog::format_string_t<Args...> log, Args&&... packs) {
+template<typename... Args> void log_info(spdlog::format_string_t<Args...> log, Args... packs) {
     spdlog::get(logging_details::global_logger_name)->info(std::move(log), std::forward<Args>(packs)...);
 }
 
@@ -59,7 +59,7 @@ template<typename... Args> void log_info(spdlog::format_string_t<Args...> log, A
  * @param log message to log
  * @param packs parameter pack in case of formatting usage via fmt library
  */
-template<typename... Args> void log_trace(spdlog::format_string_t<Args...> log, Args&&... packs) {
+template<typename... Args> void log_trace(spdlog::format_string_t<Args...> log, Args... packs) {
     spdlog::get(logging_details::global_logger_name)->trace(std::move(log), std::forward<Args>(packs)...);
 }
 
@@ -69,7 +69,7 @@ template<typename... Args> void log_trace(spdlog::format_string_t<Args...> log, 
  * @param log message to log
  * @param packs parameter pack in case of formatting usage via fmt library
  */
-template<typename... Args> void log_debug(spdlog::format_string_t<Args...> log, Args&&... packs) {
+template<typename... Args> void log_debug(spdlog::format_string_t<Args...> log, Args... packs) {
     spdlog::get(logging_details::global_logger_name)->debug(std::move(log), std::forward<Args>(packs)...);
 }
 

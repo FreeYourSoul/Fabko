@@ -11,6 +11,8 @@
 #include "common/exception.hh"
 #include "solver_context.hh"
 
+#include <filesystem>
+
 namespace fabko::compiler::sat {
 
 enum class assignment {
@@ -24,12 +26,12 @@ class literal {
     explicit literal(std::int64_t value)
         : value_(std::abs(value)) {}
 
+    auto operator<=>(const literal& lhs) const = default;
+
     /**
      * @return literal value (absolute value that represent the variable)
      */
     [[nodiscard]] std::int64_t value() const { return std::abs(value_); }
-
-    friend bool operator==(const literal& lhs, const literal& rhs) { return lhs.value() == rhs.value(); }
 
   private:
     std::int64_t value_;
@@ -113,6 +115,18 @@ struct model {
 
     solver_context::configuration conf;
 };
+
+/**
+ * @brief Create a model from a DNF file.
+ *
+ * This function reads a DNF (Disjunctive Normal Form) file and constructs a model
+ * that can be used by the SAT solver. The DNF file should contain clauses in the
+ * appropriate format.
+ *
+ * @param dnf_file Path to the DNF file to be processed.
+ * @return A model object representing the parsed DNF file.
+ */
+model make_model_from_cnf_file(const std::filesystem::path& dnf_file);
 
 enum class sat_error {
     unsatisfiable, //!< The SAT problem is unsatisfiable.

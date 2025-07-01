@@ -10,9 +10,8 @@
 // the APGL license is applying.
 //
 
-// @todo : remove that comment when fil::cli has removed necessary nodiscard
-// ReSharper disable All
 #include <fil/cli/command_line_interface.hh>
+#include <filesystem>
 
 #include "cli_base.hh"
 #include "compiler/backend/sat/cli.hh"
@@ -26,7 +25,8 @@ int main(int argc, char** argv) {
 
     fil::command_line_interface cli({command_sat}, [] {});
     cli.add_option(fil::option {//
-        "log-level",
+        "--log-level",
+        "-l",
         [&cli_data](const std::string& value) { cli_data.log_level = spdlog::level::from_str(value); },
         "Set the log level for the CLI, if not provided, the default log level is `info`.\n"
         "The possible values are the following (case insensitive):\n"
@@ -35,14 +35,17 @@ int main(int argc, char** argv) {
         " warn  : only warning and error logs are displayed\n"
         " error : only error logs are displayed\n"});
     cli.add_option(fil::option {//
-        "log-file",
+        "--log-file",
         [&cli_data](const std::string& value) { cli_data.log_file = value; },
         "Set the output log file in which logs will be written, if not provided : /tmp/fabko.log will be used by default."});
 
-    cli.add_pre_executed_handler([&cli_data] { fabko::init_logger(cli_data.log_level, cli_data.log_file); });
+    cli.add_pre_executed_handler([&cli_data] { //
+        fmt::println("Initialization of the logger");
+        fabko::init_logger(cli_data.log_level, cli_data.log_file);
+    });
 
     if (!cli.parse_command_line(argc, argv)) {
-        fabko::log_error("Command line error occurred", "fabko");
+        fabko::log_error("Command line error occurred");
         return 1;
     }
 
