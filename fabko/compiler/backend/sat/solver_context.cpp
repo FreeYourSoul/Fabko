@@ -34,6 +34,8 @@ conflict_resolution_result resolve_conflict(clause_soa::struct_id conflict_claus
 bool backtrack(solver_context& ctx, std::size_t level) {
     while (ctx.trail_.empty()) {
         const auto& node = ctx.trail_.back();
+        // @todo implement backtrack from tuto
+        ctx.trail_.pop_back();
     }
     return true;
 }
@@ -81,6 +83,7 @@ void learn_additional_clause(solver_context& ctx, const clause& clause) {
         log_debug("learned clause is empty, the solver is unsatisfiable", SECTION);
         return;
     }
+    // @todo learn clause
 }
 } // namespace
 
@@ -120,7 +123,7 @@ std::expected<solver::result, sat_error> solve_sat(solver_context& ctx, const mo
 
 } // namespace impl_details
 
-solver_context::solver_context(const model& model)
+solver_context::make_context(const model& model)
     : config_(model.conf)
     , model_(model)
     , vars_soa_([&]() {
@@ -138,7 +141,9 @@ solver_context::solver_context(const model& model)
 
         for (const std::vector<literal>& model_clause : model.clauses) {
             auto all_clause_ids = std::ranges::fold_right(model_clause, std::vector<var_soa::struct_id> {}, [&, this](const literal& l, auto res) { //
-                auto it = std::ranges::find_if(vars_soa_, fil::soa_select<soa_literal>([&, this](const literal& lit) { return lit == l; }));
+                auto it = std::ranges::find_if(vars_soa_, fil::soa_select<soa_literal>([&, this](literal lit) {                                     //
+                    return lit == l;
+                }));
                 fabko_assert(it != vars_soa_.end(), "a clause cannot contains a non-defined literal");
                 res.push_back((*it).struct_id());
                 return res;

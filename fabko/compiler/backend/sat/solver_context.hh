@@ -65,15 +65,16 @@ struct solver_context {
 
         //! after a certain number of conflicts, restart the resolution of the sat solver to avoid the algorithm to
         //! being stuck in a bad path of the resolution domain.
-        std::uint32_t restart_threshold;
-        std::uint32_t restart_multiplier; //!< multiplier that is applied on the threshold when hit
+        // @todo check in tuto what are the recommended values for start
+        std::uint32_t restart_threshold {100};
+        std::uint32_t restart_multiplier {2}; //!< multiplier that is applied on the threshold when hit
 
         // VSIDS (Variable State Independent Decaying Sum) configurations
 
         //! value used for the increment of the vsids value in case a conflict occurs
-        std::int32_t vsids_increment = 10;
-        std::int32_t decay_interval  = 100;  //!< number of ticks before decaying the vsids (to favor recent conflict)
-        float vsids_decay_ratio      = 0.95; //!< ratio to decrease the importance of the vsids value over time
+        std::int32_t vsids_increment {10};
+        std::int32_t decay_interval {100}; //!< number of ticks before decaying the vsids (to favor recent conflict)
+        float vsids_decay_ratio {0.95};    //!< ratio to decrease the importance of the vsids value over time
     };
 
     struct statistics {

@@ -24,9 +24,13 @@ enum class assignment {
 class literal {
   public:
     explicit literal(std::int64_t value)
-        : value_(std::abs(value)) {}
+        : value_(value) {}
 
-    auto operator<=>(const literal& lhs) const = default;
+    bool operator==(const literal& lit) const { return std::abs(value_) == std::abs(lit.value_); }
+    auto operator<=>(const literal& lhs) const { return std::abs(value_) <=> std::abs(lhs.value_); }
+
+    [[nodiscard]] bool is_on() const { return value_ > 0; }
+    [[nodiscard]] bool is_off() const { return value_ < 0; }
 
     /**
      * @return literal value (absolute value that represent the variable)
@@ -68,7 +72,7 @@ class clause_watcher {
     explicit clause_watcher(const var_soa& vs, const clause& clause)
         : watchers_([&]() -> std::vector<literal> { //
             using std::get;
-            fabko_assert(clause.vars().empty(), "Cannot make a clause watchers over an empty clause");
+            fabko_assert(!clause.vars().empty(), "Cannot make a clause watchers over an empty clause");
             if (clause.vars().size() == 1) {
                 return {get<soa_literal>(vs[clause.vars().front()])};
             }

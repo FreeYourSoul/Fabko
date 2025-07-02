@@ -19,6 +19,8 @@
 
 #include "solver.hh"
 
+#include "common/logging.hh"
+
 namespace fabko::compiler::sat {
 
 namespace impl_details {
