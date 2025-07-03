@@ -27,8 +27,9 @@ conflict_resolution_result resolve_conflict(clause_soa::struct_id conflict_claus
     std::size_t backtrack_level = 0;
 
     // find UIP : Unique Implication Point
+    // @todo
     // return {std::move(learned_clause), backtrack_level};
-    return {clause({}), backtrack_level};
+    return {clause({}, {}), backtrack_level};
 }
 
 bool backtrack(solver_context& ctx, std::size_t level) {
@@ -47,24 +48,31 @@ std::optional<clause_soa::struct_id> unit_propagation(solver_context& ctx) {
         if (conflict.has_value())
             return false;
 
-        const auto& [clause, assignment, _]                   = clause_struct;
-        const std::vector<var_soa::struct_id>& clause_var_ids = clause.vars();
-        const std::vector<literal> literal_unassigned         = std::ranges::fold_right(clause_var_ids, std::vector<literal> {}, [&ctx](var_soa::struct_id var_id, auto res) {
-            const auto& [literal, assignment, assignment_context, compiler_context] = ctx.vars_soa_[var_id];
-            if (assignment != assignment::off) {
+        const auto& [clause, assignment, _] = clause_struct;
+        const auto& clauselit_mapped_varid  = clause.vars();
+        const auto unassigned               = std::ranges::fold_right(clauselit_mapped_varid,
+            std::vector<std::pair<literal, var_soa::struct_id>> {}, //
+            [&ctx, &clause_struct](const auto& pair, auto res) {
+                const auto clause_var_id                                                = pair.second;
+                const auto& [literal, assignment, assignment_context, compiler_context] = ctx.vars_soa_[clause_var_id];
+                if (assignment != assignment::not_assigned) {
+                    return res;
+                }
+                res.push_back(pair);
                 return res;
-            }
-            // res.push_back(literal);
-            // ctx.trail_.push_back(s.);
-            return res;
-        });
+            });
 
-        if (literal_unassigned.empty()) {
+        if (unassigned.empty()) {
             conflict = clause_struct.struct_id(); // no literal is assigned, this clause is a conflict
             return false;
         }
-        if (literal_unassigned.size() == 1) {
-            return true;
+        if (unassigned.size() == 1) {
+            const auto& [unassigned_clauselit, unassigned_varid]              = unassigned.front();
+            auto& [literal, assignment, assignment_context, compiler_context] = ctx.vars_soa_[unassigned_varid];
+
+            assignment                             = unassigned_clauselit.is_on() ? assignment::on : assignment::off; // set assignment of the propagation
+            assignment_context.clause_propagation_ = clause_struct.struct_id(); // setup clause responsible for the propagation of the assignment
+            ctx.trail_.push_back(unassigned_varid);                             // add the propagation in the trail
         }
         return true;
     };
@@ -100,7 +108,7 @@ std::expected<solver::result, sat_error> solve_sat(solver_context& ctx, const mo
             // Restart by backtracking to decision level 0
             backtrack(ctx, 0);
 
-            // Update restart threshold for next restart
+            // Update the restart threshold for next restart
             ctx.config_.restart_threshold *= static_cast<int>(ctx.config_.restart_multiplier);
         }
 
@@ -123,7 +131,7 @@ std::expected<solver::result, sat_error> solve_sat(solver_context& ctx, const mo
 
 } // namespace impl_details
 
-solver_context::make_context(const model& model)
+solver_context::solver_context(const model& model)
     : config_(model.conf)
     , model_(model)
     , vars_soa_([&]() {
@@ -131,7 +139,7 @@ solver_context::make_context(const model& model)
         vars.reserve(model.literals.size());
         for (const auto& lit : model.literals) {
             [[maybe_unused]] auto _ =
-                vars.insert(lit, assignment::not_assigned, assignment_context {/*empty assignment context*/}, compiler_context {/*@todo: add compiler context from model*/});
+                vars.insert(lit, assignment::not_assigned, assignment_context {/*empty assignment context*/}, metadata {/*@todo: add compiler context from model*/});
         }
         return vars;
     }())
@@ -149,11 +157,11 @@ solver_context::make_context(const model& model)
                 return res;
             });
 
-            clause clause_to_insert {std::move(all_clause_ids)};
+            clause clause_to_insert {model_clause, std::move(all_clause_ids)};
             [[maybe_unused]] const auto _ = clauses.insert( //
                 clause_to_insert,
                 clause_watcher {vars_soa_, clause_to_insert},
-                compiler_context {/*@todo: add compiler context from model*/});
+                metadata {/*@todo: add compiler context from model*/});
         }
         return clauses;
     }()) {}

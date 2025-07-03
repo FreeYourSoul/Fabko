@@ -6,12 +6,11 @@
 #define SOLVER_CONTEXT_HH
 
 #include <cstdint>
-#include <memory>
 #include <vector>
 
 #include <fil/datastructure/soa.hh>
 
-#include "compiler/backend/metadata.h"
+#include "compiler/backend/metadata.hh"
 
 //
 // Forward declarations
@@ -31,12 +30,15 @@ struct model;
 
 namespace fabko::compiler::sat {
 
+/**
+ * @brief Solution returned by the sat solver
+ */
 class solver_solution {
-    std::vector<literal> literals_solving_;                                             //!< literals that solve the SAT problem
+    std::vector<literal> literals_solving_;                                     //!< literals that solve the SAT problem
 };
 
-using var_soa    = fil::soa<literal, assignment, assignment_context, compiler_context>; //!< structure of arrays representing a variable
-using clause_soa = fil::soa<clause, clause_watcher, compiler_context>;                  //!< structure of arrays representing a clause
+using var_soa    = fil::soa<literal, assignment, assignment_context, metadata>; //!< structure of arrays representing a variable
+using clause_soa = fil::soa<clause, clause_watcher, metadata>;                  //!< structure of arrays representing a clause
 
 enum var_values {
     soa_literal          = 0,

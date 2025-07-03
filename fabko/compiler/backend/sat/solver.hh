@@ -12,6 +12,7 @@
 #include "solver_context.hh"
 
 #include <filesystem>
+#include <ranges>
 
 namespace fabko::compiler::sat {
 
@@ -45,49 +46,63 @@ class clause {
     friend class clause_view;
 
   public:
-    explicit clause(std::vector<var_soa::struct_id> literals)
-        : vars_(std::move(literals)) {}
+    explicit clause(std::vector<literal> clause, std::vector<var_soa::struct_id> literals_mapping)
+        : vars_([&]() {
+            return std::views::zip_transform(
+                       [](auto lit_clause, auto lit_mapping) { //
+                           return std::make_pair(lit_clause, lit_mapping);
+                       },
+                       clause,
+                       literals_mapping)
+                 | std::ranges::to<std::vector<std::pair<literal, var_soa::struct_id>>>();
+        }()) {}
 
     [[nodiscard]] bool is_empty() const { return vars_.empty(); }
-    [[nodiscard]] const std::vector<var_soa::struct_id>& vars() const { return vars_; }
+    [[nodiscard]] const std::vector<std::pair<literal, var_soa::struct_id>>& vars() const { return vars_; }
 
   private:
     std::int64_t id_ {0};
-    std::vector<var_soa::struct_id> vars_;
+    std::vector<std::pair<literal, var_soa::struct_id>> vars_; //!< pair of a clause literal and the variable id it refers to in the soa_struct
 
-    std::shared_ptr<compiler_context> debug_info_;
+    std::shared_ptr<metadata> debug_info_;
 };
 
-class clause_view {
-  public:
-    explicit clause_view(const clause& literal)
-        : clause_(literal) {}
-
-  private:
-    std::reference_wrapper<const clause> clause_;
-};
-
+/**
+ * @brief Class implementing the 2-watched literals scheme for efficient clause monitoring
+ *
+ * This class implements the 2-watched literals scheme, a key optimization in modern SAT solvers.
+ * It maintains two "watcher" literals per clause (except for unit clauses which have one),
+ * allowing for efficient propagation and backtracking during the solving process.
+ *
+ * The watchers are initially set to the first and last literals in the clause. Only when both
+ * watched literals become false does the solver need to examine the entire clause.
+ */
 class clause_watcher {
   public:
+    /**
+     * @brief Constructs a clause watcher for the given clause
+     * @param vs The variable structure-of-arrays containing all variables
+     * @param clause The clause to watch
+     * @throws fabko_exception if the clause is empty
+     */
     explicit clause_watcher(const var_soa& vs, const clause& clause)
         : watchers_([&]() -> std::vector<literal> { //
             using std::get;
             fabko_assert(!clause.vars().empty(), "Cannot make a clause watchers over an empty clause");
             if (clause.vars().size() == 1) {
-                return {get<soa_literal>(vs[clause.vars().front()])};
+                return {get<soa_literal>(vs[clause.vars().front().second])};
             }
-            return {get<soa_literal>(vs[clause.vars().front()]), get<soa_literal>(vs[clause.vars().back()])};
+            return {get<soa_literal>(vs[clause.vars().front().second]), get<soa_literal>(vs[clause.vars().back().second])};
         }()) {}
 
   private:
-    std::vector<literal> watchers_;
+    std::vector<literal> watchers_; //!< The watched literals (1 for unit clauses, 2 for other clauses)
 };
 
 /**
- * @brief Represents the context in which an assignement occurs on a literal
+ * @brief Represents the context in which an assignment occurs on a literal
  *
- * This class maintains the state of an assigned literal in the SAT solver, including
- * its decision level, VSIDS activity score, and the reason for its assignment
+ * This class maintains the state of an assigned literal in the SAT solver, including its decision level, VSIDS activity score, and the reason for its assignment
  * (Whether it was a decision or propagated through a clause.)
  *
  */
@@ -98,12 +113,18 @@ class assignment_context {
         propagated,
     };
 
-    [[nodiscard]] bool is_decision() const { return !clause_propagation_.has_value(); }
+    /**
+     * @return true if the assignment is propagation from a clause, false if it is a decision from the SAT solver
+     */
     [[nodiscard]] bool is_propagated() const { return clause_propagation_.has_value(); }
+    /**
+     * @return true if the assignment is a decision made by the SAT solver, false if it is propagation from a clause.
+     */
+    [[nodiscard]] bool is_decision() const { return !is_propagated(); }
 
-    std::int64_t vsids_activity_ {};                   //!< VSIDS (Variable State Independent Decaying Sum) activity value type
-    std::size_t decision_level_ {};                    //!< decision level of the literal
-    std::optional<clause_view> clause_propagation_ {}; //!< clause that produced this (nullopt if decision type)
+    std::int64_t vsids_activity_ {};                             //!< VSIDS (Variable State Independent Decaying Sum) activity value type
+    std::size_t decision_level_ {};                              //!< decision level of the literal
+    std::optional<clause_soa::struct_id> clause_propagation_ {}; //!< clause that produced this (nullopt if decision type)
 };
 
 struct conflict_resolution_result {
@@ -123,8 +144,7 @@ struct model {
 /**
  * @brief Create a model from a DNF file.
  *
- * This function reads a DNF (Disjunctive Normal Form) file and constructs a model
- * that can be used by the SAT solver. The DNF file should contain clauses in the
+ * This function reads a DNF (Disjunctive Normal Form) file and constructs a model that can be used by the SAT solver. The DNF file should contain clauses in the
  * appropriate format.
  *
  * @param dnf_file Path to the DNF file to be processed.
