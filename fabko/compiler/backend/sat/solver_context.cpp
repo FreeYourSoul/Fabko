@@ -68,7 +68,8 @@ std::optional<clause_soa::struct_id> unit_propagation(solver_context& ctx) {
         }
         if (unassigned.size() == 1) {
             const auto& [unassigned_clauselit, unassigned_varid]              = unassigned.front();
-            auto& [literal, assignment, assignment_context, compiler_context] = ctx.vars_soa_[unassigned_varid];
+            auto d                                                            = ctx.vars_soa_[unassigned_varid];
+            auto& [literal, assignment, assignment_context, compiler_context] = d;
 
             assignment                             = unassigned_clauselit.is_on() ? assignment::on : assignment::off; // set assignment of the propagation
             assignment_context.clause_propagation_ = clause_struct.struct_id(); // setup clause responsible for the propagation of the assignment
@@ -76,6 +77,9 @@ std::optional<clause_soa::struct_id> unit_propagation(solver_context& ctx) {
         }
         return true;
     };
+
+    // execute propagation unit there is no propagation happening
+    // propagate return the number of propagations that occurred on a single loop over the clauses, this is repeated in case of a cascade effect.
     while (auto propagated_literal = std::ranges::count_if(ctx.clauses_soa_, propagate)) {
         if (conflict.has_value()) {
             break;
