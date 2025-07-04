@@ -55,7 +55,7 @@ all_of(queens, (i: int, q: Reine) -> { // all_of is a foreach loop where every c
     q.position.x >= MIN_BOARD;
    
     all_of(queens, 
-      (j: int, qq: Queen) -> { i == j; }, // optional conditions on all_of, if predicate is filled, then the generation of constraint occurs
+      (j: int, qq: Queen) -> { i != j; }, // optional conditions on all_of, if predicate is filled, then the generation of constraint occurs
       (j: int, qq: Queen) -> {
         { q.position.x != qq.position.x;  q.position.y != qq.position.y; };           // positions cannot be equal
         { q.position.x + j != qq.position.x;  q.position.y == qq.position.y; };       // position cannot be on the same line
@@ -141,3 +141,5 @@ CharacterB :: actor {
 };
 
 ```
+
+Here is an example of the 9 Queen problems using the actor syntax
