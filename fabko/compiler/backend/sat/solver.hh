@@ -46,7 +46,7 @@ class clause {
     friend class clause_view;
 
   public:
-    explicit clause(std::vector<literal> clause, std::vector<var_soa::struct_id> literals_mapping)
+    clause(std::vector<literal> clause, std::vector<var_soa::struct_id> literals_mapping)
         : vars_([&]() {
             return std::views::zip_transform(
                        [](auto lit_clause, auto lit_mapping) { //
@@ -56,6 +56,9 @@ class clause {
                        literals_mapping)
                  | std::ranges::to<std::vector<std::pair<literal, var_soa::struct_id>>>();
         }()) {}
+
+    explicit clause(std::vector<std::pair<literal, var_soa::struct_id>>&& lit_vars_mapping)
+        : vars_(std::move(lit_vars_mapping)) {}
 
     [[nodiscard]] bool is_empty() const { return vars_.empty(); }
     [[nodiscard]] const std::vector<std::pair<literal, var_soa::struct_id>>& vars() const { return vars_; }
@@ -124,7 +127,7 @@ class assignment_context {
 
     std::int64_t vsids_activity_ {};                             //!< VSIDS (Variable State Independent Decaying Sum) activity value type
     std::size_t decision_level_ {};                              //!< decision level of the literal
-    std::optional<clause_soa::struct_id> clause_propagation_ {}; //!< clause that produced this (nullopt if decision type)
+    std::optional<clause_soa::struct_id> clause_propagation_ {}; //!< clause that produced this (std::nullopt if decision type)
 };
 
 struct conflict_resolution_result {
