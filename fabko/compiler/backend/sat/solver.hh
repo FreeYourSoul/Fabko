@@ -46,7 +46,7 @@ class clause {
     friend class clause_view;
 
   public:
-    clause(std::vector<literal> clause, std::vector<var_soa::struct_id> literals_mapping)
+    clause(std::vector<literal> clause, std::vector<Vars_Soa::struct_id> literals_mapping)
         : vars_([&]() {
             return std::views::zip_transform(
                        [](auto lit_clause, auto lit_mapping) { //
@@ -54,18 +54,18 @@ class clause {
                        },
                        clause,
                        literals_mapping)
-                 | std::ranges::to<std::vector<std::pair<literal, var_soa::struct_id>>>();
+                 | std::ranges::to<std::vector<std::pair<literal, Vars_Soa::struct_id>>>();
         }()) {}
 
-    explicit clause(std::vector<std::pair<literal, var_soa::struct_id>>&& lit_vars_mapping)
+    explicit clause(std::vector<std::pair<literal, Vars_Soa::struct_id>>&& lit_vars_mapping)
         : vars_(std::move(lit_vars_mapping)) {}
 
     [[nodiscard]] bool is_empty() const { return vars_.empty(); }
-    [[nodiscard]] const std::vector<std::pair<literal, var_soa::struct_id>>& vars() const { return vars_; }
+    [[nodiscard]] const std::vector<std::pair<literal, Vars_Soa::struct_id>>& vars() const { return vars_; }
 
   private:
     std::int64_t id_ {0};
-    std::vector<std::pair<literal, var_soa::struct_id>> vars_; //!< pair of a clause literal and the variable id it refers to in the soa_struct
+    std::vector<std::pair<literal, Vars_Soa::struct_id>> vars_; //!< pair of a clause literal and the variable id it refers to in the soa_struct
 
     std::shared_ptr<metadata> debug_info_;
 };
@@ -88,7 +88,7 @@ class clause_watcher {
      * @param clause The clause to watch
      * @throws fabko_exception if the clause is empty
      */
-    explicit clause_watcher(const var_soa& vs, const clause& clause)
+    explicit clause_watcher(const Vars_Soa& vs, const clause& clause)
         : watchers_([&]() -> std::vector<literal> { //
             using std::get;
             fabko_assert(!clause.vars().empty(), "Cannot make a clause watchers over an empty clause");
@@ -125,9 +125,9 @@ class assignment_context {
      */
     [[nodiscard]] bool is_decision() const { return !is_propagated(); }
 
-    std::int64_t vsids_activity_ {};                             //!< VSIDS (Variable State Independent Decaying Sum) activity value type
-    std::size_t decision_level_ {};                              //!< decision level of the literal
-    std::optional<clause_soa::struct_id> clause_propagation_ {}; //!< clause that produced this (std::nullopt if decision type)
+    std::int64_t vsids_activity_ {};                              //!< VSIDS (Variable State Independent Decaying Sum) activity value type
+    std::size_t decision_level_ {};                               //!< decision level of the literal
+    std::optional<Clauses_Soa::struct_id> clause_propagation_ {}; //!< clause that produced this (std::nullopt if decision type)
 };
 
 struct conflict_resolution_result {
@@ -141,7 +141,7 @@ struct model {
 
     //@todo add compiler information linked for each clauses and literals that generated that model
 
-    solver_context::configuration conf;
+    Solver_Context::configuration conf;
 };
 
 /**
@@ -178,7 +178,7 @@ class solver {
     std::vector<result> solve(std::int32_t expected = -1);
 
   private:
-    solver_context context_; // !< The context for the solver, containing configuration and state.
+    Solver_Context context_; // !< The context for the solver, containing configuration and state.
     model model_;
 };
 

@@ -14,9 +14,8 @@
 #include <filesystem>
 
 #include "cli_base.hh"
-#include "compiler/backend/sat/cli.hh"
-
 #include "common/logging.hh"
+#include "compiler/backend/sat/cli.hh"
 
 int main(int argc, char** argv) {
 

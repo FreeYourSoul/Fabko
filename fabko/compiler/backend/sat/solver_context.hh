@@ -33,12 +33,12 @@ namespace fabko::compiler::sat {
 /**
  * @brief Solution returned by the sat solver
  */
-class solver_solution {
-    std::vector<literal> literals_solving_;                                     //!< literals that solve the SAT problem
+class Solver_Solution {
+    std::vector<literal> literals_solving_;                                      //!< literals that solve the SAT problem
 };
 
-using var_soa    = fil::soa<literal, assignment, assignment_context, metadata>; //!< structure of arrays representing a variable
-using clause_soa = fil::soa<clause, clause_watcher, metadata>;                  //!< structure of arrays representing a clause
+using Vars_Soa    = fil::soa<literal, assignment, assignment_context, metadata>; //!< structure of arrays representing a variable
+using Clauses_Soa = fil::soa<clause, clause_watcher, metadata>;                  //!< structure of arrays representing a clause
 
 enum var_values {
     soa_literal          = 0,
@@ -62,7 +62,7 @@ enum clause_values {
  *
  * @note clause can be learned using Conflict-Driven Clause Learning (CDCL) techniques
  */
-struct solver_context {
+struct Solver_Context {
     struct configuration {
 
         //! after a certain number of conflicts, restart the resolution of the sat solver to avoid the algorithm to
@@ -80,28 +80,30 @@ struct solver_context {
     };
 
     struct statistics {
-        std::size_t restarts;     //!< number of restarts that occurred
-        std::size_t conflicts;    //!< number of conflicts that occurred in the overall execution of the solver
-        std::size_t propagations; //!< amount of propagation that occurred
-        std::size_t decisions;    //!< number of decisions taken
-        std::size_t backtracks;   //!< number of backtracking that occurred
+        std::size_t restarts;         //!< number of restarts that occurred
+        std::size_t conflicts;        //!< number of conflicts that occurred in the overall execution of the solver
+        std::size_t propagations;     //!< amount of propagation that occurred
+        std::size_t decisions;        //!< number of decisions taken
+        std::size_t backtracks;       //!< number of backtracking that occurred
+        std::size_t learned_clause;   //!< number of clause learned through the CDLC
+        std::size_t max_decision_lvl; //!< level of decision maximum during sat solve
     };
 
-    explicit solver_context(const model& model);
+    explicit Solver_Context(const model& model);
 
     configuration config_ {};                           //!< configuration of the solver
     std::reference_wrapper<const model> model_;         //!< reference to the model being solved
 
-    var_soa vars_soa_;                                  //!< variables of the SAT solver, containing their assignment and context
-    clause_soa clauses_soa_;                            //!< clauses of the SAT solver, containing their watchers and context
-    std::vector<var_soa::struct_id> trail_ {};          //!< trail of assigned literals and their context
+    Vars_Soa vars_soa_;                                 //!< variables of the SAT solver, containing their assignment and context
+    Clauses_Soa clauses_soa_;                           //!< clauses of the SAT solver, containing their watchers and context
+    std::vector<Vars_Soa::struct_id> trail_ {};         //!< trail of assigned literals and their context
 
     std::size_t conflict_count_since_last_restart_ {0}; //!< current number of conflicts since last restart
     std::size_t current_decision_level_ {0};
 
     statistics statistics_ {};                          //!< resolution statistics of the solver
 
-    std::vector<solver_solution> solutions_found_ {};   //!< final solutions found by the solver
+    std::vector<Solver_Solution> solutions_found_ {};   //!< final solutions found by the solver
 };
 
 } // namespace fabko::compiler::sat

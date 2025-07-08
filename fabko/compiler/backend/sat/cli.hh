@@ -31,15 +31,18 @@ inline fil::sub_command make_cli() {
         [files] { //
             log_info("execution of the SAT solver command line interface");
             if (files->empty()) {
-                log_error("No file provided to the SAT solver, please use --file or -f option to provide a file");
+                log_error("no file provided to the SAT solver, please use --file or -f option to provide a file");
                 return;
             }
             log_info("file to process count : {}", files->size());
             for (const auto& cnf_file : *files) {
-                log_info("Processing file: {}", cnf_file.string());
+                log_info("processing file: {}", cnf_file.string());
                 auto model = make_model_from_cnf_file(cnf_file);
                 solver solver {std::move(model)};
                 auto results = solver.solve(1);
+                if (results.empty()) {
+                    log_warn("no solution found for {}", cnf_file.string());
+                }
             }
         },
         "SAT solver cli command");

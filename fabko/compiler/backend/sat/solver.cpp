@@ -11,20 +11,20 @@
 //
 
 #include <algorithm>
+#include <expected>
 #include <filesystem>
 #include <fstream>
-#include <optional>
 #include <set>
 #include <stdexcept>
 
-#include "solver.hh"
-
 #include "common/logging.hh"
+
+#include "solver.hh"
 
 namespace fabko::compiler::sat {
 
 namespace impl_details {
-std::optional<solver::result> solve_sat(solver_context& ctx, const model& model);
+std::expected<solver::result, sat_error> solve_sat(Solver_Context& ctx, const model& model);
 } // namespace impl_details
 
 model make_model_from_cnf_file(const std::filesystem::path& cnf_file) {
@@ -100,7 +100,13 @@ std::vector<solver::result> solver::solve(std::int32_t expected) {
     for (auto i = 0; i < expected; ++i) {
         auto r = impl_details::solve_sat(context_, model_);
         if (!r.has_value()) {
-            break;
+            auto error = r.error();
+            if (error == sat_error::unsatisfiable) {
+                log_error("SAT solver cannot find solution for mode : UNSATISFIABLE");
+            } else {
+                log_error("SAT solver : an error occurred");
+            }
+            return res;
         }
         res.push_back(std::move(r.value()));
 

@@ -19,8 +19,8 @@ namespace fabko {
 
 struct cli_data {
 
-    spdlog::level::level_enum log_level = spdlog::level::info; //!< log level to use for the CLI, can be set by the environment variable FABKO_LOG_LEVEL
-    std::string log_file                = "/tmp/fabko.log";    //!< log file to use for the CLI, if empty no log file is used
+    spdlog::level::level_enum log_level = spdlog::level::debug; //!< log level to use for the CLI, can be set by the environment variable FABKO_LOG_LEVEL
+    std::string log_file                = "/tmp/fabko.log";     //!< log file to use for the CLI, if empty no log file is used
 };
 
 } // namespace fabko

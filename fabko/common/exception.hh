@@ -19,29 +19,27 @@
 namespace fabko {
 
 namespace except_cat {
-struct db : public std::error_category {
-  [[nodiscard]] const char* name() const noexcept override { return "fabko::exception::db"; }
-  [[nodiscard]] std::string message(int I) const override {
-    return fmt::format("Fabko::Database Exception Category : {} : id {}", name(), I);
-  }
+struct db : std::error_category {
+    [[nodiscard]] const char* name() const noexcept override { return "fabko::exception::db"; }
+    [[nodiscard]] std::string message(int I) const override { return fmt::format("Fabko::Database Exception Category : {} : id {}", name(), I); }
 };
 
-struct fbk : public std::error_category {
-  [[nodiscard]] const char* name() const noexcept override { return "fabko::exception"; }
-  [[nodiscard]] std::string message(int I) const override {
-    return fmt::format("Fabko Exception Category : {} : id {}", name(), I);
-  }
+struct fbk : std::error_category {
+    [[nodiscard]] const char* name() const noexcept override { return "fabko::exception"; }
+    [[nodiscard]] std::string message(int I) const override { return fmt::format("Fabko Exception Category : {} : id {}", name(), I); }
 };
 } // namespace except_cat
 
 class exception : public std::runtime_error {
-public:
-  exception(const std::error_code& ec, const std::string& what) : std::runtime_error(what), _ec(ec) {}
+  public:
+    exception(const std::error_code& ec, const std::string& what)
+        : std::runtime_error(what)
+        , _ec(ec) {}
 
-  [[nodiscard]] int code() const { return _ec.value(); }
+    [[nodiscard]] int code() const { return _ec.value(); }
 
-private:
-  std::error_code _ec;
+  private:
+    std::error_code _ec;
 };
 
 static void fabko_assert(bool assertion, std::error_code ec, const std::string& msg = "") {
@@ -51,18 +49,20 @@ static void fabko_assert(bool assertion, std::error_code ec, const std::string& 
         throw exception(ec, msg);
     }
 #else
-    (void)assertion;
-    (void)ec;
-    (void)msg;
+    (void) assertion;
+    (void) ec;
+    if (!assertion) {
+        log_error(msg);
+    }
 #endif
 }
 
 static void fabko_assert(bool assertion, const std::string& msg = "") {
 #ifndef NDEBUG
-    fabko_assert(assertion, {42, except_cat::fbk{}}, msg);
+    fabko_assert(assertion, {42, except_cat::fbk {}}, msg);
 #else
-    (void)assertion;
-    (void)msg;
+    (void) assertion;
+    (void) msg;
 #endif
 }
 
