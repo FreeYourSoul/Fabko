@@ -27,6 +27,14 @@ namespace impl_details {
 std::expected<solver::result, sat_error> solve_sat(Solver_Context& ctx, const model& model);
 } // namespace impl_details
 
+std::string to_string(assignment a) {
+    switch (a) {
+        case assignment::on: return "on";
+        case assignment::off: return "off";
+        default: return "unassigned";
+    }
+}
+
 model make_model_from_cnf_file(const std::filesystem::path& cnf_file) {
     if (!std::filesystem::exists(cnf_file)) {
         throw std::runtime_error("CNF file does not exist");
@@ -38,9 +46,9 @@ model make_model_from_cnf_file(const std::filesystem::path& cnf_file) {
     }
 
     std::string line;
-    std::vector<std::vector<literal>> clauses;
-    std::vector<literal> literals;
-    std::set<literal> literals_unique;
+    std::vector<std::vector<Literal>> clauses;
+    std::vector<Literal> literals;
+    std::set<Literal> literals_unique;
 
     while (std::getline(file, line)) {
         if (line.empty() || line[0] == 'c') {
@@ -67,11 +75,11 @@ model make_model_from_cnf_file(const std::filesystem::path& cnf_file) {
         }
 
         std::istringstream iss(line);
-        std::vector<literal> clause;
+        std::vector<Literal> clause;
         std::int64_t lit;
         while (iss >> lit && lit != 0) {
             clause.emplace_back(lit);
-            literals_unique.insert(literal {std::abs(lit)});
+            literals_unique.insert(Literal {std::abs(lit)});
         }
 
         if (!clause.empty()) {
@@ -85,7 +93,7 @@ model make_model_from_cnf_file(const std::filesystem::path& cnf_file) {
     fabko_assert(clauses.size() == clauses.capacity(),          //
         fmt::format("More clauses than expected, expected {} but got {}", clauses.capacity(), clauses.size()));
 
-    std::ranges::transform(literals_unique, std::back_inserter(literals), [](const literal& l) { return l; });
+    std::ranges::transform(literals_unique, std::back_inserter(literals), [](const Literal& l) { return l; });
 
     return model {std::move(literals), std::move(clauses)};
 }

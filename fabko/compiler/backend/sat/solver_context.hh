@@ -1,5 +1,13 @@
+// Dual Licensing Either :
+// - AGPL
+// or
+// - Subscription license for commercial usage (without requirement of licensing propagation).
+//   please contact ballandfys@protonmail.com for additional information about this subscription commercial licensing.
 //
-// Created by Quentin on 25/05/2025.
+// Created by FyS on 30/04/23. License 2022-2025
+//
+// In the case no license has been purchased for the use (modification or distribution in any way) of the software stack
+// the APGL license is applying.
 //
 
 #ifndef SOLVER_CONTEXT_HH
@@ -19,8 +27,8 @@ namespace fabko::compiler::sat {
 class assignment_context;
 
 struct statistics;
-class clause;
-class literal;
+class Clause;
+class Literal;
 class clause_watcher;
 enum class assignment;
 struct model;
@@ -34,11 +42,11 @@ namespace fabko::compiler::sat {
  * @brief Solution returned by the sat solver
  */
 class Solver_Solution {
-    std::vector<literal> literals_solving_;                                      //!< literals that solve the SAT problem
+    std::vector<Literal> literals_solving_;                                      //!< literals that solve the SAT problem
 };
 
-using Vars_Soa    = fil::soa<literal, assignment, assignment_context, metadata>; //!< structure of arrays representing a variable
-using Clauses_Soa = fil::soa<clause, clause_watcher, metadata>;                  //!< structure of arrays representing a clause
+using Vars_Soa    = fil::soa<Literal, assignment, assignment_context, metadata>; //!< structure of arrays representing a variable
+using Clauses_Soa = fil::soa<Clause, clause_watcher, metadata>;                  //!< structure of arrays representing a clause
 
 enum var_values {
     soa_literal          = 0,
@@ -85,7 +93,7 @@ struct Solver_Context {
         std::size_t propagations;     //!< amount of propagation that occurred
         std::size_t decisions;        //!< number of decisions taken
         std::size_t backtracks;       //!< number of backtracking that occurred
-        std::size_t learned_clause;   //!< number of clause learned through the CDLC
+        std::size_t learned_clause;   //!< number of clause learned through the CDCL
         std::size_t max_decision_lvl; //!< level of decision maximum during sat solve
     };
 

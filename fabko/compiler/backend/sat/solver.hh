@@ -1,5 +1,13 @@
+// Dual Licensing Either :
+// - AGPL
+// or
+// - Subscription license for commercial usage (without requirement of licensing propagation).
+//   please contact ballandfys@protonmail.com for additional information about this subscription commercial licensing.
 //
-// Created by Quentin on 25/05/2025.
+// Created by FyS on 30/04/23. License 2022-2025
+//
+// In the case no license has been purchased for the use (modification or distribution in any way) of the software stack
+// the APGL license is applying.
 //
 
 #ifndef SOLVER_HH
@@ -21,14 +29,15 @@ enum class assignment {
     off,         //!< Literal is assigned to false
     not_assigned //!< Literal is not assigned yet
 };
+[[nodiscard]] std::string to_string(assignment a);
 
-class literal {
+class Literal {
   public:
-    explicit literal(std::int64_t value)
+    explicit Literal(std::int64_t value)
         : value_(value) {}
 
-    bool operator==(const literal& lit) const { return std::abs(value_) == std::abs(lit.value_); }
-    auto operator<=>(const literal& lhs) const { return std::abs(value_) <=> std::abs(lhs.value_); }
+    bool operator==(const Literal& lit) const { return std::abs(value_) == std::abs(lit.value_); }
+    auto operator<=>(const Literal& lhs) const { return std::abs(value_) <=> std::abs(lhs.value_); }
 
     [[nodiscard]] bool is_on() const { return value_ > 0; }
     [[nodiscard]] bool is_off() const { return value_ < 0; }
@@ -38,15 +47,17 @@ class literal {
      */
     [[nodiscard]] std::int64_t value() const { return std::abs(value_); }
 
+    [[nodiscard]] friend std::string to_string(const Literal& lit) { return std::to_string(lit.value_); }
+
   private:
     std::int64_t value_;
 };
 
-class clause {
+class Clause {
     friend class clause_view;
 
   public:
-    clause(std::vector<literal> clause, std::vector<Vars_Soa::struct_id> literals_mapping)
+    Clause(std::vector<Literal> clause, std::vector<Vars_Soa::struct_id> literals_mapping)
         : vars_([&]() {
             return std::views::zip_transform(
                        [](auto lit_clause, auto lit_mapping) { //
@@ -54,18 +65,23 @@ class clause {
                        },
                        clause,
                        literals_mapping)
-                 | std::ranges::to<std::vector<std::pair<literal, Vars_Soa::struct_id>>>();
+                 | std::ranges::to<std::vector<std::pair<Literal, Vars_Soa::struct_id>>>();
         }()) {}
 
-    explicit clause(std::vector<std::pair<literal, Vars_Soa::struct_id>>&& lit_vars_mapping)
+    explicit Clause(std::vector<std::pair<Literal, Vars_Soa::struct_id>>&& lit_vars_mapping)
         : vars_(std::move(lit_vars_mapping)) {}
 
     [[nodiscard]] bool is_empty() const { return vars_.empty(); }
-    [[nodiscard]] const std::vector<std::pair<literal, Vars_Soa::struct_id>>& vars() const { return vars_; }
+    [[nodiscard]] const std::vector<std::pair<Literal, Vars_Soa::struct_id>>& get_literals() const { return vars_; }
+    [[nodiscard]] friend std::string to_string(const Clause& clause) {
+        return std::ranges::fold_left(clause.vars_, std::string {"clause["}, [](std::string res, const auto& lit_it) { //
+            return std::format("{}{},", res, to_string(lit_it.first));
+        }) + "]";
+    }
 
   private:
     std::int64_t id_ {0};
-    std::vector<std::pair<literal, Vars_Soa::struct_id>> vars_; //!< pair of a clause literal and the variable id it refers to in the soa_struct
+    std::vector<std::pair<Literal, Vars_Soa::struct_id>> vars_; //!< pair of a clause literal and the variable id it refers to in the soa_struct
 
     std::shared_ptr<metadata> debug_info_;
 };
@@ -88,18 +104,18 @@ class clause_watcher {
      * @param clause The clause to watch
      * @throws fabko_exception if the clause is empty
      */
-    explicit clause_watcher(const Vars_Soa& vs, const clause& clause)
-        : watchers_([&]() -> std::vector<literal> { //
+    explicit clause_watcher(const Vars_Soa& vs, const Clause& clause)
+        : watchers_([&]() -> std::vector<Literal> { //
             using std::get;
-            fabko_assert(!clause.vars().empty(), "Cannot make a clause watchers over an empty clause");
-            if (clause.vars().size() == 1) {
-                return {get<soa_literal>(vs[clause.vars().front().second])};
+            fabko_assert(!clause.get_literals().empty(), "Cannot make a clause watchers over an empty clause");
+            if (clause.get_literals().size() == 1) {
+                return {get<soa_literal>(vs[clause.get_literals().front().second])};
             }
-            return {get<soa_literal>(vs[clause.vars().front().second]), get<soa_literal>(vs[clause.vars().back().second])};
+            return {get<soa_literal>(vs[clause.get_literals().front().second]), get<soa_literal>(vs[clause.get_literals().back().second])};
         }()) {}
 
   private:
-    std::vector<literal> watchers_; //!< The watched literals (1 for unit clauses, 2 for other clauses)
+    std::vector<Literal> watchers_; //!< The watched literals (1 for unit clauses, 2 for other clauses)
 };
 
 /**
@@ -131,13 +147,13 @@ class assignment_context {
 };
 
 struct conflict_resolution_result {
-    clause learned_clause;          //!< clause learned from conflict resolution
+    Clause learned_clause;          //!< clause learned from conflict resolution
     std::size_t backtrack_level {}; //!< level the conflict resolution found to requires the solver to backtrack to
 };
 
 struct model {
-    std::vector<literal> literals;
-    std::vector<std::vector<literal>> clauses;
+    std::vector<Literal> literals;
+    std::vector<std::vector<Literal>> clauses;
 
     //@todo add compiler information linked for each clauses and literals that generated that model
 
@@ -170,7 +186,7 @@ enum class sat_error {
 class solver {
   public:
     struct result {
-        std::vector<literal> literals;
+        std::vector<Literal> literals;
     };
 
     explicit solver(model m);
