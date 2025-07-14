@@ -32,19 +32,45 @@ constexpr std::string SECTION = "sat_solver"; //!< logging a section for the SAT
 }
 
 /**
- * @return true if all literals in the clause is set to a value that satisfie the clause, false otherwise
+ * @return true if all literals in the clause are set to a value that satisfies the clause, false otherwise
  */
 bool is_clause_satisfied(const Solver_Context& ctx, const Clause& clause) {
-    const auto& all_lit = clause.get_literals();
-    return std::ranges::all_of(all_lit, [&ctx](const auto& lit) {
+    const auto& all_clause_lit = clause.get_literals();
+    return std::ranges::any_of(all_clause_lit, [&ctx](const auto& lit) {
         const auto& [literal, varid] = lit;
         const auto assignment        = get<soa_assignment>(ctx.vars_soa_[varid]);
         return (literal.is_on() && assignment == assignment::on) || (literal.is_off() && assignment == assignment::off);
     });
 }
 
+bool has_conflict(const Solver_Context& ctx, const Clause& clause) { // @todo remove function when watchers is implemented
+    const auto& all_clause_lit = clause.get_literals();
+    return std::ranges::all_of(all_clause_lit, [&ctx](const auto& lit) {
+        const auto& [literal, varid] = lit;
+        const auto assignment        = get<soa_assignment>(ctx.vars_soa_[varid]);
+        return (literal.is_on() && assignment == assignment::off) //
+            || (literal.is_off() && assignment == assignment::on);
+    });
+}
+
 /**
- * @brief conflict resolution step consist of analysing a found conflicting clause
+ * @brief Increase the VSIDS activity of the variables in the clause
+ * @note if the VSIDS activity is too high, to avoid overflow, every variable activity is divided by 1e100
+ * @param ctx
+ * @param clause
+ */
+void increase_vsids_activity(Solver_Context& ctx, const Clause& clause) {
+    const auto& all_lit = clause.get_literals();
+    std::for_each(all_lit.begin(), all_lit.end(), [&ctx](const auto& lit) {
+        const auto& [_, varid]                                = lit;
+        auto varstruct                                        = ctx.vars_soa_[varid];
+        auto& [literal, assignment, assignment_context, meta] = varstruct;
+        assignment_context.vsids_activity_ += ctx.config_.vsids_increment; //@todo handle numerical overflow
+    });
+}
+
+/**
+ * @brief conflict resolution step consist of analyzing a found conflicting clause
  *  As the SAT solver implement CDCL (Clause-Driven Clause Learning) learned clause is retrieved from that and an indication of the backtracking to be done to
  *  continue SAT resolution
  * @param ctx solving context to resolve the conflict from
@@ -78,7 +104,7 @@ conflict_resolution_result resolve_conflict(Solver_Context& ctx, Clauses_Soa::so
     while (current_level_vars.size() > 1) {
 
         while (trail_index > 0) {
-            const auto trail_struct_id = ctx.trail_[trail_index - 1];
+            const auto trail_struct_id = ctx.trail_[trail_index];
             const auto& trail_node     = ctx.vars_soa_[trail_struct_id];
             const auto var             = get<soa_literal>(trail_node).value();
             const auto& assignment_ctx = get<soa_assignment_ctx>(trail_node);
@@ -102,22 +128,22 @@ conflict_resolution_result resolve_conflict(Solver_Context& ctx, Clauses_Soa::so
         // remove trail literal found from the learned clause
         std::erase_if(learned_clause, [&trail_lit](const auto& lit_struct) { return get<soa_literal>(lit_struct).value() == trail_lit.value(); });
 
+        log_debug(":: resolving with antecedent of {}", trail_lit.value());
+
         if (trail_assign_ctx.clause_propagation_.has_value()) {
             const auto& propagation_clausestruct = ctx.clauses_soa_[trail_assign_ctx.clause_propagation_.value()];
             const auto& propagation_vars         = get<soa_clause>(propagation_clausestruct).get_literals();
 
+            // add literals from the propagation clause (except current trail literal)
             for (const auto [prop_lit, prop_varid] : propagation_vars) {
                 if (prop_lit.value() == trail_lit.value()
-                    || std::ranges::none_of(learned_clause, //
-                        [&prop_lit](const auto& lit_map) { return prop_lit.value() == lit_map.first.value(); }))
+                    || std::ranges::any_of(learned_clause, [&prop_lit](const auto& lit_map) { return prop_lit.value() == lit_map.first.value(); }))
                     continue;
 
                 learned_clause.emplace_back(prop_lit, prop_varid);
-                auto found_in_trail = std::ranges::any_of(ctx.trail_, //
-                    [&prop_varid](auto trail_id) { return prop_varid == trail_id; });
-                if (found_in_trail) {
+                if (trail_assign_ctx.decision_level_ == ctx.current_decision_level_) {
                     current_level_vars.push_back(ctx.vars_soa_[prop_varid]);
-                } else {
+                } else if (trail_assign_ctx.decision_level_ > backtrack_level) {
                     backtrack_level = trail_assign_ctx.decision_level_;
                 }
             }
@@ -125,12 +151,17 @@ conflict_resolution_result resolve_conflict(Solver_Context& ctx, Clauses_Soa::so
 
         std::erase_if(current_level_vars, fil::soa_select<soa_literal>([trail_lit](auto lit_var) { return lit_var == trail_lit; }));
 
+        log_debug(":: learning clause[{}] :: variable left current var level {}",
+            std::ranges::fold_left(learned_clause, std::string {}, [](std::string&& res, const auto& lit) { return res + to_string(lit.first) + ", "; }),
+            current_level_vars.size());
+
         --trail_index;
     }
 
     std::ranges::sort(learned_clause, [](const auto& lhs, const auto& rhs) { return lhs.first.value() < rhs.first.value(); });
-    learned_clause.erase(
-        std::ranges::unique(learned_clause, [](const auto& lhs, const auto& rhs) { return lhs.first.value() == rhs.first.value(); }).begin(), learned_clause.end());
+    learned_clause.erase( //
+        std::ranges::unique(learned_clause, [](const auto& lhs, const auto& rhs) { return lhs.first.value() == rhs.first.value(); }).begin(),
+        learned_clause.end());
 
     log_debug("conflict resolution :: backtracking to level ({}) :: learned clause (clause[{}])",
         backtrack_level,                                                                                //
@@ -143,13 +174,13 @@ conflict_resolution_result resolve_conflict(Solver_Context& ctx, Clauses_Soa::so
 
 /**
  * @brief backtrack the SAT solver to the indicated level
- *  The SAT solver has a non linear backtracking implementation. It is backtracking multiple levels to not skip un-necessary decision branches thanks to the learned clause.
+ *  the SAT solver has a non-linear backtracking implementation. it is backtracking multiple levels to skip unnecessary decision branches thanks to the learned clause.
  * @param ctx of the sat solver
  * @param level to backtrack to
  */
 void backtrack(Solver_Context& ctx, std::size_t level) {
     log_debug("backtracking start :: from {} to {}", ctx.current_decision_level_, level);
-    while (ctx.trail_.empty()) {
+    while (!ctx.trail_.empty()) {
         const auto& node = ctx.trail_.back();
         auto soa_struct  = ctx.vars_soa_[node];
 
@@ -162,10 +193,10 @@ void backtrack(Solver_Context& ctx, std::size_t level) {
         ctx.trail_.pop_back();
     }
     ctx.current_decision_level_ = level;
+    log_debug("backtracking end :: backtracked to level {} :: size trail {}", level, ctx.trail_.size());
 }
 
 std::optional<Clauses_Soa::struct_id> unit_propagation(Solver_Context& ctx) {
-
     std::optional<Clauses_Soa::struct_id> conflict;
     [[maybe_unused]] auto propagate = [&](const auto& clause_struct) {
         if (conflict.has_value())
@@ -191,11 +222,12 @@ std::optional<Clauses_Soa::struct_id> unit_propagation(Solver_Context& ctx) {
             });
 
         if (unassigned.empty()) {
-            conflict = clause_struct.struct_id(); // no literal is assigned, this clause is a conflict
+            // if (has_conflict(ctx, clause)) {
+            conflict = clause_struct.struct_id(); // no literal is assigned : conflict detected
             log_debug("conflict found :: {}", to_string(clause));
-
             return false;
         }
+
         if (unassigned.size() == 1) {
             const auto& [unassigned_clauselit, unassigned_varid]  = unassigned.front();
             auto unassigned_soa_struct                            = ctx.vars_soa_[unassigned_varid];
@@ -228,20 +260,22 @@ void learn_additional_clause(Solver_Context& ctx, const Clause& clause_learned) 
         log_debug("learned clause is empty, the solver is unsatisfiable", SECTION);
         return;
     }
-    // @todo learn clause
-    // ctx.clauses_soa_.
+    log_debug("learned clause: {}", to_string(clause_learned));
+    [[maybe_unused]] const auto _ = ctx.clauses_soa_.insert(clause_learned, clause_watcher {ctx.vars_soa_, clause_learned}, metadata {/*@todo: add compiler context from model*/});
     ++ctx.statistics_.learned_clause;
 }
 
 bool make_decision(Solver_Context& ctx) {
+    auto unassigned_vars = //
+        std::ranges::views::filter(ctx.vars_soa_, [](const auto& var) { return get<soa_assignment>(var) == assignment::not_assigned; });
 
-    auto var_highest_vsids = std::ranges::max_element(ctx.vars_soa_, //
-        [](const auto& lhs, const auto& rhs) { return get<soa_assignment_ctx>(lhs).vsids_activity_ < get<soa_assignment_ctx>(rhs).vsids_activity_; });
-
-    if (var_highest_vsids == ctx.vars_soa_.end()) {
-        log_info("no decision found");
+    if (unassigned_vars.empty()) {
+        log_info("no unassigned variable found");
         return false;
     }
+
+    auto var_highest_vsids = std::ranges::max_element(
+        unassigned_vars, [](const auto& rhs, const auto& lhs) { return get<soa_assignment_ctx>(rhs).vsids_activity_ < get<soa_assignment_ctx>(lhs).vsids_activity_; });
 
     ++ctx.current_decision_level_;
     ctx.statistics_.max_decision_lvl = std::max(ctx.statistics_.max_decision_lvl, ctx.current_decision_level_);
@@ -288,11 +322,15 @@ std::expected<solver::result, sat_error> solve_sat(Solver_Context& ctx, const mo
             }
             learn_additional_clause(ctx, learned_clause);
             backtrack(ctx, backtrack_level);
+
+            // increase activity of learned clause
+            increase_vsids_activity(ctx, learned_clause);
+
         } else {
             if (make_decision(ctx))
                 continue;
 
-            // no decision found, check if problem is solved
+            // no decision found, check if a solution is found
             const bool is_sat_solved = std::ranges::all_of(ctx.clauses_soa_, fil::soa_select<soa_clause>([&ctx](const auto& clause) { //
                 return is_clause_satisfied(ctx, clause);
             }));
@@ -315,7 +353,7 @@ Solver_Context::Solver_Context(const model& model)
         vars.reserve(model.literals.size());
         for (const auto& lit : model.literals) {
             [[maybe_unused]] auto _ =
-                vars.insert(lit, assignment::not_assigned, assignment_context {/*empty assignment context*/}, metadata {/*@todo: add compiler context from model*/});
+                vars.insert(lit, assignment::not_assigned, Assignment_Context {/*empty assignment context*/}, metadata {/*@todo: add compiler context from model*/});
         }
         return vars;
     }())
@@ -329,6 +367,7 @@ Solver_Context::Solver_Context(const model& model)
                     return lit == l;
                 }));
                 fabko_assert(it != vars_soa_.end(), "a clause cannot contains a non-defined literal");
+                ++get<soa_assignment_ctx>(*it).vsids_activity_;
                 res.push_back((*it).struct_id());
                 return res;
             });

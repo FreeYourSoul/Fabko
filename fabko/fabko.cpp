@@ -28,11 +28,11 @@ int main(int argc, char** argv) {
         "-l",
         [&cli_data](const std::string& value) { cli_data.log_level = spdlog::level::from_str(value); },
         "Set the log level for the CLI, if not provided, the default log level is `info`.\n"
-        "The possible values are the following (case insensitive):\n"
-        " debug : maximum log level possible\n"
-        " info  : all logs excluding debug logs are displayed\n"
-        " warn  : only warning and error logs are displayed\n"
-        " error : only error logs are displayed\n"});
+        "        The possible values are the following (case insensitive): \n"
+        "           * debug : maximum log level possible\n"
+        "           * info  : all logs excluding debug logs are displayed\n"
+        "           * warn  : only warning and error logs are displayed\n"
+        "           * error : only error logs are displayed"});
     cli.add_option(fil::option {//
         "--log-file",
         [&cli_data](const std::string& value) { cli_data.log_file = value; },

@@ -125,7 +125,7 @@ class clause_watcher {
  * (Whether it was a decision or propagated through a clause.)
  *
  */
-class assignment_context {
+class Assignment_Context {
   public:
     enum class type_assign {
         decision,

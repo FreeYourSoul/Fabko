@@ -31,7 +31,7 @@ inline fil::sub_command make_cli() {
         [files] { //
             log_info("execution of the SAT solver command line interface");
             if (files->empty()) {
-                log_error("no file provided to the SAT solver, please use --file or -f option to provide a file");
+                log_error("no file provided to the SAT solver, please use --cnf-file or -c option to provide a file");
                 return;
             }
             log_info("file to process count : {}", files->size());
