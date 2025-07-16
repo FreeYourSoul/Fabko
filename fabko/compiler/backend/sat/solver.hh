@@ -187,6 +187,12 @@ class solver {
   public:
     struct result {
         std::vector<Literal> literals;
+
+        [[nodiscard]] friend std::string to_string(const result& res) {
+            return std::ranges::fold_left(res.literals, std::string {"result["}, [](std::string res, const Literal& lit) { //
+                return std::format("{}{}->{},", res, lit.value(), lit.is_on());
+            }) + "]";
+        }
     };
 
     explicit solver(model m);

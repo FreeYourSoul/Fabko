@@ -14,7 +14,6 @@
 #include <expected>
 #include <optional>
 #include <ranges>
-#include <set>
 
 #include "common/exception.hh"
 #include "common/logging.hh"
@@ -335,8 +334,14 @@ std::expected<solver::result, sat_error> solve_sat(Solver_Context& ctx, const mo
                 return is_clause_satisfied(ctx, clause);
             }));
             if (is_sat_solved) {
-                log_info("solution found");
-                break; // @todo remove break and fill-up solution
+                solution = std::ranges::fold_left(ctx.vars_soa_, solution, [](solver::result res, const auto& soa_struct) {
+                    res.literals.emplace_back(                              //
+                        get<soa_assignment>(soa_struct) == assignment::on ? //
+                            get<soa_literal>(soa_struct).value() :
+                            -get<soa_literal>(soa_struct).value());
+                    return res;
+                });
+                log_info("solution found : {}", to_string(solution));
             }
         }
     }
