@@ -50,12 +50,12 @@ inline fil::sub_command make_cli() {
         "--cnf-file",
         "-c",
         [files](const std::string& value) { //
-            std::filesystem::path dnf_file {value};
-            if (!exists(dnf_file) || !dnf_file.has_extension() || dnf_file.extension() != ".cnf") {
-                log_error("file {} is not a valid CNF file, it should exists and have a .cnf extension", std::string(dnf_file));
+            std::filesystem::path cnf_file {value};
+            if (!exists(cnf_file) || !cnf_file.has_extension() || cnf_file.extension() != ".cnf") {
+                log_error("file {} is not a valid CNF file, it should exists and have a .cnf extension", std::string(cnf_file));
                 return;
             }
-            files->emplace_back(std::move(dnf_file));
+            files->emplace_back(std::move(cnf_file));
         },
         "File in CNF format to be process by the SAT solver"});
 

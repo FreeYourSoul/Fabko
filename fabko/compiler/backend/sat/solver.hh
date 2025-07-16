@@ -161,15 +161,15 @@ struct model {
 };
 
 /**
- * @brief Create a model from a DNF file.
+ * @brief Create a model from a CNF file.
  *
- * This function reads a DNF (Disjunctive Normal Form) file and constructs a model that can be used by the SAT solver. The DNF file should contain clauses in the
+ * This function reads a CNF (Conjunction Normal Form) file and constructs a model that can be used by the SAT solver. The CNF file should contain clauses in the
  * appropriate format.
  *
- * @param dnf_file Path to the DNF file to be processed.
- * @return A model object representing the parsed DNF file.
+ * @param cnf_file Path to the CNF file to be processed.
+ * @return A model object representing the parsed CNF file.
  */
-model make_model_from_cnf_file(const std::filesystem::path& dnf_file);
+model make_model_from_cnf_file(const std::filesystem::path& cnf_file);
 
 enum class sat_error {
     unsatisfiable, //!< The SAT problem is unsatisfiable.

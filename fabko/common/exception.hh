@@ -42,7 +42,7 @@ class exception : public std::runtime_error {
     std::error_code _ec;
 };
 
-static void fabko_assert(bool assertion, std::error_code ec, const std::string& msg = "") {
+inline void fabko_assert(bool assertion, std::error_code ec, const std::string& msg = "") {
 
 #ifndef NDEBUG
     if (!assertion) {
@@ -57,7 +57,7 @@ static void fabko_assert(bool assertion, std::error_code ec, const std::string& 
 #endif
 }
 
-static void fabko_assert(bool assertion, const std::string& msg = "") {
+inline void fabko_assert(bool assertion, const std::string& msg = "") {
 #ifndef NDEBUG
     fabko_assert(assertion, {42, except_cat::fbk {}}, msg);
 #else

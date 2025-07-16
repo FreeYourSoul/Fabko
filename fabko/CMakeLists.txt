@@ -42,8 +42,8 @@ target_sources(fabko
         ${CMAKE_CURRENT_SOURCE_DIR}/fabko.cpp
 )
 target_include_directories(fabko PUBLIC include)
-target_link_libraries(fabko
+target_link_libraries(fabkof
         PRIVATE
         fabko::agent
         fabko::compiler)
-target_compile_definitions(fabko PUBLIC cxx_std_26)
+target_compile_features(agent PUBLIC cxx_std_26)

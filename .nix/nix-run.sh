@@ -16,8 +16,8 @@ if [ -n "$IN_NIX_RUN" ]; then
   exec "$CMD" "$@"
 else
   #relative path containing default.nix / shell.nix
-  PROJECT_DIR=$(dirname ./.
-  QUOT_ARGS=$(printf '"%s" ' "$@")
-  IN_NIX_RUN=1 nix-shell --pure --keep IN_NIX_RUN --run "$CMD $QUOT_ARGS" "$PROJECT_DIR"
+  PROJECT_DIR=$(dirname "$0")
+  ESCAPED_ARGS=$(printf '%q ' "$@")
+  IN_NIX_RUN=1 nix-shell --pure --keep IN_NIX_RUN --run "$CMD $ESCAPED_ARGS" "$PROJECT_DIR"
   exit $?
 fi

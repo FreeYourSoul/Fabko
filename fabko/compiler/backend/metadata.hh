@@ -13,6 +13,8 @@
 #ifndef METADATA_H
 #define METADATA_H
 
+#include <optional>
+
 namespace fabko::compiler {
 namespace fabl {
 class compiler_generation_context {}; //@todo transform into a forward declaration when class exists in compiler

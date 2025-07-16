@@ -14,7 +14,7 @@ target_sources(agent
         ${CMAKE_CURRENT_SOURCE_DIR}/protocol/agent_com_p2p.cpp
 )
 target_include_directories(agent PUBLIC agent)
-target_compile_definitions(agent PUBLIC cxx_std_26)
+target_compile_features(agent PUBLIC cxx_std_26)
 
 target_link_libraries(agent
         PRIVATE
