@@ -14,6 +14,9 @@ project(fabko
 
 set(CMAKE_CXX_STANDARD 26)
 
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
 find_package(fmt CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
@@ -31,4 +34,49 @@ find_package(RocksDB CONFIG REQUIRED)
 set(nlohmann-json_IMPLICIT_CONVERSIONS OFF)
 
 add_subdirectory(fabko)
-add_subdirectory(tests)
+
+if (IS_BUILT_FROM_SOURCE AND BUILD_TESTING)
+    message(STATUS "Tests will be built")
+    add_subdirectory(tests)
+endif ()
+
+#
+# Installation
+#
+set(CMAKE_INSTALL_LIBDIR lib CACHE PATH "Installation directory for libraries")
+set(CMAKE_INSTALL_INCLUDEDIR include CACHE PATH "Installation directory for header files")
+
+write_basic_package_version_file(
+        "${PROJECT_BINARY_DIR}/fabkoConfigVersion.cmake"
+        VERSION "${FABKO_VERSION}"
+        COMPATIBILITY AnyNewerVersion
+)
+configure_package_config_file(
+        "${PROJECT_SOURCE_DIR}/cmake/fabkoConfig.cmake.in"
+        "${PROJECT_BINARY_DIR}/fabkoConfig.cmake"
+        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/fabko"
+        PATH_VARS CMAKE_INSTALL_INCLUDEDIR
+)
+
+message("CMAKE_INSTALL_LIBDIR ----" ${CMAKE_INSTALL_LIBDIR})
+message("CMAKE_INSTALL_BINDIR ----" ${CMAKE_INSTALL_BINDIR})
+message("CMAKE_INSTALL_INCLUDEDIR ----" ${CMAKE_INSTALL_INCLUDEDIR})
+
+install(TARGETS fabko
+        EXPORT fabkoTargets
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+)
+
+install(EXPORT fabkoTargets
+        FILE fabkoTargets.cmake
+        NAMESPACE fabko::
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/fabko"
+)
+
+install(FILES
+        "${PROJECT_BINARY_DIR}/fabkoConfig.cmake"
+        "${PROJECT_BINARY_DIR}/fabkoConfigVersion.cmake"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/fabko"
+)

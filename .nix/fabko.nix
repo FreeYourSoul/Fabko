@@ -34,6 +34,14 @@ stdenv.mkDerivation rec {
     lcov gcovr
   ];
 
+  cmakeFlags = [
+    "-DCMAKE_PREFIX_PATH=${fil}/lib/cmake"
+  ];
+
+  preConfigure = ''
+    # Ensure the build directory is clean
+    echo "========== ${fil}"
+  '';
 
   CXXFLAGS = lib.optionalString with_coverage "-coverage -fkeep-inline-functions -fno-inline -fno-inline-small-functions -fno-default-inline -O0 -g";
 
@@ -66,7 +74,6 @@ stdenv.mkDerivation rec {
 
   meta = with lib; {
     description = "Fabko Agent - compiler library";
-    license = [ agpl3Plus unfree ];
     platforms = platforms.all;
   };
 }

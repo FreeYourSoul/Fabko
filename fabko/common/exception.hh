@@ -51,9 +51,6 @@ inline void fabko_assert(bool assertion, std::error_code ec, const std::string& 
 #else
     (void) assertion;
     (void) ec;
-    if (!assertion) {
-        log_error(msg);
-    }
 #endif
 }
 

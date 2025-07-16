@@ -2,8 +2,8 @@
   "fil": {
     "owner": "FreeYourSoul",
     "repo": "FiL",
-    "rev": "1230525420a22e51cac6b956dfef28250e134787",
-    "sha256": "sha256-dCQ2iEaxdeaHQJcZqBkJrq733NoF1XlWZhIG/cb0BUI",
+    "rev": "b2629a1b78156330935c94d7d3f348827afe3e9b",
+    "sha256": "sha256-OYaoXRrHpVZf2utE3vd23ESmX5/0c+ocoqo1gqtjf28=",
     "nixFile": ".nix/default.nix"
   }
 }
