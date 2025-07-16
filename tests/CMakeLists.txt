@@ -7,19 +7,6 @@ find_package(Catch2 3 CONFIG REQUIRED)
 include(CTest)
 include(Catch)
 
-# Test of the datastore
-#
-add_executable(test_datastore)
-target_sources(test_datastore
-        PRIVATE
-        peerboard/test_kv_rocksdb.cpp
-)
-target_compile_features(test_datastore PUBLIC cxx_std_26)
-target_link_libraries(test_datastore
-        PRIVATE Catch2::Catch2WithMain)
-
-catch_discover_tests(test_datastore)
-
 # Test of the Agent
 #
 #

@@ -36,14 +36,14 @@ add_subdirectory(agent)
 #
 add_executable(fabko
         cli_base.hh)
-
 target_sources(fabko
         PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/fabko.cpp
 )
-target_include_directories(fabko PUBLIC include)
-target_link_libraries(fabkof
+target_include_directories(fabko
+        PRIVATE include)
+target_link_libraries(fabko
         PRIVATE
         fabko::agent
         fabko::compiler)
-target_compile_features(agent PUBLIC cxx_std_26)
+target_compile_features(fabko PUBLIC cxx_std_26)
