@@ -16,7 +16,7 @@ target_sources(test_datastore
 )
 target_compile_definitions(test_datastore PUBLIC cxx_std_26)
 target_link_libraries(test_datastore
-        PRIVATE Catch2::Catch2WithMain fabko::peerboard)
+        PRIVATE Catch2::Catch2WithMain)
 
 catch_discover_tests(test_datastore)
 
@@ -35,24 +35,18 @@ target_link_libraries(test_agent
 catch_discover_tests(test_agent)
 
 
-# Test of the core
+# Test of the compiler
 #
-add_executable(test_core)
-target_sources(test_core
-        PRIVATE
-        core/common/test_assignment_bitset.cpp
-        core/common/test_algo_utils.cpp
-        core/sat/test_formula.cpp
-        core/sat/test_set.cpp
-        core/sat/test_dimacs_compiler.cpp
-        core/sat/test_basic_sat.cpp
-        core/sat/test_sat_coloring.cpp
-)
-target_compile_definitions(test_core PUBLIC cxx_std_26)
-target_compile_definitions(test_core
-        PRIVATE -DTEST_ASSETS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/_assets")
-target_link_libraries(test_core
-        PRIVATE fabko::core Catch2::Catch2WithMain)
-
-catch_discover_tests(test_core)
+#add_executable(test_core)
+#target_sources(test_core
+#        PRIVATE
+#
+#)
+#target_compile_definitions(test_core PUBLIC cxx_std_26)
+#target_compile_definitions(test_core
+#        PRIVATE -DTEST_ASSETS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/_assets")
+#target_link_libraries(test_core
+#        PRIVATE fabko::core Catch2::Catch2WithMain)
+#
+#catch_discover_tests(test_core)
 

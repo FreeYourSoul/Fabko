@@ -10,19 +10,16 @@
 // the APGL license is applying.
 //
 
-#include "agent_com.hh"
+#pragma once
 
-namespace fabko::agent_protocol::p2p {
+namespace fabko {
 
-std::string agent_com::instantiate_blackboard(const acl::message&) {
-    return {};
-}
-
-std::future<agent_protocol::propositions> agent_com::request_propositions(const acl::message&) {
-    return {};
-}
-decision_status agent_com::commit_decision(const acl::message&) {
-    return decision_status::RETRY;
-}
+//! Overload pattern for visitation
+template<class... Ts>
+struct overloaded : Ts... {
+  using Ts::operator()...;
+};
+template<class... Ts>
+overloaded(Ts...) -> overloaded<Ts...>;
 
 } // namespace fabko

@@ -4,7 +4,7 @@
 // - Subscription license for commercial usage (without requirement of licensing propagation).
 //   please contact ballandfys@protonmail.com for additional information about this subscription commercial licensing.
 //
-// Created by FyS on 23/04/23. License 2022-2024
+// Created by FyS on 23/04/23. License 2022-2025
 //
 // In the case no license has been purchased for the use (modification or distribution in any way) of the software stack
 // the APGL license is applying.
@@ -36,8 +36,7 @@ std::string kv_rocksdb::transaction::get(const std::string& key) {
     rocksdb::ReadOptions opt;
 
     auto s = _transaction->Get(opt, key, &result);
-    fabko_assert(
-        s.ok(), get_error_code(), fmt::format("Error while getting key {} : {}", key, s.ToString()));
+    fabko_assert(s.ok(), get_error_code(), fmt::format("Error while getting key {} : {}", key, s.ToString()));
     return result;
 }
 
@@ -55,8 +54,9 @@ std::vector<key_value> kv_rocksdb::transaction::multi_get(const std::vector<std:
 
     results.reserve(r.size());
     for (std::size_t i = 0; i < status.size(); ++i) {
-        fabko_assert(
-            status.at(i).ok(), get_error_code(), fmt::format("Error while multi getting {} values : {}", keys.size(), status.at(i).ToString()));
+        fabko_assert(status.at(i).ok(),
+                     get_error_code(),
+                     fmt::format("Error while multi getting {} values : {}", keys.size(), status.at(i).ToString()));
         results.emplace_back(keys.at(i), r.at(i));
     }
     return results;
@@ -79,8 +79,7 @@ bool kv_rocksdb::transaction::multi_set(const std::vector<key_value>& to_adds) {
 
 bool kv_rocksdb::transaction::commit_transaction() {
     auto s = _transaction->Commit();
-    fabko_assert(
-        s.ok(), commit_error_code(), fmt::format("Commit Failure : {}", s.ToString()));
+    fabko_assert(s.ok(), commit_error_code(), fmt::format("Commit Failure : {}", s.ToString()));
     return true;
 }
 
@@ -100,7 +99,7 @@ kv_rocksdb::kv_rocksdb(const initializer_type& initializer) {
     auto status = rocksdb::OptimisticTransactionDB::Open(option, initializer.path_db_file, &txn_db);
 
     fabko_assert(
-        status.ok(), std::error_code{}, fmt::format(FMT_STRING("Couldn't open optimistic RocksDB Database: {}"), status.ToString()));
+        status.ok(), std::error_code {}, fmt::format(FMT_STRING("Couldn't open optimistic RocksDB Database: {}"), status.ToString()));
 
     _db.reset(txn_db);
 
