@@ -103,21 +103,23 @@ conflict_resolution_result resolve_conflict(Solver_Context& ctx, Clauses_Soa::so
     while (current_level_vars.size() > 1) {
 
         while (trail_index > 0) {
-            const auto trail_struct_id = ctx.trail_[trail_index];
-            const auto& trail_node     = ctx.vars_soa_[trail_struct_id];
-            const auto var             = get<soa_literal>(trail_node).value();
-            const auto& assignment_ctx = get<soa_assignment_ctx>(trail_node);
+            const auto trail_struct_id   = ctx.trail_[trail_index];
+            const auto& trail_node       = ctx.vars_soa_[trail_struct_id];
+            const auto trail_var         = get<soa_literal>(trail_node).value();
+            const auto& trail_assign_ctx = get<soa_assignment_ctx>(trail_node);
 
-            if (!assignment_ctx.is_decision() && assignment_ctx.decision_level_ == ctx.current_decision_level_) {
-                if (std::ranges::any_of(current_level_vars, [var](const auto& ss) { return get<soa_literal>(ss).value() == var; })) {
+            if (!trail_assign_ctx.is_decision() && trail_assign_ctx.decision_level_ == ctx.current_decision_level_) {
+                if (std::ranges::any_of(current_level_vars, [trail_var](const auto& ss) { return get<soa_literal>(ss).value() == trail_var; })) {
                     break;
                 }
             }
 
             --trail_index;
         }
-        if (trail_index == 0)
+        if (trail_index == 0) {
+            log_debug(" :: trail empty");
             break;
+        }
 
         const auto trail_struct_id   = ctx.trail_[trail_index];
         const auto& trail_node       = ctx.vars_soa_[trail_struct_id];
@@ -127,7 +129,7 @@ conflict_resolution_result resolve_conflict(Solver_Context& ctx, Clauses_Soa::so
         // remove trail literal found from the learned clause
         std::erase_if(learned_clause, [&trail_lit](const auto& lit_struct) { return get<soa_literal>(lit_struct).value() == trail_lit.value(); });
 
-        log_debug(":: resolving with antecedent of {}", trail_lit.value());
+        log_debug(":: resolving with trail antecedent of {}", trail_lit.value());
 
         if (trail_assign_ctx.clause_propagation_.has_value()) {
             const auto& propagation_clausestruct = ctx.clauses_soa_[trail_assign_ctx.clause_propagation_.value()];
@@ -188,7 +190,8 @@ void backtrack(Solver_Context& ctx, std::size_t level) {
         if (assignment_context.decision_level_ <= level) {
             break;
         }
-        assignment = assignment::not_assigned;
+        assignment                             = assignment::not_assigned;
+        assignment_context.clause_propagation_ = std::nullopt; // remove any propagation context from the assignment
         ctx.trail_.pop_back();
     }
     ctx.current_decision_level_ = level;
