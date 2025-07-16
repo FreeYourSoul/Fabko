@@ -66,7 +66,7 @@ stdenv.mkDerivation rec {
 
   meta = with lib; {
     description = "Fabko Agent - compiler library";
-    license = [ agpl3Plus unfree ];
+    license = [ unfree ];
     platforms = platforms.all;
   };
 }
