@@ -53,19 +53,38 @@ bool has_conflict(const Solver_Context& ctx, const Clause& clause) { // @todo re
 }
 
 /**
- * @brief Increase the VSIDS activity of the variables in the clause
+ * @brief Increase the VSIDS activity of the variables in the provided learned clause, then decrease the VSIDS activity of all variables if configured to do so.
+ * @note this function is called after a conflict (and the learned clause from the conflict resolution is the parameter 'learned_clause')
  * @note if the VSIDS activity is too high, to avoid overflow, every variable activity is divided by 1e100
- * @param ctx
- * @param clause
+ * @param ctx solving context to update the VSIDS activity of the variables
+ * @param learned_clause clause learned from the conflict resolution, the literals in this clause are used to increase the VSIDS activity of the variables
  */
-void increase_vsids_activity(Solver_Context& ctx, const Clause& clause) {
-    const auto& all_lit = clause.get_literals();
-    std::for_each(all_lit.begin(), all_lit.end(), [&ctx](const auto& lit) {
-        const auto& [_, varid]                                = lit;
-        auto varstruct                                        = ctx.vars_soa_[varid];
-        auto& [literal, assignment, assignment_context, meta] = varstruct;
-        assignment_context.vsids_activity_ += ctx.config_.vsids_increment; //@todo handle numerical overflow
+void update_vsids_activity(Solver_Context& ctx, const Clause& learned_clause) {
+    const auto& all_lit = learned_clause.get_literals();
+
+    const bool need_normalization = std::ranges::any_of(all_lit, [&ctx](const auto& lit) { // check if any variable activity is too high
+        const auto vsids_activity = get<soa_assignment_ctx>(ctx.vars_soa_[lit.second]).vsids_activity_;
+        return vsids_activity >= (std::numeric_limits<decltype(vsids_activity)>::max() - ctx.config_.vsids_increment);
     });
+    if (need_normalization) {
+        static constexpr auto NORMALIZATION_FACTOR = 1e6;
+        std::ranges::for_each(ctx.vars_soa_, fil::soa_select<soa_assignment_ctx>([](auto& assignment_ctx) { //
+            assignment_ctx.vsids_activity_ /= NORMALIZATION_FACTOR;
+        }));
+    }
+
+    // increase the VSIDS activity of the variables in the learned clause
+    for (const auto& varid : all_lit | std::views::values) {
+        auto& assignment_context = get<soa_assignment_ctx>(ctx.vars_soa_[varid]);
+        assignment_context.vsids_activity_ += ctx.config_.vsids_increment;
+    }
+
+    // decrease the VSIDS for all variables if the counter of conflict exceeded the configured decay interval
+    if (ctx.statistics_.conflicts % ctx.config_.decay_interval == 0) {
+        std::ranges::for_each(ctx.vars_soa_, fil::soa_select<soa_assignment_ctx>([&ctx](auto& assignment_ctx) { //
+            assignment_ctx.vsids_activity_ /= ctx.config_.vsids_decay_ratio;
+        }));
+    }
 }
 
 /**
@@ -77,7 +96,6 @@ void increase_vsids_activity(Solver_Context& ctx, const Clause& clause) {
  * @return a resolution result that provides the learned clause as well as the backtracking level at which the solver must return to for continuation of the sat solve
  */
 conflict_resolution_result resolve_conflict(Solver_Context& ctx, Clauses_Soa::soa_struct conflict_soastruct_clause) {
-
     const auto& [conflict_clause, watcher, meta] = conflict_soastruct_clause;
     log_debug("analyzing conflicting clause: {}", to_string(conflict_clause));
 
@@ -324,9 +342,7 @@ std::expected<solver::result, sat_error> solve_sat(Solver_Context& ctx, const mo
             }
             learn_additional_clause(ctx, learned_clause);
             backtrack(ctx, backtrack_level);
-
-            // increase activity of learned clause
-            increase_vsids_activity(ctx, learned_clause);
+            update_vsids_activity(ctx, learned_clause);
 
         } else {
             if (make_decision(ctx))
