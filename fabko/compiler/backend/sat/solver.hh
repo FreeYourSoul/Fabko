@@ -83,7 +83,7 @@ class Clause {
     std::int64_t id_ {0};
     std::vector<std::pair<Literal, Vars_Soa::struct_id>> vars_; //!< pair of a clause literal and the variable id it refers to in the soa_struct
 
-    std::shared_ptr<metadata> debug_info_;
+    std::shared_ptr<Metadata> debug_info_;
 };
 
 /**
@@ -96,7 +96,7 @@ class Clause {
  * The watchers are initially set to the first and last literals in the clause. Only when both
  * watched literals become false does the solver need to examine the entire clause.
  */
-class clause_watcher {
+class Clause_Watcher {
   public:
     /**
      * @brief Constructs a clause watcher for the given clause
@@ -104,18 +104,20 @@ class clause_watcher {
      * @param clause The clause to watch
      * @throws fabko_exception if the clause is empty
      */
-    explicit clause_watcher(const Vars_Soa& vs, const Clause& clause)
-        : watchers_([&]() -> std::vector<Literal> { //
+    explicit Clause_Watcher(const Vars_Soa& vs, const Clause& clause)
+        : watchers_([&]() -> std::array<std::optional<Vars_Soa::struct_id>, 2> { //
             using std::get;
             fabko_assert(!clause.get_literals().empty(), "Cannot make a clause watchers over an empty clause");
             if (clause.get_literals().size() == 1) {
-                return {get<soa_literal>(vs[clause.get_literals().front().second])};
+                return {vs[clause.get_literals().front().second].struct_id(), std::nullopt};
             }
-            return {get<soa_literal>(vs[clause.get_literals().front().second]), get<soa_literal>(vs[clause.get_literals().back().second])};
+            std::ranges::views::filter(clause, [](const auto& lit) { return get<soa_literal>(vs[]) == lit; });
+
+            return {vs[clause.get_literals().front().second].struct_id(), get<soa_literal>(vs[clause.get_literals().back().second])};
         }()) {}
 
   private:
-    std::vector<Literal> watchers_; //!< The watched literals (1 for unit clauses, 2 for other clauses)
+    std::array<std::optional<Vars_Soa::struct_id>, 2> watchers_; //!< The watched literals (1 for unit clauses, 2 for other clauses)
 };
 
 /**
@@ -151,13 +153,13 @@ struct conflict_resolution_result {
     std::size_t backtrack_level {}; //!< level the conflict resolution found to requires the solver to backtrack to
 };
 
-struct model {
+struct Model {
     std::vector<Literal> literals;
     std::vector<std::vector<Literal>> clauses;
 
     //@todo add compiler information linked for each clauses and literals that generated that model
 
-    Solver_Context::configuration conf;
+    Solver_Context::Configuration conf;
 };
 
 /**
@@ -169,7 +171,7 @@ struct model {
  * @param cnf_file Path to the CNF file to be processed.
  * @return A model object representing the parsed CNF file.
  */
-model make_model_from_cnf_file(const std::filesystem::path& cnf_file);
+Model make_model_from_cnf_file(const std::filesystem::path& cnf_file);
 
 enum class sat_error {
     unsatisfiable, //!< The SAT problem is unsatisfiable.
@@ -195,13 +197,13 @@ class solver {
         }
     };
 
-    explicit solver(model m);
+    explicit solver(Model m);
 
     std::vector<result> solve(std::int32_t expected = -1);
 
   private:
     Solver_Context context_; // !< The context for the solver, containing configuration and state.
-    model model_;
+    Model model_;
 };
 
 } // namespace fabko::compiler::sat
