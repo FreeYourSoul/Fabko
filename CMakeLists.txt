@@ -23,7 +23,8 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(fil CONFIG REQUIRED)
 
 if (UNIX AND NOT APPLE)
-    add_library(uring::uring INTERFACE IMPORTED)
+    add_library(uring::uring INTERFACE IMPORTED
+            tests/compiler/soa/watcher_testcase.cpp)
     set_target_properties(uring::uring PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_INCLUDE_PATH}"
             INTERFACE_LINK_LIBRARIES "uring"

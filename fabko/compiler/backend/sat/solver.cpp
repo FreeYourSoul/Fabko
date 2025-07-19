@@ -24,7 +24,7 @@
 namespace fabko::compiler::sat {
 
 namespace impl_details {
-std::expected<solver::result, sat_error> solve_sat(Solver_Context& ctx, const model& model);
+std::expected<solver::result, sat_error> solve_sat(Solver_Context& ctx, const Model& model);
 } // namespace impl_details
 
 std::string to_string(assignment a) {
@@ -35,7 +35,7 @@ std::string to_string(assignment a) {
     }
 }
 
-model make_model_from_cnf_file(const std::filesystem::path& cnf_file) {
+Model make_model_from_cnf_file(const std::filesystem::path& cnf_file) {
     if (!std::filesystem::exists(cnf_file)) {
         throw std::runtime_error("CNF file does not exist");
     }
@@ -95,10 +95,10 @@ model make_model_from_cnf_file(const std::filesystem::path& cnf_file) {
 
     std::ranges::transform(literals_unique, std::back_inserter(literals), [](const Literal& l) { return l; });
 
-    return model {std::move(literals), std::move(clauses)};
+    return Model {std::move(literals), std::move(clauses)};
 }
 
-solver::solver(model m)
+solver::solver(Model m)
     : context_(m)
     , model_(std::move(m)) {}
 

@@ -26,7 +26,7 @@ class solving_generation_context {}; //@todo transform into a forward declaratio
 
 namespace fabko::compiler {
 
-class metadata {
+class Metadata {
     std::optional<fabl::compiler_generation_context> fabl_generation_ctx; //!< set if the fabl compiler generated this context
     std::optional<sat::solving_generation_context> sat_generation_ctx;    //!< set if the sat generation generated this context
 };

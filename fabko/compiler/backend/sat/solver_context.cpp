@@ -281,7 +281,7 @@ void learn_additional_clause(Solver_Context& ctx, const Clause& clause_learned) 
         return;
     }
     log_debug("learned clause: {}", to_string(clause_learned));
-    [[maybe_unused]] const auto _ = ctx.clauses_soa_.insert(clause_learned, clause_watcher {ctx.vars_soa_, clause_learned}, metadata {/*@todo: add compiler context from model*/});
+    [[maybe_unused]] const auto _ = ctx.clauses_soa_.insert(clause_learned, Clause_Watcher {ctx.vars_soa_, clause_learned}, Metadata {/*@todo: add compiler context from model*/});
     ++ctx.statistics_.learned_clause;
 }
 
@@ -313,7 +313,7 @@ bool make_decision(Solver_Context& ctx) {
     return true;
 }
 
-std::expected<solver::result, sat_error> solve_sat(Solver_Context& ctx, const model& model) {
+std::expected<solver::result, sat_error> solve_sat(Solver_Context& ctx, const Model& model) {
     if (unit_propagation(ctx).has_value())
         return std::unexpected(sat_error::unsatisfiable);
 
@@ -369,7 +369,7 @@ std::expected<solver::result, sat_error> solve_sat(Solver_Context& ctx, const mo
 
 } // namespace impl_details
 
-Solver_Context::Solver_Context(const model& model)
+Solver_Context::Solver_Context(const Model& model)
     : config_(model.conf)
     , model_(model)
     , vars_soa_([&]() {
@@ -377,7 +377,7 @@ Solver_Context::Solver_Context(const model& model)
         vars.reserve(model.literals.size());
         for (const auto& lit : model.literals) {
             [[maybe_unused]] auto _ =
-                vars.insert(lit, assignment::not_assigned, Assignment_Context {/*empty assignment context*/}, metadata {/*@todo: add compiler context from model*/});
+                vars.insert(lit, assignment::not_assigned, Assignment_Context {/*empty assignment context*/}, Metadata {/*@todo: add compiler context from model*/});
         }
         return vars;
     }())
@@ -399,8 +399,8 @@ Solver_Context::Solver_Context(const model& model)
             Clause clause_to_insert {model_clause, std::move(all_clause_ids)};
             [[maybe_unused]] const auto _ = clauses.insert( //
                 clause_to_insert,
-                clause_watcher {vars_soa_, clause_to_insert},
-                metadata {/*@todo: add compiler context from model*/});
+                Clause_Watcher {vars_soa_, clause_to_insert},
+                Metadata {/*@todo: add compiler context from model*/});
         }
         return clauses;
     }()) {}
