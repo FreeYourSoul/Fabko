@@ -111,10 +111,21 @@ class Clause_Watcher {
             if (clause.get_literals().size() == 1) {
                 return {vs[clause.get_literals().front().second].struct_id(), std::nullopt};
             }
-            std::ranges::views::filter(clause, [](const auto& lit) { return get<soa_literal>(vs[]) == lit; });
+            auto filtered = std::ranges::views::filter(
+                                clause.get_literals(), [&vs](const auto& lit_id_pair) { return get<soa_assignment>(vs[lit_id_pair.second]) == assignment::not_assigned; }) //
+                          | std::views::transform([&vs](const auto& lit_id_pair) { return vs[lit_id_pair.second].struct_id(); });                                          //
 
-            return {vs[clause.get_literals().front().second].struct_id(), get<soa_literal>(vs[clause.get_literals().back().second])};
+            auto it = filtered.begin();
+            if (it == filtered.end())
+                return {std::nullopt, std::nullopt}; // no watched literals, clause is satisfied
+            ++it;
+            if (it == filtered.end())
+                return {*it, std::nullopt};          // no watched literals, clause is satisfied
+
+            return {std::make_optional(*filtered.begin()), std::make_optional(*it)};
         }()) {}
+
+    [[nodiscard]] std::size_t size() const { return (watchers_[0].has_value() ? 1 : 0) + watchers_[1].has_value() ? 1 : 0; }
 
   private:
     std::array<std::optional<Vars_Soa::struct_id>, 2> watchers_; //!< The watched literals (1 for unit clauses, 2 for other clauses)
