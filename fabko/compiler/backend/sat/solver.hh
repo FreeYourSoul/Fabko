@@ -82,8 +82,6 @@ class Clause {
   private:
     std::int64_t id_ {0};
     std::vector<std::pair<Literal, Vars_Soa::struct_id>> vars_; //!< pair of a clause literal and the variable id it refers to in the soa_struct
-
-    std::shared_ptr<Metadata> debug_info_;
 };
 
 /**

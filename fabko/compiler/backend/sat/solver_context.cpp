@@ -290,7 +290,7 @@ bool make_decision(Solver_Context& ctx) {
         std::ranges::views::filter(ctx.vars_soa_, [](const auto& var) { return get<soa_assignment>(var) == assignment::not_assigned; });
 
     if (unassigned_vars.empty()) {
-        log_info("no unassigned variable found");
+        log_debug("no unassigned variable found");
         return false;
     }
 
