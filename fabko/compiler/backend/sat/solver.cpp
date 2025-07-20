@@ -27,6 +27,42 @@ namespace impl_details {
 std::expected<solver::result, sat_error> solve_sat(Solver_Context& ctx, const Model& model);
 } // namespace impl_details
 
+Solver_Context::Solver_Context(const Model& model)
+    : config_(model.conf)
+    , model_(model)
+    , vars_soa_([&]() {
+        Vars_Soa vars;
+        vars.reserve(model.literals.size());
+        for (const auto& lit : model.literals) {
+            [[maybe_unused]] auto _ =
+                vars.insert(lit, assignment::not_assigned, Assignment_Context {/*empty assignment context*/}, Metadata {/*@todo: add compiler context from model*/});
+        }
+        return vars;
+    }())
+    , clauses_soa_([&]() {
+        Clauses_Soa clauses;
+        clauses.reserve(model.clauses.size());
+
+        for (const std::vector<Literal>& model_clause : model.clauses) {
+            auto all_clause_ids = std::ranges::fold_left(model_clause, std::vector<Vars_Soa::struct_id> {}, [&, this](auto res, const Literal& l) { //
+                auto it = std::ranges::find_if(vars_soa_, fil::soa_select<soa_literal>([&, this](Literal lit) {                                     //
+                    return lit == l;
+                }));
+                fabko_assert(it != vars_soa_.end(), "a clause cannot contains a non-defined literal");
+                ++get<soa_assignment_ctx>(*it).vsids_activity_;
+                res.push_back((*it).struct_id());
+                return res;
+            });
+
+            Clause clause_to_insert {model_clause, std::move(all_clause_ids)};
+            [[maybe_unused]] const auto _ = clauses.insert( //
+                clause_to_insert,
+                Clause_Watcher {vars_soa_, clause_to_insert},
+                Metadata {/*@todo: add compiler context from model*/});
+        }
+        return clauses;
+    }()) {}
+
 std::string to_string(assignment a) {
     switch (a) {
         case assignment::on: return "on";

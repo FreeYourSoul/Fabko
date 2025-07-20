@@ -6,7 +6,7 @@ target_sources(compiler
         PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/backend/Metadata.hh
         ${CMAKE_CURRENT_SOURCE_DIR}/backend/sat/solver.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/backend/sat/solver_context.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/backend/sat/solver_impl.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/backend/sat/solver_context.hh
 )
 target_include_directories(compiler
