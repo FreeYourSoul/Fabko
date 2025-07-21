@@ -23,7 +23,8 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(fil CONFIG REQUIRED)
 
 if (UNIX AND NOT APPLE)
-    add_library(uring::uring INTERFACE IMPORTED)
+    add_library(uring::uring INTERFACE IMPORTED
+            tests/compiler/soa/watcher_testcase.cpp)
     set_target_properties(uring::uring PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_INCLUDE_PATH}"
             INTERFACE_LINK_LIBRARIES "uring"
@@ -35,10 +36,10 @@ set(nlohmann-json_IMPLICIT_CONVERSIONS OFF)
 
 add_subdirectory(fabko)
 
-if (IS_BUILT_FROM_SOURCE AND BUILD_TESTING)
-    message(STATUS "Tests will be built")
-    add_subdirectory(tests)
-endif ()
+#if (BUILD_TESTING)
+message(STATUS "Tests will be built")
+add_subdirectory(tests)
+#endif ()
 
 #
 # Installation

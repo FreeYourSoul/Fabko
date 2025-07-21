@@ -12,19 +12,16 @@
 
 #include <algorithm>
 #include <expected>
+#include <numeric>
 #include <optional>
 #include <ranges>
 
-#include "common/exception.hh"
 #include "common/logging.hh"
 #include "solver.hh"
 
 #include "solver_context.hh"
 
-#include <numeric>
-
-namespace fabko::compiler::sat {
-namespace impl_details {
+namespace fabko::compiler::sat::impl_details {
 
 namespace {
 constexpr std::string SECTION = "sat_solver"; //!< logging a section for the SAT solver
@@ -127,7 +124,7 @@ conflict_resolution_result resolve_conflict(Solver_Context& ctx, Clauses_Soa::so
             const auto& trail_assign_ctx = get<soa_assignment_ctx>(trail_node);
 
             if (!trail_assign_ctx.is_decision() && trail_assign_ctx.decision_level_ == ctx.current_decision_level_) {
-                if (std::ranges::any_of(current_level_vars, [trail_var](const auto& ss) { return get<soa_literal>(ss).value() == trail_var; })) {
+                if (std::ranges::any_of(current_level_vars, [trail_var](const auto& current_var) { return get<soa_literal>(current_var).value() == trail_var; })) {
                     break;
                 }
             }
@@ -155,15 +152,18 @@ conflict_resolution_result resolve_conflict(Solver_Context& ctx, Clauses_Soa::so
 
             // add literals from the propagation clause (except current trail literal)
             for (const auto [prop_lit, prop_varid] : propagation_vars) {
+                const auto prop_node        = ctx.vars_soa_[prop_varid];
+                const auto& prop_assign_ctx = get<soa_assignment_ctx>(prop_node);
+
                 if (prop_lit.value() == trail_lit.value()
                     || std::ranges::any_of(learned_clause, [&prop_lit](const auto& lit_map) { return prop_lit.value() == lit_map.first.value(); }))
                     continue;
 
                 learned_clause.emplace_back(prop_lit, prop_varid);
-                if (trail_assign_ctx.decision_level_ == ctx.current_decision_level_) {
-                    current_level_vars.push_back(ctx.vars_soa_[prop_varid]);
-                } else if (trail_assign_ctx.decision_level_ > backtrack_level) {
-                    backtrack_level = trail_assign_ctx.decision_level_;
+                if (prop_assign_ctx.decision_level_ == ctx.current_decision_level_) {
+                    current_level_vars.push_back(prop_node);
+                } else if (prop_assign_ctx.decision_level_ > backtrack_level) {
+                    backtrack_level = prop_assign_ctx.decision_level_;
                 }
             }
         }
@@ -281,7 +281,7 @@ void learn_additional_clause(Solver_Context& ctx, const Clause& clause_learned) 
         return;
     }
     log_debug("learned clause: {}", to_string(clause_learned));
-    [[maybe_unused]] const auto _ = ctx.clauses_soa_.insert(clause_learned, clause_watcher {ctx.vars_soa_, clause_learned}, metadata {/*@todo: add compiler context from model*/});
+    [[maybe_unused]] const auto _ = ctx.clauses_soa_.insert(clause_learned, Clause_Watcher {ctx.vars_soa_, clause_learned}, Metadata {/*@todo: add compiler context from model*/});
     ++ctx.statistics_.learned_clause;
 }
 
@@ -290,7 +290,7 @@ bool make_decision(Solver_Context& ctx) {
         std::ranges::views::filter(ctx.vars_soa_, [](const auto& var) { return get<soa_assignment>(var) == assignment::not_assigned; });
 
     if (unassigned_vars.empty()) {
-        log_info("no unassigned variable found");
+        log_debug("no unassigned variable found");
         return false;
     }
 
@@ -305,7 +305,7 @@ bool make_decision(Solver_Context& ctx) {
     auto& [lit, assignment, assignment_context, meta] = s;
 
     assignment_context.decision_level_ = ctx.current_decision_level_;
-    assignment                         = assignment::on; // always set at on by default. Off will be set by propagation (@incomplete : really ?)
+    assignment                         = assignment::on;
 
     log_debug("make decision: level({}) :: {} -> {}", ctx.current_decision_level_, lit.value(), to_string(assignment));
     ctx.trail_.push_back((*var_highest_vsids).struct_id());
@@ -313,10 +313,7 @@ bool make_decision(Solver_Context& ctx) {
     return true;
 }
 
-std::expected<solver::result, sat_error> solve_sat(Solver_Context& ctx, const model& model) {
-    if (unit_propagation(ctx).has_value())
-        return std::unexpected(sat_error::unsatisfiable);
-
+std::expected<solver::result, sat_error> solve_sat(Solver_Context& ctx, const Model& model) {
     solver::result solution;
     while (solution.literals.empty()) {
         if (ctx.conflict_count_since_last_restart_ >= ctx.config_.restart_threshold) {
@@ -330,11 +327,15 @@ std::expected<solver::result, sat_error> solve_sat(Solver_Context& ctx, const mo
             ctx.config_.restart_threshold *= static_cast<int>(ctx.config_.restart_multiplier);
         }
 
-        const auto conflict = unit_propagation(ctx);
-        if (conflict.has_value()) {
+        if (const auto conflict = unit_propagation(ctx); conflict.has_value()) {
             ++ctx.conflict_count_since_last_restart_;
             ++ctx.statistics_.conflicts;
             const auto& [learned_clause, backtrack_level] = resolve_conflict(ctx, ctx.clauses_soa_[conflict.value()]);
+
+            if (ctx.current_decision_level_ == 0 && backtrack_level == 0) {
+                log_info("Conflict found on level 0, unsatisfiable");
+                return std::unexpected(sat_error::unsatisfiable);
+            }
 
             if (learned_clause.is_empty()) {
                 log_info("Conflict resolved into an empty clause, unsatisfiable");
@@ -367,42 +368,4 @@ std::expected<solver::result, sat_error> solve_sat(Solver_Context& ctx, const mo
     return solution;
 }
 
-} // namespace impl_details
-
-Solver_Context::Solver_Context(const model& model)
-    : config_(model.conf)
-    , model_(model)
-    , vars_soa_([&]() {
-        Vars_Soa vars;
-        vars.reserve(model.literals.size());
-        for (const auto& lit : model.literals) {
-            [[maybe_unused]] auto _ =
-                vars.insert(lit, assignment::not_assigned, Assignment_Context {/*empty assignment context*/}, metadata {/*@todo: add compiler context from model*/});
-        }
-        return vars;
-    }())
-    , clauses_soa_([&]() {
-        Clauses_Soa clauses;
-        clauses.reserve(model.clauses.size());
-
-        for (const std::vector<Literal>& model_clause : model.clauses) {
-            auto all_clause_ids = std::ranges::fold_left(model_clause, std::vector<Vars_Soa::struct_id> {}, [&, this](auto res, const Literal& l) { //
-                auto it = std::ranges::find_if(vars_soa_, fil::soa_select<soa_literal>([&, this](Literal lit) {                                     //
-                    return lit == l;
-                }));
-                fabko_assert(it != vars_soa_.end(), "a clause cannot contains a non-defined literal");
-                ++get<soa_assignment_ctx>(*it).vsids_activity_;
-                res.push_back((*it).struct_id());
-                return res;
-            });
-
-            Clause clause_to_insert {model_clause, std::move(all_clause_ids)};
-            [[maybe_unused]] const auto _ = clauses.insert( //
-                clause_to_insert,
-                clause_watcher {vars_soa_, clause_to_insert},
-                metadata {/*@todo: add compiler context from model*/});
-        }
-        return clauses;
-    }()) {}
-
-} // namespace fabko::compiler::sat
+} // namespace fabko::compiler::sat::impl_details

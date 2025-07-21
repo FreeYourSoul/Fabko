@@ -18,7 +18,7 @@
 
 #include <fil/datastructure/soa.hh>
 
-#include "compiler/backend/metadata.hh"
+#include "compiler/backend/Metadata.hh"
 
 //
 // Forward declarations
@@ -29,9 +29,9 @@ class Assignment_Context;
 struct statistics;
 class Clause;
 class Literal;
-class clause_watcher;
+class Clause_Watcher;
 enum class assignment;
-struct model;
+struct Model;
 } // namespace fabko::compiler::sat
 // end forward declarations
 //
@@ -45,8 +45,8 @@ class Solver_Solution {
     std::vector<Literal> literals_solving_;                                      //!< literals that solve the SAT problem
 };
 
-using Vars_Soa    = fil::soa<Literal, assignment, Assignment_Context, metadata>; //!< structure of arrays representing a variable
-using Clauses_Soa = fil::soa<Clause, clause_watcher, metadata>;                  //!< structure of arrays representing a clause
+using Vars_Soa    = fil::soa<Literal, assignment, Assignment_Context, Metadata>; //!< structure of arrays representing a variable
+using Clauses_Soa = fil::soa<Clause, Clause_Watcher, Metadata>;                  //!< structure of arrays representing a clause
 
 enum var_values {
     soa_literal          = 0,
@@ -71,7 +71,7 @@ enum clause_values {
  * @note clause can be learned using Conflict-Driven Clause Learning (CDCL) techniques
  */
 struct Solver_Context {
-    struct configuration {
+    struct Configuration {
 
         //! after a certain number of conflicts, restart the resolution of the sat solver to avoid the algorithm to
         //! being stuck in a bad path of the resolution domain.
@@ -87,7 +87,7 @@ struct Solver_Context {
         float vsids_decay_ratio {0.95};    //!< ratio to decrease the importance of the vsids value over time
     };
 
-    struct statistics {
+    struct Statistics {
         std::size_t restarts;         //!< number of restarts that occurred
         std::size_t conflicts;        //!< number of conflicts that occurred in the overall execution of the solver
         std::size_t propagations;     //!< amount of propagation that occurred
@@ -97,10 +97,10 @@ struct Solver_Context {
         std::size_t max_decision_lvl; //!< level of decision maximum during sat solver
     };
 
-    explicit Solver_Context(const model& model);
+    explicit Solver_Context(const Model& model);
 
-    configuration config_ {};                   //!< configuration of the solver
-    std::reference_wrapper<const model> model_; //!< reference to the model being solved
+    Configuration config_ {};                   //!< configuration of the solver
+    std::reference_wrapper<const Model> model_; //!< reference to the model being solved
 
     Vars_Soa vars_soa_;                         //!< variables of the SAT solver, containing their assignment and context
     Clauses_Soa clauses_soa_;                   //!< clauses of the SAT solver, containing their watchers and context
@@ -113,7 +113,7 @@ struct Solver_Context {
     std::size_t conflict_count_since_last_restart_ {0}; //!< current number of conflicts since last restart
     std::size_t current_decision_level_ {0};
 
-    statistics statistics_ {};                          //!< resolution statistics of the solver
+    Statistics statistics_ {};                          //!< resolution statistics of the solver
 
     std::vector<Solver_Solution> solutions_found_ {};   //!< final solutions found by the solver
 };

@@ -25,7 +25,6 @@ int main(int argc, char** argv) {
     fil::command_line_interface cli({command_sat}, [] {});
     cli.add_option(fil::option {//
         "--log-level",
-        "-l",
         [&cli_data](const std::string& value) { cli_data.log_level = spdlog::level::from_str(value); },
         "Set the log level for the CLI, if not provided, the default log level is `info`.\n"
         "        The possible values are the following (case insensitive): \n"
@@ -35,6 +34,7 @@ int main(int argc, char** argv) {
         "           * error : only error logs are displayed"});
     cli.add_option(fil::option {//
         "--log-file",
+        "-l",
         [&cli_data](const std::string& value) { cli_data.log_file = value; },
         "Set the output log file in which logs will be written, if not provided : /tmp/fabko.log will be used by default."});
 
