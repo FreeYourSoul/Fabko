@@ -71,6 +71,50 @@ std::string to_string(assignment a) {
     }
 }
 
+Clause_Watcher::Clause_Watcher(const Vars_Soa& vs, const Clause& clause)
+    : watchers_([&]() -> std::array<std::optional<Vars_Soa::struct_id>, 2> { //
+        fabko_assert(!clause.get_literals().empty(), "Cannot make a clause watchers over an empty clause");
+
+        auto filtered =
+            std::ranges::views::filter(clause.get_literals(), [&vs](const auto& lit_id_pair) { return get<soa_assignment>(vs[lit_id_pair.second]) == assignment::not_assigned; }) //
+            | std::views::transform([&vs](const auto& lit_id_pair) { return vs[lit_id_pair.second].struct_id(); });                                                               //
+
+        auto it = filtered.begin();
+        if (it == filtered.end())
+            return {std::nullopt, std::nullopt};      // no watched literals, clause is satisfied
+        if (++it == filtered.end())
+            return {*filtered.begin(), std::nullopt}; // no watched literals, clause is satisfied
+
+        return {std::make_optional(*filtered.begin()), std::make_optional(*it)};
+    }()) {}
+
+void Clause_Watcher::replace(const Vars_Soa& vs, const Clause& clause, Vars_Soa::struct_id to_replace) {
+
+    if ((!watchers_[0].has_value() || watchers_[0].value().offset != to_replace.offset) && //
+        (!watchers_[1].has_value() || watchers_[1].value().offset != to_replace.offset))
+        return;
+
+    auto& replace_ref = (watchers_[0].value().offset == to_replace.offset) ? watchers_[0] : watchers_[1];
+    auto& other_ref   = (watchers_[0].value().offset != to_replace.offset) ? watchers_[0] : watchers_[1];
+
+    // remove the watched literal
+    replace_ref = std::nullopt;
+
+    const auto it = std::ranges::find_if(clause.get_literals(), [&vs, &other_ref](const auto& lit_id_pair) { //
+        if (other_ref.has_value() && other_ref.value().offset == lit_id_pair.second.offset) {
+            return false;
+        }
+        return get<soa_assignment>(vs[lit_id_pair.second]) == assignment::not_assigned;
+    });
+    if (it == clause.get_literals().end()) {
+        return;
+    }
+
+    replace_ref = {vs[it->second].struct_id()};
+}
+
+std::uint8_t Clause_Watcher::size() const { return (watchers_[0].has_value() ? 1 : 0) + (watchers_[1].has_value() ? 1 : 0); }
+
 Model make_model_from_cnf_file(const std::filesystem::path& cnf_file) {
     if (!std::filesystem::exists(cnf_file)) {
         throw std::runtime_error("CNF file does not exist");

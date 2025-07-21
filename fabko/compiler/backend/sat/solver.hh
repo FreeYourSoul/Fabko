@@ -102,24 +102,21 @@ class Clause_Watcher {
      * @param clause The clause to watch
      * @throws fabko_exception if the clause is empty
      */
-    explicit Clause_Watcher(const Vars_Soa& vs, const Clause& clause)
-        : watchers_([&]() -> std::array<std::optional<Vars_Soa::struct_id>, 2> { //
-            fabko_assert(!clause.get_literals().empty(), "Cannot make a clause watchers over an empty clause");
+    explicit Clause_Watcher(const Vars_Soa& vs, const Clause& clause);
 
-            auto filtered = std::ranges::views::filter(
-                                clause.get_literals(), [&vs](const auto& lit_id_pair) { return get<soa_assignment>(vs[lit_id_pair.second]) == assignment::not_assigned; }) //
-                          | std::views::transform([&vs](const auto& lit_id_pair) { return vs[lit_id_pair.second].struct_id(); });                                          //
+    /**
+     * @brief replace a watched literal in the clause watcher by the first literal that is not assigned found in the variable structure-of-arrays
+     * @param vs The variable structure-of-arrays containing all variables
+     * @param clause The clause to watch over
+     * @param to_replace The variable id to replace in the watcher
+     */
+    void replace(const Vars_Soa& vs, const Clause& clause, Vars_Soa::struct_id to_replace);
 
-            auto it = filtered.begin();
-            if (it == filtered.end())
-                return {std::nullopt, std::nullopt};      // no watched literals, clause is satisfied
-            if (++it == filtered.end())
-                return {*filtered.begin(), std::nullopt}; // no watched literals, clause is satisfied
-
-            return {std::make_optional(*filtered.begin()), std::make_optional(*it)};
-        }()) {}
-
-    [[nodiscard]] std::size_t size() const { return (watchers_[0].has_value() ? 1 : 0) + (watchers_[1].has_value() ? 1 : 0); }
+    /**
+     * @brief number of watched literal in the clause watcher
+     * @return 0, 1, or 2 depending on the number of watched literals (cannot be more than 2)
+     */
+    [[nodiscard]] std::uint8_t size() const;
 
     /**
      * @return variable ids that are currently under watch

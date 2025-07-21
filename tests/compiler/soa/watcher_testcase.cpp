@@ -99,6 +99,49 @@ TEST_CASE("test watcher", "sat") {
         CHECK(watcher.get_watched().size() == 2);
         CHECK(watcher.get_watched()[0].offset == var_id1.offset);
         CHECK(watcher.get_watched()[1].offset == var_id2.offset);
+
+        SECTION("test replace :: check that replacing an element that is not watched does not change the watcher") {
+
+            watcher.replace(vars, clause, var_id3);
+
+            CHECK(watcher.size() == 2);
+            CHECK(watcher.get_watched().size() == 2);
+            CHECK(watcher.get_watched()[0].offset == var_id1.offset);
+            CHECK(watcher.get_watched()[1].offset == var_id2.offset);
+        }
+
+        SECTION("test replace :: check that if replace an element watched but the element is still un-assigned, it is taken again (no change in watcher)") {
+
+            watcher.replace(vars, clause, var_id1); // element exists but has not assigned still, so it's retrieved back
+
+            CHECK(watcher.size() == 2);
+            CHECK(watcher.get_watched().size() == 2);
+            CHECK(watcher.get_watched()[0].offset == var_id1.offset);
+            CHECK(watcher.get_watched()[1].offset == var_id2.offset);
+        }
+
+        SECTION("test replace :: check that if replace an element that has been assigned take another element") {
+
+            get<fabko::compiler::sat::soa_assignment>(vars[var_id1]) = fabko::compiler::sat::assignment::on; // assign the first variable
+            // element exists but and has been assigned, new element found
+            watcher.replace(vars, clause, var_id1);
+
+            CHECK(watcher.size() == 2);
+            CHECK(watcher.get_watched().size() == 2);
+            CHECK(watcher.get_watched()[0].offset == var_id3.offset);
+            CHECK(watcher.get_watched()[1].offset == var_id2.offset);
+        }
+
+        SECTION("test replace :: test that if nothing left to be assigned, nothing get assigned ") {
+            get<fabko::compiler::sat::soa_assignment>(vars[var_id1]) = fabko::compiler::sat::assignment::on; // assign the first variable
+            get<fabko::compiler::sat::soa_assignment>(vars[var_id3]) = fabko::compiler::sat::assignment::on; // assign the last variable
+
+            watcher.replace(vars, clause, var_id1);
+
+            CHECK(watcher.size() == 1);
+            CHECK(watcher.get_watched().size() == 1);
+            CHECK(watcher.get_watched()[0].offset == var_id2.offset);
+        }
     }
 
     SECTION("test single element in clause : size 1 if not assigned") {
