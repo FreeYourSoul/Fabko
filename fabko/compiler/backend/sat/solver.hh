@@ -104,26 +104,36 @@ class Clause_Watcher {
      */
     explicit Clause_Watcher(const Vars_Soa& vs, const Clause& clause)
         : watchers_([&]() -> std::array<std::optional<Vars_Soa::struct_id>, 2> { //
-            using std::get;
             fabko_assert(!clause.get_literals().empty(), "Cannot make a clause watchers over an empty clause");
-            if (clause.get_literals().size() == 1) {
-                return {vs[clause.get_literals().front().second].struct_id(), std::nullopt};
-            }
+
             auto filtered = std::ranges::views::filter(
                                 clause.get_literals(), [&vs](const auto& lit_id_pair) { return get<soa_assignment>(vs[lit_id_pair.second]) == assignment::not_assigned; }) //
                           | std::views::transform([&vs](const auto& lit_id_pair) { return vs[lit_id_pair.second].struct_id(); });                                          //
 
             auto it = filtered.begin();
             if (it == filtered.end())
-                return {std::nullopt, std::nullopt}; // no watched literals, clause is satisfied
-            ++it;
-            if (it == filtered.end())
-                return {*it, std::nullopt};          // no watched literals, clause is satisfied
+                return {std::nullopt, std::nullopt};      // no watched literals, clause is satisfied
+            if (++it == filtered.end())
+                return {*filtered.begin(), std::nullopt}; // no watched literals, clause is satisfied
 
             return {std::make_optional(*filtered.begin()), std::make_optional(*it)};
         }()) {}
 
-    [[nodiscard]] std::size_t size() const { return (watchers_[0].has_value() ? 1 : 0) + watchers_[1].has_value() ? 1 : 0; }
+    [[nodiscard]] std::size_t size() const { return (watchers_[0].has_value() ? 1 : 0) + (watchers_[1].has_value() ? 1 : 0); }
+
+    /**
+     * @return variable ids that are currently under watch
+     */
+    [[nodiscard]] std::vector<Vars_Soa::struct_id> get_watched() const {
+        std::vector<Vars_Soa::struct_id> res;
+        if (watchers_[0].has_value()) {
+            res.push_back(watchers_[0].value());
+        }
+        if (watchers_[1].has_value()) {
+            res.push_back(watchers_[1].value());
+        }
+        return res;
+    }
 
   private:
     std::array<std::optional<Vars_Soa::struct_id>, 2> watchers_; //!< The watched literals (1 for unit clauses, 2 for other clauses)

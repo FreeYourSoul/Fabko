@@ -36,10 +36,10 @@ set(nlohmann-json_IMPLICIT_CONVERSIONS OFF)
 
 add_subdirectory(fabko)
 
-if (IS_BUILT_FROM_SOURCE AND BUILD_TESTING)
-    message(STATUS "Tests will be built")
-    add_subdirectory(tests)
-endif ()
+#if (BUILD_TESTING)
+message(STATUS "Tests will be built")
+add_subdirectory(tests)
+#endif ()
 
 #
 # Installation

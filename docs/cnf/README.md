@@ -1,6 +1,8 @@
 # CNF
 
-Those are CNF files representing probles that must be runneable from the CLI.
+https://www.cs.ubc.ca/~hoos/SATLIB/benchm.html : link to benchmarks to be downloaded.
+
+Those are CNF files representing problems that must be runnable from the CLI.
 Those are used for testing purposes and validation of the SAT solver which is part of the fabko solution
 
 ## Simple Straightforward formula

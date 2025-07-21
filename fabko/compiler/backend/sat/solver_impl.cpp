@@ -12,19 +12,16 @@
 
 #include <algorithm>
 #include <expected>
+#include <numeric>
 #include <optional>
 #include <ranges>
 
-#include "common/exception.hh"
 #include "common/logging.hh"
 #include "solver.hh"
 
 #include "solver_context.hh"
 
-#include <numeric>
-
-namespace fabko::compiler::sat {
-namespace impl_details {
+namespace fabko::compiler::sat::impl_details {
 
 namespace {
 constexpr std::string SECTION = "sat_solver"; //!< logging a section for the SAT solver
@@ -127,7 +124,7 @@ conflict_resolution_result resolve_conflict(Solver_Context& ctx, Clauses_Soa::so
             const auto& trail_assign_ctx = get<soa_assignment_ctx>(trail_node);
 
             if (!trail_assign_ctx.is_decision() && trail_assign_ctx.decision_level_ == ctx.current_decision_level_) {
-                if (std::ranges::any_of(current_level_vars, [trail_var](const auto& ss) { return get<soa_literal>(ss).value() == trail_var; })) {
+                if (std::ranges::any_of(current_level_vars, [trail_var](const auto& current_var) { return get<soa_literal>(current_var).value() == trail_var; })) {
                     break;
                 }
             }
@@ -155,15 +152,18 @@ conflict_resolution_result resolve_conflict(Solver_Context& ctx, Clauses_Soa::so
 
             // add literals from the propagation clause (except current trail literal)
             for (const auto [prop_lit, prop_varid] : propagation_vars) {
+                const auto prop_node        = ctx.vars_soa_[prop_varid];
+                const auto& prop_assign_ctx = get<soa_assignment_ctx>(prop_node);
+
                 if (prop_lit.value() == trail_lit.value()
                     || std::ranges::any_of(learned_clause, [&prop_lit](const auto& lit_map) { return prop_lit.value() == lit_map.first.value(); }))
                     continue;
 
                 learned_clause.emplace_back(prop_lit, prop_varid);
-                if (trail_assign_ctx.decision_level_ == ctx.current_decision_level_) {
-                    current_level_vars.push_back(ctx.vars_soa_[prop_varid]);
-                } else if (trail_assign_ctx.decision_level_ > backtrack_level) {
-                    backtrack_level = trail_assign_ctx.decision_level_;
+                if (prop_assign_ctx.decision_level_ == ctx.current_decision_level_) {
+                    current_level_vars.push_back(prop_node);
+                } else if (prop_assign_ctx.decision_level_ > backtrack_level) {
+                    backtrack_level = prop_assign_ctx.decision_level_;
                 }
             }
         }
@@ -305,7 +305,7 @@ bool make_decision(Solver_Context& ctx) {
     auto& [lit, assignment, assignment_context, meta] = s;
 
     assignment_context.decision_level_ = ctx.current_decision_level_;
-    assignment                         = assignment::on; // always set at on by default. Off will be set by propagation (@incomplete : really ?)
+    assignment                         = assignment::on;
 
     log_debug("make decision: level({}) :: {} -> {}", ctx.current_decision_level_, lit.value(), to_string(assignment));
     ctx.trail_.push_back((*var_highest_vsids).struct_id());
@@ -314,9 +314,6 @@ bool make_decision(Solver_Context& ctx) {
 }
 
 std::expected<solver::result, sat_error> solve_sat(Solver_Context& ctx, const Model& model) {
-    if (unit_propagation(ctx).has_value())
-        return std::unexpected(sat_error::unsatisfiable);
-
     solver::result solution;
     while (solution.literals.empty()) {
         if (ctx.conflict_count_since_last_restart_ >= ctx.config_.restart_threshold) {
@@ -330,11 +327,15 @@ std::expected<solver::result, sat_error> solve_sat(Solver_Context& ctx, const Mo
             ctx.config_.restart_threshold *= static_cast<int>(ctx.config_.restart_multiplier);
         }
 
-        const auto conflict = unit_propagation(ctx);
-        if (conflict.has_value()) {
+        if (const auto conflict = unit_propagation(ctx); conflict.has_value()) {
             ++ctx.conflict_count_since_last_restart_;
             ++ctx.statistics_.conflicts;
             const auto& [learned_clause, backtrack_level] = resolve_conflict(ctx, ctx.clauses_soa_[conflict.value()]);
+
+            if (ctx.current_decision_level_ == 0 && backtrack_level == 0) {
+                log_info("Conflict found on level 0, unsatisfiable");
+                return std::unexpected(sat_error::unsatisfiable);
+            }
 
             if (learned_clause.is_empty()) {
                 log_info("Conflict resolved into an empty clause, unsatisfiable");
@@ -367,5 +368,4 @@ std::expected<solver::result, sat_error> solve_sat(Solver_Context& ctx, const Mo
     return solution;
 }
 
-} // namespace impl_details
-} // namespace fabko::compiler::sat
+} // namespace fabko::compiler::sat::impl_details

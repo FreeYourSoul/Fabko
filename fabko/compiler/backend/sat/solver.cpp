@@ -98,8 +98,8 @@ Model make_model_from_cnf_file(const std::filesystem::path& cnf_file) {
 
             std::istringstream iss(line);
             std::string p, cnf;
-            std::size_t num_variables;
-            std::size_t num_clauses;
+            int num_variables = 0;
+            int num_clauses   = 0;
 
             iss >> p >> cnf >> num_variables >> num_clauses;
             if (p != "p" || cnf != "cnf") {
@@ -143,10 +143,12 @@ std::vector<solver::result> solver::solve(std::int32_t expected) {
 
     for (auto i = 0; i < expected; ++i) {
         auto r = impl_details::solve_sat(context_, model_);
+
         if (!r.has_value()) {
             auto error = r.error();
             if (error == sat_error::unsatisfiable) {
-                log_error("SAT solver cannot find solution for mode : UNSATISFIABLE");
+                if (i == 0)
+                    log_info("SAT solver cannot find solution for mode : UNSATISFIABLE");
             } else {
                 log_error("SAT solver : an error occurred");
             }
