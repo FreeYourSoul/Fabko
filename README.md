@@ -31,6 +31,16 @@ The language is split into different sections: `agent`, `capabilities`.
 
 ```mnz
 
+all_different :: func (v) {
+    for v1 in values { 
+        for v2 in values {
+            if v1 != v2 { 
+                v1 != v2 
+            }
+        }
+     }
+}
+
 board_size : int @parameter;
 
 Coord :: struct {
