@@ -29,6 +29,7 @@ all the capabilities of each agent to provide solutions.
 
 The language is split into different sections: `agent`, `capabilities`.
 
+work in progress
 ```mnz
 
 all_different :: func (v) {
