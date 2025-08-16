@@ -19,6 +19,7 @@
 #include "common/exception.hh"
 #include "solver_context.hh"
 
+#include <fil/algorithm/string.hh>
 #include <filesystem>
 #include <ranges>
 
