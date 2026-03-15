@@ -28,6 +28,7 @@ add_executable(test_compiler)
 target_sources(test_compiler
         PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/compiler/soa/watcher_testcase.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/compiler/test_parser.cpp
 )
 target_compile_features(test_compiler PUBLIC cxx_std_23)
 target_link_libraries(test_compiler

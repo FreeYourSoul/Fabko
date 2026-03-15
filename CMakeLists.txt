@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.22)
 set(project_description "Fabko is a set of library for server / client execution of distributed multi-agent application.")
 include(cmake/utils.cmake)
 
+# append nix cmake paths if nix is being used
 if (DEFINED ENV{NIXPKGS_CMAKE_PREFIX_PATH})
     string(REPLACE ":" ";" _nix_prefix_path "$ENV{NIXPKGS_CMAKE_PREFIX_PATH}")
     list(APPEND CMAKE_PREFIX_PATH ${_nix_prefix_path})
