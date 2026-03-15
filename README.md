@@ -67,9 +67,10 @@ constraint all_different([queens[i].x + 1 for i in 1 .. board_size]);
 
 actor part of FABL
 
-```rust
-
-
-```
 
 Here is an example of the 9 Queen problems using the actor syntax
+
+## Compile 
+
+Fabko is an agent binary that can be compiled using nix. The binary is a nix flake and thus can be compiled using `nix build` command.
+It depends on FiL, a C++ library developed as a nix flake as well.

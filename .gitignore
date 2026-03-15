@@ -6,6 +6,8 @@ build
 .idea
 tmp
 
+result
+
 # logs
 *.log
 

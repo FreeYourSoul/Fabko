@@ -6,14 +6,13 @@
     flake-utils.url = "github:numtide/flake-utils";
     fil = {
       url = "github:FreeYourSoul/FiL";
-      # The user mentioned FiL has been converted into nix flakes already.
     };
   };
 
   outputs = { self, nixpkgs, flake-utils, fil }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs { inherit system; };
+       pkgs = nixpkgs.legacyPackages.${system};
 
         fabko = pkgs.callPackage ./.nix/fabko.nix {
           fil = fil.packages.${system}.default;

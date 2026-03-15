@@ -39,7 +39,16 @@ stdenv.mkDerivation rec {
     echo "========== ${fil}"
   '';
 
+  # change compilation flags when doing code coverage execution
+  # remove optimization and disable inlining
   CXXFLAGS = lib.optionalString with_coverage "-coverage -fkeep-inline-functions -fno-inline -fno-inline-small-functions -fno-default-inline -O0 -g";
+
+  # execute unit tests only if the tests are required to be executed
+  doCheck = execute_test;
+
+  checkPhase = ''
+    ctest --output-on-failure
+  '';
 
   postCheck = lib.optionalString with_coverage ''
       echo "Generating coverage report... ${src}"

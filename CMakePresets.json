@@ -40,8 +40,7 @@
       "inherits": "base",
       "generator": "Ninja",
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "/usr/bin/g++",
-        "CMAKE_C_COMPILER": "/usr/bin/gcc"
+        "CMAKE_PREFIX_PATH": "$env{NIXPKGS_CMAKE_PREFIX_PATH}"
       },
       "hidden": true
     },
