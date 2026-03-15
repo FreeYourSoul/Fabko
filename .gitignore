@@ -44,3 +44,4 @@ tmp
 
 venv
 vcpkg_installed
+/conan_provider.cmake

@@ -10,17 +10,13 @@
 , liburing
 , lcov
 , gcovr
+, fil
 , execute_test ? false
 , with_coverage ? false
 }:
 
 let
     version = builtins.readFile ../VERSION;
-    import-from-json = import ./import-from-json.nix { };
-    fil = import-from-json {
-      sourcesFile = ./nix-dep.json;
-      dependencyName = "fil";
-    };
 in
 stdenv.mkDerivation rec {
   pname = "fabko";

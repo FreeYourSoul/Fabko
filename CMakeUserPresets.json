@@ -1,0 +1,15 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "local-linux-DEBUG",
+      "inherits": "x64-Debug-Linux",
+      "cacheVariables": {
+        "CMAKE_MAKE_PROGRAM": {
+          "type": "FILEPATH",
+          "value": "/snap/clion/current/bin/ninja/linux/x64/ninja"
+        }
+      }
+    }
+  ]
+}
