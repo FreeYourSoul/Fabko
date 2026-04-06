@@ -34,10 +34,10 @@ add_subdirectory(agent)
 #
 # Fabko
 #
-add_executable(fabko
-        cli_base.hh)
+add_executable(fabko)
 target_sources(fabko
         PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/cli_base.hh
         ${CMAKE_CURRENT_SOURCE_DIR}/fabko.cpp
 )
 target_include_directories(fabko

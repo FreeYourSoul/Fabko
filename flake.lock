@@ -6,11 +6,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1775468803,
-        "narHash": "sha256-r8hHbdTjorhp/VfpZGBd3o02v2gEvo7IVmxMdekNRLw=",
+        "lastModified": 1775470429,
+        "narHash": "sha256-e238Tb7t3No8VUd8U5NQLG8f52cWchKubbB2yM45Tbs=",
         "owner": "FreeYourSoul",
         "repo": "FiL",
-        "rev": "014ddf2105a50bb4f829b1b94ea2d183567b13ca",
+        "rev": "df36cd93c3af2d4fd62371209f58a8a3c689eb40",
         "type": "github"
       },
       "original": {
