@@ -17,7 +17,13 @@
 
 namespace fabko::compiler {
 namespace fabl {
-class compiler_generation_context {}; //@todo transform into a forward declaration when class exists in compiler
+
+struct compiler_generation_context {
+    std::string lexeme;
+    std::string unit;
+    std::uint32_t line;
+};
+
 }; // namespace fabl
 namespace sat {
 class solving_generation_context {}; //@todo transform into a forward declaration when class exists in compiler
@@ -26,7 +32,7 @@ class solving_generation_context {}; //@todo transform into a forward declaratio
 
 namespace fabko::compiler {
 
-class Metadata {
+class metadata {
     std::optional<fabl::compiler_generation_context> fabl_generation_ctx; //!< set if the fabl compiler generated this context
     std::optional<sat::solving_generation_context> sat_generation_ctx;    //!< set if the sat generation generated this context
 };

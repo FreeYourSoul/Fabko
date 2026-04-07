@@ -24,10 +24,10 @@
 namespace fabko::compiler::sat {
 
 namespace impl_details {
-std::expected<solver::result, sat_error> solve_sat(Solver_Context& ctx, const Model& model);
+std::expected<solver::result, sat_error> solve_sat(solver_context& ctx, const model& model);
 } // namespace impl_details
 
-Solver_Context::Solver_Context(const Model& model)
+solver_context::solver_context(const model& model)
     : config_(model.conf)
     , model_(model)
     , vars_soa_([&]() {
@@ -35,7 +35,7 @@ Solver_Context::Solver_Context(const Model& model)
         vars.reserve(model.literals.size());
         for (const auto& lit : model.literals) {
             [[maybe_unused]] auto _ =
-                vars.insert(lit, assignment::not_assigned, Assignment_Context {/*empty assignment context*/}, Metadata {/*@todo: add compiler context from model*/});
+                vars.insert(lit, assignment::not_assigned, assignment_context {/*empty assignment context*/}, metadata {/*@todo: add compiler context from model*/});
         }
         return vars;
     }())
@@ -43,9 +43,9 @@ Solver_Context::Solver_Context(const Model& model)
         Clauses_Soa clauses;
         clauses.reserve(model.clauses.size());
 
-        for (const std::vector<Literal>& model_clause : model.clauses) {
-            auto all_clause_ids = std::ranges::fold_left(model_clause, std::vector<Vars_Soa::struct_id> {}, [&, this](auto res, const Literal& l) { //
-                auto it = std::ranges::find_if(vars_soa_, fil::soa_select<soa_literal>([&, this](Literal lit) {                                     //
+        for (const std::vector<literal>& model_clause : model.clauses) {
+            auto all_clause_ids = std::ranges::fold_left(model_clause, std::vector<Vars_Soa::struct_id> {}, [&, this](auto res, const literal& l) { //
+                auto it = std::ranges::find_if(vars_soa_, fil::soa_select<soa_literal>([&, this](literal lit) {                                     //
                     return lit == l;
                 }));
                 fabko_assert(it != vars_soa_.end(), "a clause cannot contains a non-defined literal");
@@ -54,11 +54,11 @@ Solver_Context::Solver_Context(const Model& model)
                 return res;
             });
 
-            Clause clause_to_insert {model_clause, std::move(all_clause_ids)};
+            clause clause_to_insert {model_clause, std::move(all_clause_ids)};
             [[maybe_unused]] const auto _ = clauses.insert( //
                 clause_to_insert,
-                Clause_Watcher {vars_soa_, clause_to_insert},
-                Metadata {/*@todo: add compiler context from model*/});
+                clause_watcher {vars_soa_, clause_to_insert},
+                metadata {/*@todo: add compiler context from model*/});
         }
         return clauses;
     }()) {}
@@ -71,7 +71,7 @@ std::string to_string(assignment a) {
     }
 }
 
-Clause_Watcher::Clause_Watcher(const Vars_Soa& vs, const Clause& clause)
+clause_watcher::clause_watcher(const Vars_Soa& vs, const clause& clause)
     : watchers_([&]() -> std::array<std::optional<Vars_Soa::struct_id>, 2> { //
         fabko_assert(!clause.get_literals().empty(), "Cannot make a clause watchers over an empty clause");
 
@@ -88,7 +88,7 @@ Clause_Watcher::Clause_Watcher(const Vars_Soa& vs, const Clause& clause)
         return {std::make_optional(*filtered.begin()), std::make_optional(*it)};
     }()) {}
 
-void Clause_Watcher::replace(const Vars_Soa& vs, const Clause& clause, Vars_Soa::struct_id to_replace) {
+void clause_watcher::replace(const Vars_Soa& vs, const clause& clause, Vars_Soa::struct_id to_replace) {
 
     if ((!watchers_[0].has_value() || watchers_[0].value().offset != to_replace.offset) && //
         (!watchers_[1].has_value() || watchers_[1].value().offset != to_replace.offset))
@@ -113,9 +113,9 @@ void Clause_Watcher::replace(const Vars_Soa& vs, const Clause& clause, Vars_Soa:
     replace_ref = {vs[it->second].struct_id()};
 }
 
-std::uint8_t Clause_Watcher::size() const { return (watchers_[0].has_value() ? 1 : 0) + (watchers_[1].has_value() ? 1 : 0); }
+std::uint8_t clause_watcher::size() const { return (watchers_[0].has_value() ? 1 : 0) + (watchers_[1].has_value() ? 1 : 0); }
 
-Model make_model_from_cnf_file(const std::filesystem::path& cnf_file) {
+model make_model_from_cnf_file(const std::filesystem::path& cnf_file) {
     if (!std::filesystem::exists(cnf_file)) {
         throw std::runtime_error("CNF file does not exist");
     }
@@ -126,9 +126,9 @@ Model make_model_from_cnf_file(const std::filesystem::path& cnf_file) {
     }
 
     std::string line;
-    std::vector<std::vector<Literal>> clauses;
-    std::vector<Literal> literals;
-    std::set<Literal> literals_unique;
+    std::vector<std::vector<literal>> clauses;
+    std::vector<literal> literals;
+    std::set<literal> literals_unique;
 
     while (std::getline(file, line)) {
         if (line.empty() || line[0] == 'c') {
@@ -155,11 +155,11 @@ Model make_model_from_cnf_file(const std::filesystem::path& cnf_file) {
         }
 
         std::istringstream iss(line);
-        std::vector<Literal> clause;
+        std::vector<literal> clause;
         std::int64_t lit;
         while (iss >> lit && lit != 0) {
             clause.emplace_back(lit);
-            literals_unique.insert(Literal {std::abs(lit)});
+            literals_unique.insert(literal {std::abs(lit)});
         }
 
         if (!clause.empty()) {
@@ -173,12 +173,12 @@ Model make_model_from_cnf_file(const std::filesystem::path& cnf_file) {
     fabko_assert(clauses.size() == clauses.capacity(),          //
         fmt::format("More clauses than expected, expected {} but got {}", clauses.capacity(), clauses.size()));
 
-    std::ranges::transform(literals_unique, std::back_inserter(literals), [](const Literal& l) { return l; });
+    std::ranges::transform(literals_unique, std::back_inserter(literals), [](const literal& l) { return l; });
 
-    return Model {std::move(literals), std::move(clauses)};
+    return model {std::move(literals), std::move(clauses)};
 }
 
-solver::solver(Model m)
+solver::solver(model m)
     : context_(m)
     , model_(std::move(m)) {}
 

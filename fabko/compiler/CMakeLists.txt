@@ -4,7 +4,8 @@ target_sources(compiler
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/backend/sat/solver.hh
         PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/backend/Metadata.hh
+        metadata.hh
+        frontend/parser/fabl_core.hh
         ${CMAKE_CURRENT_SOURCE_DIR}/backend/sat/solver.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/backend/sat/solver_impl.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/backend/sat/solver_context.hh
@@ -15,6 +16,7 @@ target_include_directories(compiler
 )
 target_compile_definitions(compiler PUBLIC cxx_std_23)
 target_link_libraries(compiler
+        fys::fil
         fabko::common
         nlohmann_json::nlohmann_json
 )

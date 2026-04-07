@@ -13,15 +13,16 @@
 #ifndef SOLVER_HH
 #define SOLVER_HH
 
+#include <filesystem>
+#include <map>
 #include <memory>
+#include <ranges>
 #include <vector>
+
+#include <fil/algorithm/string.hh>
 
 #include "common/exception.hh"
 #include "solver_context.hh"
-
-#include <fil/algorithm/string.hh>
-#include <filesystem>
-#include <ranges>
 
 namespace fabko::compiler::sat {
 
@@ -32,33 +33,33 @@ enum class assignment {
 };
 [[nodiscard]] std::string to_string(assignment a);
 
-class Literal {
+class literal {
   public:
-    explicit Literal(std::int64_t value)
+    explicit constexpr literal(std::int64_t value)
         : value_(value) {}
 
-    bool operator==(const Literal& lit) const { return std::abs(value_) == std::abs(lit.value_); }
-    auto operator<=>(const Literal& lhs) const { return std::abs(value_) <=> std::abs(lhs.value_); }
+    constexpr bool operator==(const literal& lit) const { return std::abs(value_) == std::abs(lit.value_); }
+    constexpr auto operator<=>(const literal& lhs) const { return std::abs(value_) <=> std::abs(lhs.value_); }
 
-    [[nodiscard]] bool is_on() const { return value_ > 0; }
-    [[nodiscard]] bool is_off() const { return value_ < 0; }
+    [[nodiscard]] constexpr bool is_on() const { return value_ > 0; }
+    [[nodiscard]] constexpr bool is_off() const { return value_ < 0; }
 
     /**
-     * @return literal value (absolute value that represent the variable)
+     * @return literal value (absolute value that represents the variable)
      */
-    [[nodiscard]] std::int64_t value() const { return std::abs(value_); }
+    [[nodiscard]] constexpr std::int64_t value() const { return std::abs(value_); }
 
-    [[nodiscard]] friend std::string to_string(const Literal& lit) { return std::to_string(lit.value_); }
+    [[nodiscard]] friend constexpr std::string to_string(const literal& lit) { return std::to_string(lit.value_); }
 
   private:
     std::int64_t value_;
 };
 
-class Clause {
+class clause {
     friend class clause_view;
 
   public:
-    Clause(std::vector<Literal> clause, std::vector<Vars_Soa::struct_id> literals_mapping)
+    clause(std::vector<literal> clause, std::vector<Vars_Soa::struct_id> literals_mapping)
         : vars_([&]() {
             return std::views::zip_transform(
                        [](auto lit_clause, auto lit_mapping) { //
@@ -66,15 +67,15 @@ class Clause {
                        },
                        clause,
                        literals_mapping)
-                 | std::ranges::to<std::vector<std::pair<Literal, Vars_Soa::struct_id>>>();
+                 | std::ranges::to<std::vector<std::pair<literal, Vars_Soa::struct_id>>>();
         }()) {}
 
-    explicit Clause(std::vector<std::pair<Literal, Vars_Soa::struct_id>>&& lit_vars_mapping)
+    explicit clause(std::vector<std::pair<literal, Vars_Soa::struct_id>>&& lit_vars_mapping)
         : vars_(std::move(lit_vars_mapping)) {}
 
     [[nodiscard]] bool is_empty() const { return vars_.empty(); }
-    [[nodiscard]] const std::vector<std::pair<Literal, Vars_Soa::struct_id>>& get_literals() const { return vars_; }
-    [[nodiscard]] friend std::string to_string(const Clause& clause) {
+    [[nodiscard]] const std::vector<std::pair<literal, Vars_Soa::struct_id>>& get_literals() const { return vars_; }
+    [[nodiscard]] friend std::string to_string(const clause& clause) {
         return std::ranges::fold_left(clause.vars_, std::string {"clause["}, [](std::string res, const auto& lit_it) { //
             return std::format("{}{},", res, to_string(lit_it.first));
         }) + "]";
@@ -82,7 +83,7 @@ class Clause {
 
   private:
     std::int64_t id_ {0};
-    std::vector<std::pair<Literal, Vars_Soa::struct_id>> vars_; //!< pair of a clause literal and the variable id it refers to in the soa_struct
+    std::vector<std::pair<literal, Vars_Soa::struct_id>> vars_; //!< pair of a clause literal and the variable id it refers to in the soa_struct
 };
 
 /**
@@ -95,7 +96,7 @@ class Clause {
  * The watchers are initially set to the first and last literals in the clause. Only when both
  * watched literals become false does the solver need to examine the entire clause.
  */
-class Clause_Watcher {
+class clause_watcher {
   public:
     /**
      * @brief Constructs a clause watcher for the given clause
@@ -103,7 +104,7 @@ class Clause_Watcher {
      * @param clause The clause to watch
      * @throws fabko_exception if the clause is empty
      */
-    explicit Clause_Watcher(const Vars_Soa& vs, const Clause& clause);
+    explicit clause_watcher(const Vars_Soa& vs, const clause& clause);
 
     /**
      * @brief replace a watched literal in the clause watcher by the first literal that is not assigned found in the variable structure-of-arrays
@@ -111,7 +112,7 @@ class Clause_Watcher {
      * @param clause The clause to watch over
      * @param to_replace The variable id to replace in the watcher
      */
-    void replace(const Vars_Soa& vs, const Clause& clause, Vars_Soa::struct_id to_replace);
+    void replace(const Vars_Soa& vs, const clause& clause, Vars_Soa::struct_id to_replace);
 
     /**
      * @brief number of watched literal in the clause watcher
@@ -144,7 +145,7 @@ class Clause_Watcher {
  * (Whether it was a decision or propagated through a clause.)
  *
  */
-class Assignment_Context {
+class assignment_context {
   public:
     enum class type_assign {
         decision,
@@ -166,17 +167,15 @@ class Assignment_Context {
 };
 
 struct conflict_resolution_result {
-    Clause learned_clause;          //!< clause learned from conflict resolution
+    clause learned_clause;          //!< clause learned from conflict resolution
     std::size_t backtrack_level {}; //!< level the conflict resolution found to requires the solver to backtrack to
 };
 
-struct Model {
-    std::vector<Literal> literals;
-    std::vector<std::vector<Literal>> clauses;
-
-    //@todo add compiler information linked for each clauses and literals that generated that model
-
-    Solver_Context::Configuration conf;
+struct model {
+    std::vector<literal> literals;                                        //!< literals to be computed by the sat solver
+    std::vector<std::vector<literal>> clauses;                            //!< cnf clauses to be solved
+    std::map<literal, fabl::compiler_generation_context> literal_context; //!< contextualization of the literal of the compiler
+    solver_context::configuration conf;                                   //!< configuration of the SAT solver
 };
 
 /**
@@ -188,7 +187,7 @@ struct Model {
  * @param cnf_file Path to the CNF file to be processed.
  * @return A model object representing the parsed CNF file.
  */
-Model make_model_from_cnf_file(const std::filesystem::path& cnf_file);
+model make_model_from_cnf_file(const std::filesystem::path& cnf_file);
 
 enum class sat_error {
     unsatisfiable, //!< The SAT problem is unsatisfiable.
@@ -205,22 +204,22 @@ enum class sat_error {
 class solver {
   public:
     struct result {
-        std::vector<Literal> literals;
+        std::vector<literal> literals;
 
         [[nodiscard]] friend std::string to_string(const result& res) {
-            return std::ranges::fold_left(res.literals, std::string {"result["}, [](std::string res, const Literal& lit) { //
+            return std::ranges::fold_left(res.literals, std::string {"result["}, [](std::string res, const literal& lit) { //
                 return std::format("{}{}->{},", res, lit.value(), lit.is_on());
             }) + "]";
         }
     };
 
-    explicit solver(Model m);
+    explicit solver(model m);
 
     std::vector<result> solve(std::int32_t expected = -1);
 
   private:
-    Solver_Context context_; // !< The context for the solver, containing configuration and state.
-    Model model_;
+    solver_context context_; // !< The context for the solver, containing configuration and state.
+    model model_;
 };
 
 } // namespace fabko::compiler::sat

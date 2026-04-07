@@ -18,20 +18,20 @@
 
 #include <fil/datastructure/soa.hh>
 
-#include "compiler/backend/Metadata.hh"
+#include "../../metadata.hh"
 
 //
 // Forward declarations
 namespace fabko::compiler::sat {
 
-class Assignment_Context;
+class assignment_context;
 
 struct statistics;
-class Clause;
-class Literal;
-class Clause_Watcher;
+class clause;
+class literal;
+class clause_watcher;
 enum class assignment;
-struct Model;
+struct model;
 } // namespace fabko::compiler::sat
 // end forward declarations
 //
@@ -41,12 +41,12 @@ namespace fabko::compiler::sat {
 /**
  * @brief Solution returned by the sat solver
  */
-class Solver_Solution {
-    std::vector<Literal> literals_solving_;                                      //!< literals that solve the SAT problem
+class solver_solution {
+    std::vector<literal> literals_solving_;                                      //!< literals that solve the SAT problem
 };
 
-using Vars_Soa    = fil::soa<Literal, assignment, Assignment_Context, Metadata>; //!< structure of arrays representing a variable
-using Clauses_Soa = fil::soa<Clause, Clause_Watcher, Metadata>;                  //!< structure of arrays representing a clause
+using Vars_Soa    = fil::soa<literal, assignment, assignment_context, metadata>; //!< structure of arrays representing a variable
+using Clauses_Soa = fil::soa<clause, clause_watcher, metadata>;                  //!< structure of arrays representing a clause
 
 enum var_values {
     soa_literal          = 0,
@@ -70,8 +70,8 @@ enum clause_values {
  *
  * @note clause can be learned using Conflict-Driven Clause Learning (CDCL) techniques
  */
-struct Solver_Context {
-    struct Configuration {
+struct solver_context {
+    struct configuration {
 
         //! after a certain number of conflicts, restart the resolution of the sat solver to avoid the algorithm to
         //! being stuck in a bad path of the resolution domain.
@@ -97,10 +97,10 @@ struct Solver_Context {
         std::size_t max_decision_lvl; //!< level of decision maximum during sat solver
     };
 
-    explicit Solver_Context(const Model& model);
+    explicit solver_context(const model& model);
 
-    Configuration config_ {};                   //!< configuration of the solver
-    std::reference_wrapper<const Model> model_; //!< reference to the model being solved
+    configuration config_ {};                   //!< configuration of the solver
+    std::reference_wrapper<const model> model_; //!< reference to the model being solved
 
     Vars_Soa vars_soa_;                         //!< variables of the SAT solver, containing their assignment and context
     Clauses_Soa clauses_soa_;                   //!< clauses of the SAT solver, containing their watchers and context
@@ -115,7 +115,7 @@ struct Solver_Context {
 
     Statistics statistics_ {};                          //!< resolution statistics of the solver
 
-    std::vector<Solver_Solution> solutions_found_ {};   //!< final solutions found by the solver
+    std::vector<solver_solution> solutions_found_ {};   //!< final solutions found by the solver
 };
 
 } // namespace fabko::compiler::sat

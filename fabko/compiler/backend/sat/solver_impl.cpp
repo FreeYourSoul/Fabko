@@ -30,7 +30,7 @@ constexpr std::string SECTION = "sat_solver"; //!< logging a section for the SAT
 /**
  * @return true if all literals in the clause are set to a value that satisfies the clause, false otherwise
  */
-bool is_clause_satisfied(const Solver_Context& ctx, const Clause& clause) {
+bool is_clause_satisfied(const solver_context& ctx, const clause& clause) {
     const auto& all_clause_lit = clause.get_literals();
     return std::ranges::any_of(all_clause_lit, [&ctx](const auto& lit) {
         const auto& [literal, varid] = lit;
@@ -39,7 +39,7 @@ bool is_clause_satisfied(const Solver_Context& ctx, const Clause& clause) {
     });
 }
 
-bool has_conflict(const Solver_Context& ctx, const Clause& clause) { // @todo remove function when watchers is implemented
+bool has_conflict(const solver_context& ctx, const clause& clause) { // @todo remove function when watchers is implemented
     const auto& all_clause_lit = clause.get_literals();
     return std::ranges::all_of(all_clause_lit, [&ctx](const auto& lit) {
         const auto& [literal, varid] = lit;
@@ -56,7 +56,7 @@ bool has_conflict(const Solver_Context& ctx, const Clause& clause) { // @todo re
  * @param ctx solving context to update the VSIDS activity of the variables
  * @param learned_clause clause learned from the conflict resolution, the literals in this clause are used to increase the VSIDS activity of the variables
  */
-void update_vsids_activity(Solver_Context& ctx, const Clause& learned_clause) {
+void update_vsids_activity(solver_context& ctx, const clause& learned_clause) {
     const auto& all_lit = learned_clause.get_literals();
 
     const bool need_normalization = std::ranges::any_of(all_lit, [&ctx](const auto& lit) { // check if any variable activity is too high
@@ -92,7 +92,7 @@ void update_vsids_activity(Solver_Context& ctx, const Clause& learned_clause) {
  * @param conflict_soastruct_clause clause that conflicted in the solving context
  * @return a resolution result that provides the learned clause as well as the backtracking level at which the solver must return to for continuation of the sat solve
  */
-conflict_resolution_result resolve_conflict(Solver_Context& ctx, Clauses_Soa::soa_struct conflict_soastruct_clause) {
+conflict_resolution_result resolve_conflict(solver_context& ctx, Clauses_Soa::soa_struct conflict_soastruct_clause) {
     const auto& [conflict_clause, watcher, meta] = conflict_soastruct_clause;
     log_debug("analyzing conflicting clause: {}", to_string(conflict_clause));
 
@@ -108,7 +108,7 @@ conflict_resolution_result resolve_conflict(Solver_Context& ctx, Clauses_Soa::so
         });
 
     // learned clause to be returned : start as being equal to the conflict clause
-    std::vector<std::pair<Literal, Vars_Soa::struct_id>> learned_clause = conflict_clause.get_literals();
+    std::vector<std::pair<literal, Vars_Soa::struct_id>> learned_clause = conflict_clause.get_literals();
 
     std::size_t backtrack_level = 0;                     // backtracking level retrieved from a learned clause
     std::size_t trail_index     = ctx.trail_.size() - 1; // index of the trail to backtrack to // @todo : do the iteration with reverse iterator
@@ -188,7 +188,7 @@ conflict_resolution_result resolve_conflict(Solver_Context& ctx, Clauses_Soa::so
             return res + ", " + to_string(lit.first);
         }));
 
-    return {Clause {std::move(learned_clause)}, backtrack_level};
+    return {clause {std::move(learned_clause)}, backtrack_level};
 }
 
 /**
@@ -197,7 +197,7 @@ conflict_resolution_result resolve_conflict(Solver_Context& ctx, Clauses_Soa::so
  * @param ctx of the sat solver
  * @param level to backtrack to
  */
-void backtrack(Solver_Context& ctx, std::size_t level) {
+void backtrack(solver_context& ctx, std::size_t level) {
     log_debug("backtracking start :: from {} to {}", ctx.current_decision_level_, level);
     while (!ctx.trail_.empty()) {
         const auto& node = ctx.trail_.back();
@@ -216,7 +216,7 @@ void backtrack(Solver_Context& ctx, std::size_t level) {
     log_debug("backtracking end :: backtracked to level {} :: size trail {}", level, ctx.trail_.size());
 }
 
-std::optional<Clauses_Soa::struct_id> unit_propagation(Solver_Context& ctx) {
+std::optional<Clauses_Soa::struct_id> unit_propagation(solver_context& ctx) {
     std::optional<Clauses_Soa::struct_id> conflict;
     [[maybe_unused]] auto propagate = [&](const auto& clause_struct) {
         if (conflict.has_value())
@@ -230,8 +230,8 @@ std::optional<Clauses_Soa::struct_id> unit_propagation(Solver_Context& ctx) {
 
         const auto& clauselit_mapped_varid = clause.get_literals();
         const auto unassigned              = std::ranges::fold_left(clauselit_mapped_varid,
-            std::vector<std::pair<Literal, Vars_Soa::struct_id>> {}, //
-            [&ctx, &clause_struct](std::vector<std::pair<Literal, Vars_Soa::struct_id>> res, const auto& pair) {
+            std::vector<std::pair<literal, Vars_Soa::struct_id>> {}, //
+            [&ctx, &clause_struct](std::vector<std::pair<literal, Vars_Soa::struct_id>> res, const auto& pair) {
                 const auto clause_var_id                                    = pair.second;
                 const auto& [literal, assignment, assignment_context, meta] = ctx.vars_soa_[clause_var_id];
                 if (assignment != assignment::not_assigned) {
@@ -275,17 +275,17 @@ std::optional<Clauses_Soa::struct_id> unit_propagation(Solver_Context& ctx) {
     return conflict;
 }
 
-void learn_additional_clause(Solver_Context& ctx, const Clause& clause_learned) {
+void learn_additional_clause(solver_context& ctx, const clause& clause_learned) {
     if (clause_learned.is_empty()) {
         log_debug("learned clause is empty, the solver is unsatisfiable", SECTION);
         return;
     }
     log_debug("learned clause: {}", to_string(clause_learned));
-    [[maybe_unused]] const auto _ = ctx.clauses_soa_.insert(clause_learned, Clause_Watcher {ctx.vars_soa_, clause_learned}, Metadata {/*@todo: add compiler context from model*/});
+    [[maybe_unused]] const auto _ = ctx.clauses_soa_.insert(clause_learned, clause_watcher {ctx.vars_soa_, clause_learned}, metadata {/*@todo: add compiler context from model*/});
     ++ctx.statistics_.learned_clause;
 }
 
-bool make_decision(Solver_Context& ctx) {
+bool make_decision(solver_context& ctx) {
     auto unassigned_vars = //
         std::ranges::views::filter(ctx.vars_soa_, [](const auto& var) { return get<soa_assignment>(var) == assignment::not_assigned; });
 
@@ -313,7 +313,7 @@ bool make_decision(Solver_Context& ctx) {
     return true;
 }
 
-std::expected<solver::result, sat_error> solve_sat(Solver_Context& ctx, const Model& model) {
+std::expected<solver::result, sat_error> solve_sat(solver_context& ctx, const model& model) {
     solver::result solution;
     while (solution.literals.empty()) {
         if (ctx.conflict_count_since_last_restart_ >= ctx.config_.restart_threshold) {

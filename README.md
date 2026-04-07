@@ -10,9 +10,9 @@ Agents.
 # Introduction
 
 Fabko is a library that some to make it easy to create agent that interoperates via customizable communication medium (
-peer-to-peer, centralised server based, distributed etc...).
+peer-to-peer, centralized server based, distributed, etc...).
 
-Those agent will be able to register their capability to an agent node called a "peerboard" node.
+Those agents will be able to register their capability to an agent node called a "peerboard" node.
 The agent will then be able to communicate through a blackboard generated each time an agent attempts to achieve a new
 action. And the agent is going to cooperate to find a solution to resolve that problem.
 
@@ -30,6 +30,7 @@ all the capabilities of each agent to provide solutions.
 The language is split into different sections: `agent`, `capabilities`.
 
 work in progress
+
 ```mnz
 
 all_different :: func (v) {
@@ -67,10 +68,45 @@ constraint all_different([queens[i].x + 1 for i in 1 .. board_size]);
 
 actor part of FABL
 
-
 Here is an example of the 9 Queen problems using the actor syntax
 
-## Compile 
+Compilation would be the following steps :
 
-Fabko is an agent binary that can be compiled using nix. The binary is a nix flake and thus can be compiled using `nix build` command.
+```terminaloutput
+ENCODING (loses information):
+┌─────────────────────────────────┐
+│  FABL: High-level semantics     │
+│  - Natural time (minutes)       │
+│  - Implicit durations           │
+│  - Complex constraints          │
+└──────────────┬──────────────────┘
+               │ Discretize, abstract, encode
+               ↓
+┌─────────────────────────────────┐
+│  CNF: Boolean logic             │
+│  - Slot-level time              │
+│  - Explicit all variables       │
+│  - Pure boolean clauses         │
+└──────────────┬──────────────────┘
+               │ SAT solve
+               ↓
+┌─────────────────────────────────┐
+│  Assignment: Variable values    │
+│  - 1000s of true/false values   │
+│  - Lost high-level structure    │
+└──────────────┬──────────────────┘
+               │ Reconstruct (with variable registry)
+               ↓
+┌─────────────────────────────────┐
+│  Execution Plan: Lower-level    │
+│  - Slot-level time              │
+│  - Actions with parameters      │
+│  - Lost sub-slot precision      │
+└─────────────────────────────────┘
+```
+
+## Compile
+
+Fabko is an agent binary that can be compiled using nix. The binary is a nix flake and thus can be compiled using
+`nix build` command.
 It depends on FiL, a C++ library developed as a nix flake as well.
