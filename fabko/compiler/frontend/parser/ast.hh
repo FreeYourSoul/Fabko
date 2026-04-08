@@ -13,13 +13,24 @@
 #ifndef FABKO_AST_HH
 #define FABKO_AST_HH
 
+#include "compiler/frontend/ir/fabl_ir.hh"
+#include "compiler/metadata.hh"
+
 namespace fabko::compiler::fabl::ast {
 
-struct actor {};
+using resource = ir::resource;
 
-struct fabl {
-    std::vector<fabl_actor> actors;
+struct resources_hardcoded {
+    std::vector<resource> resources;
 };
+
+struct actor {
+    std::string name;
+
+    resources_hardcoded resources;
+};
+
+struct fabl_program {};
 
 } // namespace fabko::compiler::fabl::ast
 

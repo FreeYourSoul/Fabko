@@ -172,10 +172,10 @@ struct conflict_resolution_result {
 };
 
 struct model {
-    std::vector<literal> literals;                                        //!< literals to be computed by the sat solver
-    std::vector<std::vector<literal>> clauses;                            //!< cnf clauses to be solved
-    std::map<literal, fabl::compiler_generation_context> literal_context; //!< contextualization of the literal of the compiler
-    solver_context::configuration conf;                                   //!< configuration of the SAT solver
+    std::vector<literal> literals;                                           //!< literals to be computed by the sat solver
+    std::vector<std::vector<literal>> clauses;                               //!< cnf clauses to be solved
+    std::map<literal, fabl::compiler_generation_context> literal_context {}; //!< contextualization of the literal of the compiler
+    solver_context::configuration conf {};                                   //!< configuration of the SAT solver
 };
 
 /**

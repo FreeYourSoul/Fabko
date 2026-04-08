@@ -13,7 +13,9 @@
 #ifndef METADATA_H
 #define METADATA_H
 
+#include <cstdint>
 #include <optional>
+#include <string>
 
 namespace fabko::compiler {
 namespace fabl {

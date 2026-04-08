@@ -175,7 +175,10 @@ model make_model_from_cnf_file(const std::filesystem::path& cnf_file) {
 
     std::ranges::transform(literals_unique, std::back_inserter(literals), [](const literal& l) { return l; });
 
-    return model {std::move(literals), std::move(clauses)};
+    return model {
+        .literals = std::move(literals),
+        .clauses  = std::move(clauses),
+    };
 }
 
 solver::solver(model m)
