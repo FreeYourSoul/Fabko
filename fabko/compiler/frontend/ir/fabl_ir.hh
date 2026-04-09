@@ -30,6 +30,7 @@ enum class operator_exec {
 
 enum class constraint_operation {
     EQUAL,
+    DIFFERENT,
     GREATER_THAN,
     LESS_THAN,
     GREATER_THAN_OR_EQUAL,
@@ -98,7 +99,7 @@ struct optimization {
 struct request {
     actor_id actor;
     std::vector<resource> rsc;
-    optimization optimization;
+    optimization opti;
 
     source_loc loc;
 };
@@ -107,7 +108,7 @@ struct program {
     std::vector<actor_id> actors;
     std::vector<resource> resources;
     std::vector<capability> capabilities;
-    request request;
+    request req;
 };
 
 } // namespace fabko::compiler::fabl::ir

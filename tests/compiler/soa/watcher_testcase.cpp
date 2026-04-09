@@ -15,7 +15,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("test watcher", "sat") {
+TEST_CASE("test watcher", "[compiler][backend][sat]") {
     fabko::compiler::sat::Vars_Soa vars;
     fabko::compiler::sat::Clauses_Soa clauses;
 

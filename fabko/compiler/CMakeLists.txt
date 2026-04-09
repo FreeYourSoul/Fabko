@@ -14,7 +14,7 @@ target_include_directories(compiler
         PRIVATE
         ${RocksDB_INCLUDE_DIR}
 )
-target_compile_definitions(compiler PUBLIC cxx_std_23)
+target_compile_definitions(compiler PUBLIC cxx_std_26)
 target_link_libraries(compiler
         fys::fil
         fabko::common

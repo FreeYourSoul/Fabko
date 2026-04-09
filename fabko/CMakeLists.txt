@@ -46,4 +46,4 @@ target_link_libraries(fabko
         PRIVATE
         fabko::agent
         fabko::compiler)
-target_compile_features(fabko PUBLIC cxx_std_23)
+target_compile_features(fabko PUBLIC cxx_std_26)
