@@ -71,19 +71,10 @@ struct precondition_grammar {
     using ast_object = ast::precondition;
 
     static constexpr auto rules() {
-        using target =                                                                                       //
-            decltype(fil::copa::match_parser<accessor_grammar, fil::copa::member<&ast_object::lhs>> {}       //
-                     + fil::copa::match_parser<constraint_operation, fil::copa::member<&ast_object::ope>> {} //
-                     + fil::copa::match_identifier<fil::copa::member<&ast_object::rhs>> {}                   //
-                     + fil::copa::semicol);
-
-        using o =                                                                                            //
-            decltype(fil::copa::match_identifier<fil::copa::member<&ast_object::lhs>> {}                     //
-                     + fil::copa::match_parser<constraint_operation, fil::copa::member<&ast_object::ope>> {} //
-                     + fil::copa::match_identifier<fil::copa::member<&ast_object::rhs>> {}                   //
-                     + fil::copa::semicol);
-
-        return target {} | o {};
+        return (fil::copa::match_parser<accessor_grammar, fil::copa::member<&ast_object::lhs>> {} | fil::copa::match_identifier<fil::copa::member<&ast_object::lhs>> {}) //
+             + fil::copa::match_parser<constraint_operation, fil::copa::member<&ast_object::ope>> {}                                                                     //
+             + fil::copa::match_identifier<fil::copa::member<&ast_object::rhs>> {}                                                                                       //
+             + fil::copa::semicol;
     }
 
     static constexpr auto convertor() { return fil::copa::sink::aggregator<ast_object> {}; }
