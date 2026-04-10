@@ -104,7 +104,6 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
                 operation.first,
                 rhs);
 
-            INFO("Testing with value: operation: " << operation.first << ", actor_selected:" << actor_selected << ", rhs:" << rhs);
             INFO("string parsed: " << content);
 
             fil::buffer_reader reader(std::move(content));
@@ -118,6 +117,63 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
             CHECK(v->ope.op == operation.second);
             CHECK(std::holds_alternative<std::string>(v->rhs));
             CHECK(std::get<std::string>(v->rhs) == rhs);
+        }
+
+        SECTION("rhs : identifier") {
+            auto actor_selected = GENERATE(std::string {"chocobo"}, std::string {"yuna"});
+            auto lhs            = GENERATE(std::string {"1"}, std::string {"42"}, std::string {"1337"});
+
+            std::string content = std::format(R"(
+               {} {} {};
+            )",
+                lhs,
+                operation.first,
+                actor_selected);
+
+            INFO("string parsed: " << content);
+
+            fil::buffer_reader reader(std::move(content));
+
+            const auto v = fil::copa::parse(g, std::move(reader));
+
+            REQUIRE(v.has_value());
+
+            CHECK(std::holds_alternative<std::string>(v->lhs));
+            CHECK(std::get<std::string>(v->lhs) == lhs);
+            CHECK(v->ope.op == operation.second);
+            CHECK(std::holds_alternative<std::string>(v->rhs));
+            CHECK(std::get<std::string>(v->rhs) == actor_selected);
+        }
+
+        SECTION("rhs : accessor") {
+            auto actor_selected = GENERATE(std::string {"target"}, std::string {"this"});
+            auto element        = GENERATE(std::string {"chocobo"}, std::string {"ifrit"}, std::string {"luna"});
+            auto lhs            = GENERATE(std::string {"1"}, std::string {"42"}, std::string {"1337"});
+
+            std::string content = std::format(R"(
+               {} {} {}.{};
+            )",
+                lhs,
+                operation.first,
+                actor_selected,
+                element);
+
+            INFO("string parsed: " << content);
+
+            fil::buffer_reader reader(std::move(content));
+
+            const auto v = fil::copa::parse(g, std::move(reader));
+
+            REQUIRE(v.has_value());
+
+            CHECK(std::holds_alternative<std::string>(v->lhs));
+            CHECK(std::get<std::string>(v->lhs) == lhs);
+
+            CHECK(v->ope.op == operation.second);
+
+            CHECK(std::holds_alternative<fabko::compiler::fabl::ast::actor_accessor>(v->rhs));
+            CHECK(std::get<fabko::compiler::fabl::ast::actor_accessor>(v->rhs).actor == actor_selected);
+            CHECK(std::get<fabko::compiler::fabl::ast::actor_accessor>(v->rhs).value == element);
         }
     }
 

@@ -73,7 +73,7 @@ struct precondition_grammar {
     static constexpr auto rules() {
         return (fil::copa::match_parser<accessor_grammar, fil::copa::member<&ast_object::lhs>> {} | fil::copa::match_identifier<fil::copa::member<&ast_object::lhs>> {}) //
              + fil::copa::match_parser<constraint_operation, fil::copa::member<&ast_object::ope>> {}                                                                     //
-             + fil::copa::match_identifier<fil::copa::member<&ast_object::rhs>> {}                                                                                       //
+             + (fil::copa::match_parser<accessor_grammar, fil::copa::member<&ast_object::rhs>> {} | fil::copa::match_identifier<fil::copa::member<&ast_object::rhs>> {}) //
              + fil::copa::semicol;
     }
 
