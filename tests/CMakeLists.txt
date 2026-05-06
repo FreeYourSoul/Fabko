@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.22)
 
-enable_testing()
-
 find_package(Catch2 3 CONFIG REQUIRED)
 
-include(CTest)
 include(Catch)
+
+enable_testing()
 
 #
 # Test of the Agent

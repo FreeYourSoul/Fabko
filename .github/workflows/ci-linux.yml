@@ -20,4 +20,17 @@ jobs:
           nix_path: nixpkgs=channel:nixos-25.05
 
       - name: Build project
-        run: nix-build .nix/default.nix --no-out-link
+        run: nix build .#fabko-test -L
+
+      - name: Check coverage file exists
+        run: |
+          ls -la result/coverage/ || echo "coverage directory not found"
+          file result/coverage/cobertura.xml
+          head -20 result/coverage/cobertura.xml
+
+      - name: codacy-coverage-reporter
+        uses: codacy/codacy-coverage-reporter-action@v1.3.0
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: result/coverage/cobertura.xml
+          language: cpp

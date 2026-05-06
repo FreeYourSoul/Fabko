@@ -20,7 +20,8 @@
 
 namespace fabko::compiler::fabl::ir {
 
-enum class operator_exec {
+enum class operator_exec : int {
+    INVALID,
     ADD,
     SUBTRACT,
     MULTIPLY,
@@ -28,7 +29,8 @@ enum class operator_exec {
     MODULO,
 };
 
-enum class constraint_operation {
+enum class constraint_operation : int {
+    INVALID,
     EQUAL,
     DIFFERENT,
     GREATER_THAN,

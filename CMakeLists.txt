@@ -6,7 +6,7 @@ include(cmake/utils.cmake)
 if (DEFINED ENV{NIXPKGS_CMAKE_PREFIX_PATH})
     string(REPLACE ":" ";" _nix_prefix_path "$ENV{NIXPKGS_CMAKE_PREFIX_PATH}")
     list(APPEND CMAKE_PREFIX_PATH ${_nix_prefix_path})
-endif()
+endif ()
 
 fabko_extract_version()
 
@@ -21,6 +21,7 @@ set(CMAKE_CXX_STANDARD 26)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
+include(CTest)
 
 find_package(fmt CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
@@ -41,10 +42,10 @@ set(nlohmann-json_IMPLICIT_CONVERSIONS OFF)
 
 add_subdirectory(fabko)
 
-#if (BUILD_TESTING)
-message(STATUS "Tests will be built")
-add_subdirectory(tests)
-#endif ()
+if (BUILD_TESTING)
+    message(STATUS "Tests will be built")
+    add_subdirectory(tests)
+endif ()
 
 #
 # Installation
