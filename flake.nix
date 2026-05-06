@@ -21,11 +21,6 @@
         fabko-test = pkgs.callPackage ./.nix/fabko.nix {
           fil = fil.packages.${system}.default;
           execute_test = true;
-        };
-
-        fabko-coverage = pkgs.callPackage ./.nix/fabko.nix {
-          fil = fil.packages.${system}.default;
-          execute_test = true;
           with_coverage = true;
         };
       in
@@ -33,7 +28,6 @@
         packages.default = fabko;
         packages.fabko = fabko;
         packages.fabko-test = fabko-test;
-        packages.fabko-coverage = fabko-coverage;
 
         devShells.default = pkgs.mkShell {
           inputsFrom = [ fabko ];

@@ -15,7 +15,7 @@
 
 #include "fil/copa/copa.hh"
 #include "fil/copa/matcher.hh"
-#include <fil/copa/ast.hh>
+#include "fil/copa/wrapper_utils.hh"
 
 #include "ast.hh"
 
