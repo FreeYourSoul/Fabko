@@ -31,60 +31,42 @@ struct actor_accessor {
 
 using accessor = std::variant<actor_accessor, std::string>;
 
-struct constraint_op {
-    ir::constraint_operation op;
+using effect_ast_node = fil::copa::ast_node<[](const std::string& token) -> ir::operator_exec {
+    if (token == "+")
+        return ir::operator_exec::ADD;
+    if (token == "-")
+        return ir::operator_exec::SUBTRACT;
+    if (token == "*")
+        return ir::operator_exec::MULTIPLY;
+    if (token == "/")
+        return ir::operator_exec::DIVIDE;
+    if (token == "%")
+        return ir::operator_exec::MODULO;
 
-    void str_to_op(const std::string& operation) {
-        if (operation == "==") {
-            op = ir::constraint_operation::EQUAL;
-        } else if (operation == "!=") {
-            op = ir::constraint_operation::DIFFERENT;
-        } else if (operation == ">") {
-            op = ir::constraint_operation::GREATER_THAN;
-        } else if (operation == ">=") {
-            op = ir::constraint_operation::GREATER_THAN_OR_EQUAL;
-        } else if (operation == "<") {
-            op = ir::constraint_operation::LESS_THAN;
-        } else if (operation == "<=") {
-            op = ir::constraint_operation::LESS_THAN_OR_EQUAL;
-        }
-    }
-};
+    return ir::operator_exec::INVALID;
+}>;
 
-struct precondition {
-    accessor lhs;
-    constraint_op ope;
-    accessor rhs;
-};
+using precondition_ast_node = fil::copa::ast_node<[](const std::string& token) -> ir::constraint_operation {
+    if (token == "==")
+        return ir::constraint_operation::EQUAL;
+    if (token == "!=")
+        return ir::constraint_operation::DIFFERENT;
+    if (token == ">")
+        return ir::constraint_operation::GREATER_THAN;
+    if (token == ">=")
+        return ir::constraint_operation::GREATER_THAN_OR_EQUAL;
+    if (token == "<")
+        return ir::constraint_operation::LESS_THAN;
+    if (token == "<=")
+        return ir::constraint_operation::LESS_THAN_OR_EQUAL;
 
-struct effect_op {
-    ir::operator_exec op;
-
-    void str_to_op(char operation) {
-        if (operation == '+') {
-            op = ir::operator_exec::ADD;
-        } else if (operation == '-') {
-            op = ir::operator_exec::SUBTRACT;
-        } else if (operation == '*') {
-            op = ir::operator_exec::MULTIPLY;
-        } else if (operation == '/') {
-            op = ir::operator_exec::DIVIDE;
-        } else if (operation == '%') {
-            op = ir::operator_exec::MODULO;
-        }
-    }
-};
-
-struct effect {
-    actor_accessor lhs;
-    effect_op ope;
-    std::string rhs;
-};
+    return ir::constraint_operation::INVALID;
+}>;
 
 struct capability {
     std::string name;
-    std::vector<precondition> preconditions;
-    std::vector<effect> effects;
+    std::vector<precondition_ast_node> preconditions;
+    std::vector<effect_ast_node> effects;
 };
 
 struct actor {
