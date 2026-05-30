@@ -27,43 +27,115 @@ The compiled graph represents the blackboard on which each node can add their ow
 that holds the peerboard is the agent that aggregates
 all the capabilities of each agent to provide solutions.
 
-The language is split into different sections: `agent`, `capabilities`.
+The language is split into different types: `agent`, `capabilities` and `resources`.
 
-work in progress
+Here is the FABL language :
 
-```mnz
+```fabl
+////////////////
+/// fabl language
+////////////////
 
-all_different :: func (v) {
-    for v1 in values { 
-        for v2 in values {
-            if v1 != v2 { 
-                v1 != v2 
-            }
-        }
-     }
+// Define locations
+// builtins types are : bool, int, str
+
+type vec2  : { x: int, y: int; };
+type location  : vec2;
+type rectangle : vec2;
+
+// Define resources
+// every agent (not environment) implicitly has 0 of every defined resources. This is useful to provides the ability
+// for agent to receive resources they did not existed before the apparition of another agent in their landscape.
+resource bike : int;
+resource money : int;
+resource time_unit: int;
+resource position: location;
+
+// agent A - Transportation service
+agent A {
+  has 1 position;
+
+  can capability transport {
+    pre: {
+        self.time == 0;
+        user.time == 0;
+
+        user.money > 100;
+        user.position.x == 42 ;
+        user.position.y >= 1337;
+    }
+    post: {
+        // takes 3 instance unit to sell the bike
+        self.time + 3;
+        user.time + 3;
+
+        user.money --100--> self.money;
+
+        user.position.x = 100;
+        user.position.y = 100;
+    }
+  };
+
 }
 
-board_size : int @parameter;
+capability provide_bike(quantity: int, price: int) {
+  pre: {
+      self.bike >= quantity;
+      user.money > price;
+  }
+  post: {
+    self.bike --quantity--> user.bikes_owned;
+    user.money   --price--> self.money;
+  }
+}
 
-Coord :: struct {
-    int : x
-    int : y
+// agent C - Resource provider
+agent C {
+  has 10 bike;
+
+  can capability provide_bike {
+    pre: {
+      user.money > 10;
+    }
+    post: {
+      self.bike   --1--> user.bike;
+      user.money --10--> self.money;
+    }
+  };
+  // same as
+  // can provide_bike(1, 100);
+}
+
+// agent B - The one who wants to move
+agent B {
+  has 1 position;
+}
+
+// it is possible to extends the definition of an agent outside of the declaration scope
+extend agent B {
+  can provide_bike(1, 110);
 };
 
-alias Size = Coord;
+// environment is exactly like an agent, except all its capabilities and resources are constant by default
+environment X {
+}
 
-Queen :: actor {
-    pos : Coord
-};
+// Request: Make B reach Z
 
-queens : Queen[board_size];
+var RESULT_POS: location {x: 100, y: 100} // constant global
 
-# minizinc style constraint
-constraint all_different([q.x for q in queens]);
-constraint all_different([q.y for q in queens]); 
-constraint all_different([queens[i].y + 1 for i in 1 .. board_size]);
-constraint all_different([queens[i].x + 1 for i in 1 .. board_size]); 
+request reach_destination {
+  actor: B;
+  goal: {
+    B.position == RESULT_POS
+  };
 
+  constraints {
+    time_limit: 2hours;
+    prefer: fastest;
+    allow_resource_waste: true;
+  }
+}
 ```
 
 actor part of FABL
