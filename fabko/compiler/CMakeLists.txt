@@ -5,7 +5,7 @@ target_sources(compiler
         ${CMAKE_CURRENT_SOURCE_DIR}/backend/sat/solver.hh
         PRIVATE
         metadata.hh
-        frontend/parser/fabl_core.hh
+        frontend/parser/fabl_grammar.hh
         ${CMAKE_CURRENT_SOURCE_DIR}/backend/sat/solver.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/backend/sat/solver_impl.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/backend/sat/solver_context.hh
