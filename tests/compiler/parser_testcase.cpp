@@ -16,7 +16,7 @@
 #include <fil/copa/copa.hh>
 #include <fil/meta/buffer_reader.hh>
 
-#include "compiler/frontend/parser/fabl_core.hh"
+#include "compiler/frontend/parser/fabl_grammar.hh"
 
 TEST_CASE("fabl parsing", "[compiler][frontend]") {
 
