@@ -15,6 +15,7 @@
 
 #include "compiler/frontend/ir/fabl_ir.hh"
 #include "compiler/metadata.hh"
+#include <fil/datastructure/soa.hh>
 
 namespace fabko::compiler::fabl::ast {
 
@@ -63,22 +64,99 @@ using precondition_ast_node = fil::copa::ast_node<[](const std::string& token) -
     return ir::constraint_operation::INVALID;
 }>;
 
-struct capability {
-    std::string name;
-    std::vector<precondition_ast_node> preconditions;
-    std::vector<effect_ast_node> effects;
+using identifier = std::string;
+
+struct custom_data_type;
+struct capability;
+
+using null_type       = std::monostate;
+using literal_integer = std::int32_t;
+using literal_string  = std::string;
+using literal_bool    = bool;
+
+using data_type = std::variant< //
+    null_type,                  //
+    custom_data_type,           //
+    capability,                 //
+    literal_bool,               //
+    literal_integer,            //
+    literal_string>;
+
+enum class compare_operator {
+    GREATER,
+    GREATER_EQUAL,
+    LESS,
+    LESS_EQUAL,
+    EQUAL,
+    DIFFERENT,
 };
 
-struct actor {
-    std::string name;
+enum class visibility {
+    PRIVATE,
+    PUBLIC
+};
 
-    resources_hardcoded resources;
+// when a type (
+
+enum class compile_status {
+    DEFINED,  //!< complete type (defined properly in a compilation unit)
+    DECLARED, //!< incomplete type for now (declared only -- expected to be defined at a later stage)
+};
+
+enum class compile_unit_type {
+    FILE,
+    RAW
+};
+
+enum class mutability {
+    CONSTANT,
+    MUTABLE,
+    MUTABLE_IN_SCOPE
+};
+
+struct outcome {};
+
+struct condition {
+    std::unique_ptr<data_type> lhs;
+    compare_operator op;
+    std::unique_ptr<data_type> rhs;
+};
+
+struct prerequisites {
+    std::vector<condition> conditions;
+};
+
+struct capability {
+    prerequisites pre;
+    outcome post;
+};
+
+struct custom_data_type {
+    std::vector<data_type> content;
+
+    fil::copa::debug_info copa_debug_info;
+};
+
+struct compile_unit_id {
+    std::string name;
+};
+
+struct metadata_info {
+    compile_unit_id unit;
+    compile_unit_type type;
+    std::size_t line_definition;
+};
+
+struct symbol_table {
+    fil::soa::soa<identifier, //
+        compile_status, mutability, visibility, metadata_info, std::unique_ptr<data_type>>
+        structure;
 };
 
 struct fabl_program {
-    std::vector<actor> actors;
-    std::vector<resources_hardcoded> resources;
-    std::vector<capability> capabilities;
+    fil::soa::soa<compile_unit_id, //
+        symbol_table>
+        structure;
 };
 
 } // namespace fabko::compiler::fabl::ast
