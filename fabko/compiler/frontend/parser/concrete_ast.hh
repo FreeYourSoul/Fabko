@@ -17,7 +17,7 @@
 #include "compiler/metadata.hh"
 #include <fil/datastructure/soa.hh>
 
-namespace fabko::compiler::fabl::ast {
+namespace fabko::compiler::fabl::concrete_ast {
 
 using resource = ir::resource;
 
@@ -68,6 +68,7 @@ using identifier = std::string;
 
 struct custom_data_type;
 struct capability;
+struct has_statement;
 
 using null_type       = std::monostate;
 using literal_integer = std::int32_t;
@@ -77,6 +78,7 @@ using literal_bool    = bool;
 using data_type = std::variant< //
     null_type,                  //
     custom_data_type,           //
+    has_statement,
     capability,                 //
     literal_bool,               //
     literal_integer,            //
@@ -117,9 +119,9 @@ enum class mutability {
 struct outcome {};
 
 struct condition {
-    std::unique_ptr<data_type> lhs;
+    std::shared_ptr<data_type> lhs;
     compare_operator op;
-    std::unique_ptr<data_type> rhs;
+    std::shared_ptr<data_type> rhs;
 };
 
 struct prerequisites {
@@ -131,10 +133,14 @@ struct capability {
     outcome post;
 };
 
-struct custom_data_type {
-    std::vector<data_type> content;
+struct has_statement {
+    identifier id;
+    std::int32_t quantity;
+};
 
-    fil::copa::debug_info copa_debug_info;
+struct custom_data_type {
+    std::string name;
+    std::vector<data_type> content;
 };
 
 struct compile_unit_id {
@@ -159,6 +165,6 @@ struct fabl_program {
         structure;
 };
 
-} // namespace fabko::compiler::fabl::ast
+} // namespace fabko::compiler::fabl::concrete_ast
 
 #endif // FABKO_AST_HH

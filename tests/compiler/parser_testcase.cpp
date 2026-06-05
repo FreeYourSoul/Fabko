@@ -20,192 +20,67 @@
 
 TEST_CASE("fabl parsing", "[compiler][frontend]") {
 
-    SECTION("parsing accessor : target") {
+    SECTION("parsing accessor : empty") {
         std::string content = R"(
-           target.chocobo
+           actor dada { };
         )";
 
         fil::buffer_reader reader(std::move(content));
 
-        auto g       = fabko::compiler::fabl::grammar::accessor_grammar {};
+        auto g       = fabko::compiler::fabl::grammar::actor_definition {};
         const auto v = fil::copa::parse(g, std::move(reader));
 
         REQUIRE(v.has_value());
-        CHECK(v->actor == "target");
-        CHECK(v->value == "chocobo");
+        CHECK(v->name == "dada");
+        CHECK(v->content.size() == 0);
     }
-
-    SECTION("parsing accessor : this") {
+    SECTION("parsing accessor : 1 has") {
         std::string content = R"(
-           this.chocobo
+           actor dada {
+                has 4 chocobo;
+            };
         )";
 
         fil::buffer_reader reader(std::move(content));
 
-        auto g       = fabko::compiler::fabl::grammar::accessor_grammar {};
+        auto g       = fabko::compiler::fabl::grammar::actor_definition {};
         const auto v = fil::copa::parse(g, std::move(reader));
 
         REQUIRE(v.has_value());
-        CHECK(v->actor == "this");
-        CHECK(v->value == "chocobo");
+        CHECK(v->name == "dada");
+        REQUIRE(v->content.size() == 1);
+        REQUIRE(std::holds_alternative<fabko::compiler::fabl::concrete_ast::has_statement>(v->content[0]));
+
+        const auto& has1 = std::get<fabko::compiler::fabl::concrete_ast::has_statement>(v->content[0]);
+
+        CHECK(has1.id == "chocobo");
+        CHECK(has1.quantity == 4);
     }
 
-    SECTION("parsing precondition") {
-        auto g = fabko::compiler::fabl::grammar::precondition_grammar {};
-
-        auto operation = GENERATE(                                                                                  //
-            std::pair {std::string {"=="}, fabko::compiler::fabl::ir::constraint_operation::EQUAL},                 //
-            std::pair {std::string {"!="}, fabko::compiler::fabl::ir::constraint_operation::DIFFERENT},             //
-            std::pair {std::string {">"}, fabko::compiler::fabl::ir::constraint_operation::GREATER_THAN},           //
-            std::pair {std::string {">="}, fabko::compiler::fabl::ir::constraint_operation::GREATER_THAN_OR_EQUAL}, //
-            std::pair {std::string {"<"}, fabko::compiler::fabl::ir::constraint_operation::LESS_THAN},
-            std::pair {std::string {"<="}, fabko::compiler::fabl::ir::constraint_operation::LESS_THAN_OR_EQUAL});
-
-        SECTION("lhs : accessor") {
-            auto actor_selected = GENERATE(std::string {"target"}, std::string {"this"});
-            auto element        = GENERATE(std::string {"chocobo"}, std::string {"ifrit"}, std::string {"luna"});
-            auto rhs            = GENERATE(std::string {"1"}, std::string {"42"}, std::string {"1337"});
-
-            std::string content = std::format(R"(
-               {}.{} {} {};
-            )",
-                actor_selected,
-                element,
-                operation.first,
-                rhs);
-
-            INFO("Testing with value: operation: " << operation.first << ", actor_selected:" << actor_selected << ", element:" << element << ", rhs:" << rhs);
-            INFO("string parsed: " << content);
-
-            fil::buffer_reader reader(std::move(content));
-
-            const auto v = fil::copa::parse(g, std::move(reader));
-
-            REQUIRE(v.has_value());
-
-            CHECK(std::holds_alternative<fabko::compiler::fabl::ast::actor_accessor>(v->lhs));
-            CHECK(std::get<fabko::compiler::fabl::ast::actor_accessor>(v->lhs).actor == actor_selected);
-            CHECK(std::get<fabko::compiler::fabl::ast::actor_accessor>(v->lhs).value == element);
-
-            CHECK(v->ope.op == operation.second);
-
-            CHECK(std::holds_alternative<std::string>(v->rhs));
-            CHECK(std::get<std::string>(v->rhs) == rhs);
-        }
-
-        SECTION("lhs : identifier") {
-            auto actor_selected = GENERATE(std::string {"chocobo"}, std::string {"yuna"});
-            auto rhs            = GENERATE(std::string {"1"}, std::string {"42"}, std::string {"1337"});
-
-            std::string content = std::format(R"(
-               {} {} {};
-            )",
-                actor_selected,
-                operation.first,
-                rhs);
-
-            INFO("string parsed: " << content);
-
-            fil::buffer_reader reader(std::move(content));
-
-            const auto v = fil::copa::parse(g, std::move(reader));
-
-            REQUIRE(v.has_value());
-
-            CHECK(std::holds_alternative<std::string>(v->lhs));
-            CHECK(std::get<std::string>(v->lhs) == actor_selected);
-            CHECK(v->ope.op == operation.second);
-            CHECK(std::holds_alternative<std::string>(v->rhs));
-            CHECK(std::get<std::string>(v->rhs) == rhs);
-        }
-
-        SECTION("rhs : identifier") {
-            auto actor_selected = GENERATE(std::string {"chocobo"}, std::string {"yuna"});
-            auto lhs            = GENERATE(std::string {"1"}, std::string {"42"}, std::string {"1337"});
-
-            std::string content = std::format(R"(
-               {} {} {};
-            )",
-                lhs,
-                operation.first,
-                actor_selected);
-
-            INFO("string parsed: " << content);
-
-            fil::buffer_reader reader(std::move(content));
-
-            const auto v = fil::copa::parse(g, std::move(reader));
-
-            REQUIRE(v.has_value());
-
-            CHECK(std::holds_alternative<std::string>(v->lhs));
-            CHECK(std::get<std::string>(v->lhs) == lhs);
-            CHECK(v->ope.op == operation.second);
-            CHECK(std::holds_alternative<std::string>(v->rhs));
-            CHECK(std::get<std::string>(v->rhs) == actor_selected);
-        }
-
-        SECTION("rhs : accessor") {
-            auto actor_selected = GENERATE(std::string {"target"}, std::string {"this"});
-            auto element        = GENERATE(std::string {"chocobo"}, std::string {"ifrit"}, std::string {"luna"});
-            auto lhs            = GENERATE(std::string {"1"}, std::string {"42"}, std::string {"1337"});
-
-            std::string content = std::format(R"(
-               {} {} {}.{};
-            )",
-                lhs,
-                operation.first,
-                actor_selected,
-                element);
-
-            INFO("string parsed: " << content);
-
-            fil::buffer_reader reader(std::move(content));
-
-            const auto v = fil::copa::parse(g, std::move(reader));
-
-            REQUIRE(v.has_value());
-
-            CHECK(std::holds_alternative<std::string>(v->lhs));
-            CHECK(std::get<std::string>(v->lhs) == lhs);
-
-            CHECK(v->ope.op == operation.second);
-
-            CHECK(std::holds_alternative<fabko::compiler::fabl::ast::actor_accessor>(v->rhs));
-            CHECK(std::get<fabko::compiler::fabl::ast::actor_accessor>(v->rhs).actor == actor_selected);
-            CHECK(std::get<fabko::compiler::fabl::ast::actor_accessor>(v->rhs).value == element);
-        }
-    }
-
-    SECTION("parsing effect") {
-        auto g = fabko::compiler::fabl::grammar::effect_grammar {};
-
-        auto actor_selected = GENERATE(std::string {"target"}, std::string {"this"});
-        auto element        = GENERATE(std::string {"chocobo"}, std::string {"ifrit"}, std::string {"luna"});
-        auto value          = GENERATE(std::string {"1"}, std::string {"42"}, std::string {"1337"});
-        auto operation      = GENERATE(                                                             //
-            std::pair {std::string {"+"}, fabko::compiler::fabl::ir::operator_exec::ADD},      //
-            std::pair {std::string {"-"}, fabko::compiler::fabl::ir::operator_exec::SUBTRACT}, //
-            std::pair {std::string {"*"}, fabko::compiler::fabl::ir::operator_exec::MULTIPLY}, //
-            std::pair {std::string {"/"}, fabko::compiler::fabl::ir::operator_exec::DIVIDE},   //
-            std::pair {std::string {"%"}, fabko::compiler::fabl::ir::operator_exec::MODULO});
-
-        std::string content = std::format(R"(
-               {}.{} {} {};
-            )",
-            actor_selected,
-            element,
-            operation.first,
-            value);
+    SECTION("parsing accessor : multiple has") {
+        std::string content = R"(
+           actor ff7 {
+                has 4 chocobo;
+                has 2 cloud;
+            };
+        )";
 
         fil::buffer_reader reader(std::move(content));
 
+        auto g       = fabko::compiler::fabl::grammar::actor_definition {};
         const auto v = fil::copa::parse(g, std::move(reader));
 
         REQUIRE(v.has_value());
-        CHECK(v->lhs.actor == actor_selected);
-        CHECK(v->lhs.value == element);
-        CHECK(v->ope.op == operation.second);
-        CHECK(v->rhs == value);
+        CHECK(v->name == "ff7");
+        REQUIRE(v->content.size() == 2);
+        REQUIRE(std::holds_alternative<fabko::compiler::fabl::concrete_ast::has_statement>(v->content[0]));
+
+        const auto& has1 = std::get<fabko::compiler::fabl::concrete_ast::has_statement>(v->content[0]);
+        CHECK(has1.id == "chocobo");
+        CHECK(has1.quantity == 4);
+
+        const auto& has2 = std::get<fabko::compiler::fabl::concrete_ast::has_statement>(v->content[1]);
+        CHECK(has2.id == "cloud");
+        CHECK(has2.quantity == 2);
     }
 }

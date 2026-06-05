@@ -17,7 +17,7 @@
 #include "fil/copa/matcher.hh"
 #include "fil/copa/wrapper_utils.hh"
 
-#include "ast.hh"
+#include "concrete_ast.hh"
 
 namespace fabko::compiler::fabl::grammar {
 
@@ -42,7 +42,7 @@ static constexpr auto match_any_keyword = fil::copa::or_rule< //
 } // namespace keywords
 
 struct capability_pre_statement {
-    using ast_object = ast::precondition_ast_node;
+    using ast_object = concrete_ast::precondition_ast_node;
 
     static constexpr auto rules() {
         return keywords::match_actor {} //
@@ -52,7 +52,7 @@ struct capability_pre_statement {
     static constexpr auto convertor() { return fil::copa::sink::ast_tree_generator<ast_object> {}; }
 };
 struct capability_post_statement {
-    using ast_object = ast::effect_ast_node;
+    using ast_object = concrete_ast::effect_ast_node;
 
     static constexpr auto rules() {
         return keywords::match_post {} //
@@ -63,13 +63,13 @@ struct capability_post_statement {
 };
 
 struct capability_definition {
-    using ast_object = ast::capability;
+    using ast_object = concrete_ast::capability;
 
     static constexpr auto rules() {
         return keywords::match_capability {}
-             + fil::copa::bracketed(                                     //
-                 fil::copa::match_parser<capability_pre_statement> {}    //
-                 + fil::copa::match_parser<capability_post_statement> {} //
+             + fil::copa::bracketed(                                         //
+                 fil::copa::match_production<capability_pre_statement> {}    //
+                 + fil::copa::match_production<capability_post_statement> {} //
              );
     }
     static constexpr auto convertor() { return fil::copa::sink::aggregator<ast_object> {}; }
@@ -79,8 +79,8 @@ struct actor_can_statement {
     struct ast_object {};
 
     static constexpr auto rules() {
-        return keywords::match_can {}                             //
-             + (fil::copa::match_parser<capability_definition> {} //
+        return keywords::match_can {}                                 //
+             + (fil::copa::match_production<capability_definition> {} //
                  | (fil::copa::match_number {} + fil::copa::match_identifier {}));
     }
 
@@ -88,27 +88,30 @@ struct actor_can_statement {
 };
 
 struct actor_has_statement {
-    struct ast_object {};
+    using ast_object = concrete_ast::has_statement;
 
     static constexpr auto rules() {
-        return keywords::match_has {} //
-             + fil::copa::match_number {} + fil::copa::match_identifier {};
+        return keywords::match_has {}                                               //
+             + fil::copa::match_number<fil::copa::member<&ast_object::quantity>> {} //
+             + fil::copa::match_identifier<fil::copa::member<&ast_object::id>> {}   //
+             + fil::copa::semicol;
     }
 
     static constexpr auto convertor() { return fil::copa::sink::aggregator<ast_object> {}; }
 };
 
 struct actor_definition {
-    using ast_object = ast::custom_data_type;
+    using ast_object = concrete_ast::custom_data_type;
 
-    static constexpr auto rules() {                               //
-        return keywords::match_actor {}                           //
-             + fil::copa::bracketed(fil::copa::list(              //
-                 fil::copa::or_rule<                              //
-                     fil::copa::match_parser<actor_has_statement>,
-                     fil::copa::match_parser<actor_can_statement> //
-                     > {}                                         //
-                 ));
+    static constexpr auto rules() {
+        //
+        return keywords::match_actor {} + fil::copa::match_identifier<fil::copa::member<&ast_object::name>> {} //
+             + fil::copa::bracketed(fil::copa::list(fil::copa::or_rule<                                        //
+                 fil::copa::match_parser<actor_has_statement, fil::copa::member<&ast_object::content>>,
+                 fil::copa::match_parser<actor_can_statement>                                                  //
+                 > {}                                                                                          //
+                 ))
+             + fil::copa::semicol;
     }
 
     static constexpr auto convertor() { return fil::copa::sink::aggregator<ast_object> {}; }

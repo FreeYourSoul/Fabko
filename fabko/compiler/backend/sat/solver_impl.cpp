@@ -65,7 +65,7 @@ void update_vsids_activity(solver_context& ctx, const clause& learned_clause) {
     });
     if (need_normalization) {
         static constexpr auto NORMALIZATION_FACTOR = 1e6;
-        std::ranges::for_each(ctx.vars_soa_, fil::soa_select<soa_assignment_ctx>([](auto& assignment_ctx) { //
+        std::ranges::for_each(ctx.vars_soa_, fil::soa::index_select<soa_assignment_ctx>([](auto& assignment_ctx) { //
             assignment_ctx.vsids_activity_ /= NORMALIZATION_FACTOR;
         }));
     }
@@ -78,7 +78,7 @@ void update_vsids_activity(solver_context& ctx, const clause& learned_clause) {
 
     // decrease the VSIDS for all variables if the counter of conflict exceeded the configured decay interval
     if (ctx.statistics_.conflicts % ctx.config_.decay_interval == 0) {
-        std::ranges::for_each(ctx.vars_soa_, fil::soa_select<soa_assignment_ctx>([&ctx](auto& assignment_ctx) { //
+        std::ranges::for_each(ctx.vars_soa_, fil::soa::index_select<soa_assignment_ctx>([&ctx](auto& assignment_ctx) { //
             assignment_ctx.vsids_activity_ /= ctx.config_.vsids_decay_ratio;
         }));
     }
@@ -168,7 +168,7 @@ conflict_resolution_result resolve_conflict(solver_context& ctx, Clauses_Soa::so
             }
         }
 
-        std::erase_if(current_level_vars, fil::soa_select<soa_literal>([trail_lit](auto lit_var) { return lit_var == trail_lit; }));
+        std::erase_if(current_level_vars, fil::soa::index_select<soa_literal>([trail_lit](auto lit_var) { return lit_var == trail_lit; }));
 
         log_debug(":: learning clause[{}] :: variable left current var level {}",
             std::ranges::fold_left(learned_clause, std::string {}, [](std::string&& res, const auto& lit) { return res + to_string(lit.first) + ", "; }),
@@ -350,7 +350,7 @@ std::expected<solver::result, sat_error> solve_sat(solver_context& ctx, const mo
                 continue;
 
             // no decision found, check if a solution is found
-            const bool is_sat_solved = std::ranges::all_of(ctx.clauses_soa_, fil::soa_select<soa_clause>([&ctx](const auto& clause) { //
+            const bool is_sat_solved = std::ranges::all_of(ctx.clauses_soa_, fil::soa::index_select<soa_clause>([&ctx](const auto& clause) { //
                 return is_clause_satisfied(ctx, clause);
             }));
             if (is_sat_solved) {

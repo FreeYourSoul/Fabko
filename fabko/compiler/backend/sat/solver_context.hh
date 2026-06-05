@@ -42,11 +42,11 @@ namespace fabko::compiler::sat {
  * @brief Solution returned by the sat solver
  */
 class solver_solution {
-    std::vector<literal> literals_solving_;                                      //!< literals that solve the SAT problem
+    std::vector<literal> literals_solving_;                                           //!< literals that solve the SAT problem
 };
 
-using Vars_Soa    = fil::soa<literal, assignment, assignment_context, metadata>; //!< structure of arrays representing a variable
-using Clauses_Soa = fil::soa<clause, clause_watcher, metadata>;                  //!< structure of arrays representing a clause
+using Vars_Soa    = fil::soa::soa<literal, assignment, assignment_context, metadata>; //!< structure of arrays representing a variable
+using Clauses_Soa = fil::soa::soa<clause, clause_watcher, metadata>;                  //!< structure of arrays representing a clause
 
 enum var_values {
     soa_literal          = 0,

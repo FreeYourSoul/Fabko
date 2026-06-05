@@ -45,7 +45,7 @@ solver_context::solver_context(const model& model)
 
         for (const std::vector<literal>& model_clause : model.clauses) {
             auto all_clause_ids = std::ranges::fold_left(model_clause, std::vector<Vars_Soa::struct_id> {}, [&, this](auto res, const literal& l) { //
-                auto it = std::ranges::find_if(vars_soa_, fil::soa_select<soa_literal>([&, this](literal lit) {                                     //
+                auto it = std::ranges::find_if(vars_soa_, fil::soa::index_select<soa_literal>([&, this](literal lit) {                              //
                     return lit == l;
                 }));
                 fabko_assert(it != vars_soa_.end(), "a clause cannot contains a non-defined literal");
