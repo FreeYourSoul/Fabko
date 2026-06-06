@@ -324,7 +324,7 @@ std::expected<solver::result, sat_error> solve_sat(solver_context& ctx, const mo
             backtrack(ctx, 0);
 
             // Update the restart threshold for the next restart
-            ctx.config_.restart_threshold *= static_cast<int>(ctx.config_.restart_multiplier);
+            ctx.config_.restart_threshold *= ctx.config_.restart_multiplier;
         }
 
         if (const auto conflict = unit_propagation(ctx); conflict.has_value()) {
