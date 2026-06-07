@@ -17,8 +17,9 @@
 #include "compiler/metadata.hh"
 #include <fil/datastructure/soa.hh>
 
-namespace fabko::compiler::fabl::concrete_ast {
+//@note cst stands for Concrete Syntax Tree
 
+namespace fabko::compiler::fabl::cst {
 using resource = ir::resource;
 
 struct resources_hardcoded {
@@ -68,6 +69,7 @@ using identifier = std::string;
 
 struct custom_data_type;
 struct capability;
+struct capability_identifier;
 struct has_statement;
 
 using null_type       = std::monostate;
@@ -75,14 +77,20 @@ using literal_integer = std::int32_t;
 using literal_string  = std::string;
 using literal_bool    = bool;
 
-using data_type = std::variant< //
-    null_type,                  //
-    custom_data_type,           //
+template<typename T> struct named_member {
+    std::string name;
+    T value;
+};
+
+using data_type = std::variant<    //
+    null_type,                     //
+    custom_data_type,              //
     has_statement,
-    capability,                 //
-    literal_bool,               //
-    literal_integer,            //
-    literal_string>;
+    capability,                    //
+    capability_identifier,
+    named_member<literal_bool>,    //
+    named_member<literal_integer>, //
+    named_member<literal_string>>;
 
 enum class compare_operator {
     GREATER,
@@ -133,6 +141,10 @@ struct capability {
     outcome post;
 };
 
+struct capability_identifier {
+    identifier id;
+};
+
 struct has_statement {
     identifier id;
     std::int32_t quantity;
@@ -165,6 +177,6 @@ struct fabl_program {
         structure;
 };
 
-} // namespace fabko::compiler::fabl::concrete_ast
+} // namespace fabko::compiler::fabl::cst
 
 #endif // FABKO_AST_HH

@@ -49,9 +49,9 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
         REQUIRE(v.has_value());
         CHECK(v->name == "dada");
         REQUIRE(v->content.size() == 1);
-        REQUIRE(std::holds_alternative<fabko::compiler::fabl::concrete_ast::has_statement>(v->content[0]));
+        REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::has_statement>(v->content[0]));
 
-        const auto& has1 = std::get<fabko::compiler::fabl::concrete_ast::has_statement>(v->content[0]);
+        const auto& has1 = std::get<fabko::compiler::fabl::cst::has_statement>(v->content[0]);
 
         CHECK(has1.id == "chocobo");
         CHECK(has1.quantity == 4);
@@ -73,13 +73,13 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
         REQUIRE(v.has_value());
         CHECK(v->name == "ff7");
         REQUIRE(v->content.size() == 2);
-        REQUIRE(std::holds_alternative<fabko::compiler::fabl::concrete_ast::has_statement>(v->content[0]));
+        REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::has_statement>(v->content[0]));
 
-        const auto& has1 = std::get<fabko::compiler::fabl::concrete_ast::has_statement>(v->content[0]);
+        const auto& has1 = std::get<fabko::compiler::fabl::cst::has_statement>(v->content[0]);
         CHECK(has1.id == "chocobo");
         CHECK(has1.quantity == 4);
 
-        const auto& has2 = std::get<fabko::compiler::fabl::concrete_ast::has_statement>(v->content[1]);
+        const auto& has2 = std::get<fabko::compiler::fabl::cst::has_statement>(v->content[1]);
         CHECK(has2.id == "cloud");
         CHECK(has2.quantity == 2);
     }

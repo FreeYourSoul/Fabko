@@ -42,7 +42,7 @@ static constexpr auto match_any_keyword = fil::copa::or_rule< //
 } // namespace keywords
 
 struct capability_pre_statement {
-    using ast_object = concrete_ast::precondition_ast_node;
+    using ast_object = cst::precondition_ast_node;
 
     static constexpr auto rules() {
         return keywords::match_actor {} //
@@ -52,7 +52,7 @@ struct capability_pre_statement {
     static constexpr auto convertor() { return fil::copa::sink::ast_tree_generator<ast_object> {}; }
 };
 struct capability_post_statement {
-    using ast_object = concrete_ast::effect_ast_node;
+    using ast_object = cst::effect_ast_node;
 
     static constexpr auto rules() {
         return keywords::match_post {} //
@@ -63,7 +63,7 @@ struct capability_post_statement {
 };
 
 struct capability_definition {
-    using ast_object = concrete_ast::capability;
+    using ast_object = cst::capability;
 
     static constexpr auto rules() {
         return keywords::match_capability {}
@@ -76,19 +76,21 @@ struct capability_definition {
 };
 
 struct actor_can_statement {
-    struct ast_object {};
+    using ast_object = cst::data_type;
 
     static constexpr auto rules() {
-        return keywords::match_can {}                                 //
-             + (fil::copa::match_production<capability_definition> {} //
-                 | (fil::copa::match_number {} + fil::copa::match_identifier {}));
+        using passthrough = fil::copa::callback<[]<typename T0>(T0&& str) { return std::forward<T0>(str); }>;
+
+        return keywords::match_can {}                                              //
+             + (fil::copa::match_production<capability_definition, passthrough> {} //
+                 | (fil::copa::match_number {} + fil::copa::match_identifier<passthrough> {}));
     }
 
     static constexpr auto convertor() { return fil::copa::sink::aggregator<ast_object> {}; }
 };
 
 struct actor_has_statement {
-    using ast_object = concrete_ast::has_statement;
+    using ast_object = cst::has_statement;
 
     static constexpr auto rules() {
         return keywords::match_has {}                                               //
@@ -101,7 +103,7 @@ struct actor_has_statement {
 };
 
 struct actor_definition {
-    using ast_object = concrete_ast::custom_data_type;
+    using ast_object = cst::custom_data_type;
 
     static constexpr auto rules() {
         //
