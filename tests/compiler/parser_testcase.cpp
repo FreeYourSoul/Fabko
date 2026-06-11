@@ -83,4 +83,25 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
         CHECK(has2.id == "cloud");
         CHECK(has2.quantity == 2);
     }
+
+    SECTION("parsing accessor : can single identifier") {
+        std::string content = R"(
+           actor chocobo {
+                can fly;
+            };
+        )";
+
+        fil::buffer_reader reader(std::move(content));
+
+        auto g       = fabko::compiler::fabl::grammar::actor_definition {};
+        const auto v = fil::copa::parse(g, std::move(reader));
+
+        REQUIRE(v.has_value());
+        CHECK(v->name == "chocobo");
+        REQUIRE(v->content.size() == 1);
+        REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::capability_identifier>(v->content[0]));
+
+        const auto& cap = std::get<fabko::compiler::fabl::cst::capability_identifier>(v->content[0]);
+        CHECK(cap.id == "fly");
+    }
 }
