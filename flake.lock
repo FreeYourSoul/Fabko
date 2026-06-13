@@ -6,11 +6,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1780899834,
-        "narHash": "sha256-3qaoO1ASNQlv/kER1jrMxBpbZ5fqXNnIteRDJU2jUB4=",
+        "lastModified": 1782055213,
+        "narHash": "sha256-WlRMdfleSnEhQtxzApIXCQzH2EVvay9/v01hq5TLLhc=",
         "owner": "FreeYourSoul",
         "repo": "FiL",
-        "rev": "831fccf2fc6722737532996020569f9de56ec001",
+        "rev": "e358fe4d60cda116684dc78bfda9f1dd9b2f3226",
         "type": "github"
       },
       "original": {
@@ -73,11 +73,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1780749050,
-        "narHash": "sha256-3av0pIjlOWQ6rDbNOmpUSvbNnJkGORQKKjb4LtCZsIY=",
+        "lastModified": 1781577229,
+        "narHash": "sha256-lrp67w8AulE9Ks53n27I45ADSzbOCn4H+CNW1Ck8B+8=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "a799d3e3886da994fa307f817a6bc705ae538eeb",
+        "rev": "567a49d1913ce81ac6e9582e3553dd90a955875f",
         "type": "github"
       },
       "original": {
