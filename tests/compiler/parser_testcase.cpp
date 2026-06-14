@@ -104,4 +104,28 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
         const auto& cap = std::get<fabko::compiler::fabl::cst::capability_identifier>(v->content[0]);
         CHECK(cap.id == "fly");
     }
+
+    SECTION("parsing accessor : can full capability") {
+        std::string content = R"(
+           actor chocobo {
+                can capability fly {
+                    pre { }
+                    post { }
+                };
+            };
+        )";
+
+        fil::buffer_reader reader(std::move(content));
+
+        auto g       = fabko::compiler::fabl::grammar::actor_definition {};
+        const auto v = fil::copa::parse(g, std::move(reader));
+
+        REQUIRE(v.has_value());
+        CHECK(v->name == "chocobo");
+        REQUIRE(v->content.size() == 1);
+        REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::capability>(v->content[0]));
+
+        const auto& cap = std::get<fabko::compiler::fabl::cst::capability>(v->content[0]);
+        CHECK(cap.name == "fly");
+    }
 }

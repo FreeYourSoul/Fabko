@@ -137,6 +137,7 @@ struct prerequisites {
 };
 
 struct capability {
+    std::string name;
     prerequisites pre;
     outcome post;
 };

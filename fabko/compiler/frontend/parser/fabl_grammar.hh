@@ -42,35 +42,37 @@ static constexpr auto match_any_keyword = fil::copa::or_rule< //
 } // namespace keywords
 
 struct capability_pre_statement {
-    using ast_object = cst::precondition_ast_node;
+    using ast_object = cst::prerequisites;
 
     static constexpr auto rules() {
-        return keywords::match_actor {} //
-             + fil::copa::bracketed(fil::copa::match_identifier {});
+        return keywords::match_pre {}                //
+             + fil::copa::bracketed(fil::copa::list( //
+                 fil::copa::match_identifier {}));
     }
 
-    static constexpr auto convertor() { return fil::copa::sink::ast_tree_generator<ast_object> {}; }
+    static constexpr auto convertor() { return fil::copa::sink::aggregator<ast_object> {}; }
 };
 struct capability_post_statement {
-    using ast_object = cst::effect_ast_node;
+    using ast_object = cst::outcome;
 
     static constexpr auto rules() {
-        return keywords::match_post {} //
-             + fil::copa::bracketed(fil::copa::match_identifier {});
+        return keywords::match_post {}               //
+             + fil::copa::bracketed(fil::copa::list( //
+                 fil::copa::match_identifier {}));
     }
 
-    static constexpr auto convertor() { return fil::copa::sink::ast_tree_generator<ast_object> {}; }
+    static constexpr auto convertor() { return fil::copa::sink::aggregator<ast_object> {}; }
 };
 
 struct capability_definition {
     using ast_object = cst::capability;
 
     static constexpr auto rules() {
-        return keywords::match_capability {}
-             + fil::copa::bracketed(                                         //
-                 fil::copa::match_production<capability_pre_statement> {}    //
-                 + fil::copa::match_production<capability_post_statement> {} //
-                 )                                                           //
+        return keywords::match_capability {}                                        //
+             + fil::copa::match_identifier<fil::copa::member<&ast_object::name>> {} //
+             + fil::copa::bracketed(                                                //
+                 fil::copa::match_production<capability_pre_statement> {}           //
+                 + fil::copa::match_production<capability_post_statement> {})
              + fil::copa::semicol;
     }
     static constexpr auto convertor() { return fil::copa::sink::aggregator<ast_object> {}; }
@@ -116,9 +118,7 @@ struct actor_definition {
         return keywords::match_actor {} + fil::copa::match_identifier<fil::copa::member<&ast_object::name>> {} //
              + fil::copa::bracketed(fil::copa::list(fil::copa::or_rule<                                        //
                  fil::copa::match_parser<actor_has_statement, fil::copa::member<&ast_object::content>>,
-                 fil::copa::match_parser<actor_can_statement, fil::copa::member<&ast_object::content>>         //
-                 > {}                                                                                          //
-                 ))
+                 fil::copa::match_parser<actor_can_statement, fil::copa::member<&ast_object::content>>> {}))
              + fil::copa::semicol;
     }
 
