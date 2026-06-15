@@ -105,7 +105,38 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
         CHECK(cap.id == "fly");
     }
 
-    SECTION("parsing accessor : can full capability") {
+    SECTION("parsing accessor : can multiple identifiers") {
+        std::string content = R"(
+           actor chocobo {
+                can fly;
+                can sleep;
+                can scream;
+            };
+        )";
+
+        fil::buffer_reader reader(std::move(content));
+
+        auto g       = fabko::compiler::fabl::grammar::actor_definition {};
+        const auto v = fil::copa::parse(g, std::move(reader));
+
+        REQUIRE(v.has_value());
+        CHECK(v->name == "chocobo");
+        REQUIRE(v->content.size() == 3);
+
+        REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::capability_identifier>(v->content[0]));
+        const auto& cap1 = std::get<fabko::compiler::fabl::cst::capability_identifier>(v->content[0]);
+        CHECK(cap1.id == "fly");
+
+        REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::capability_identifier>(v->content[1]));
+        const auto& cap2 = std::get<fabko::compiler::fabl::cst::capability_identifier>(v->content[1]);
+        CHECK(cap2.id == "sleep");
+
+        REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::capability_identifier>(v->content[2]));
+        const auto& cap3 = std::get<fabko::compiler::fabl::cst::capability_identifier>(v->content[2]);
+        CHECK(cap3.id == "scream");
+    }
+
+    SECTION("parsing accessor : can full single capability") {
         std::string content = R"(
            actor chocobo {
                 can capability fly {
@@ -127,5 +158,37 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
 
         const auto& cap = std::get<fabko::compiler::fabl::cst::capability>(v->content[0]);
         CHECK(cap.name == "fly");
+    }
+
+    SECTION("parsing accessor : can full multiple capabilities") {
+        std::string content = R"(
+           actor chocobo {
+                can capability fly {
+                    pre { }
+                    post { }
+                };
+                can capability sleep {
+                    pre { }
+                    post { }
+                };
+            };
+        )";
+
+        fil::buffer_reader reader(std::move(content));
+
+        auto g       = fabko::compiler::fabl::grammar::actor_definition {};
+        const auto v = fil::copa::parse(g, std::move(reader));
+
+        REQUIRE(v.has_value());
+        CHECK(v->name == "chocobo");
+        REQUIRE(v->content.size() == 2);
+
+        REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::capability>(v->content[0]));
+        const auto& cap = std::get<fabko::compiler::fabl::cst::capability>(v->content[0]);
+        CHECK(cap.name == "fly");
+
+        REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::capability>(v->content[1]));
+        const auto& cap2 = std::get<fabko::compiler::fabl::cst::capability>(v->content[1]);
+        CHECK(cap2.name == "sleep");
     }
 }
