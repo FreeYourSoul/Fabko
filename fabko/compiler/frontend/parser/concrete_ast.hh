@@ -22,16 +22,26 @@
 namespace fabko::compiler::fabl::cst {
 using resource = ir::resource;
 
+using identifier = std::string;
+
+struct custom_data_type;
+struct capability;
+struct capability_identifier;
+struct has_statement;
+
+using null_type       = std::monostate;
+using literal_integer = std::int32_t;
+using literal_string  = std::string;
+using literal_bool    = bool;
+
 struct resources_hardcoded {
     resource rsc;
 };
 
 struct actor_accessor {
     std::string actor;
-    std::string value;
+    std::optional<std::string> access = std::nullopt;
 };
-
-using accessor = std::variant<actor_accessor, std::string>;
 
 using effect_ast_node = fil::copa::ast_node<[](const std::string& token) -> ir::operator_exec {
     if (token == "+")
@@ -63,19 +73,8 @@ using precondition_ast_node = fil::copa::ast_node<[](const std::string& token) -
         return ir::constraint_operation::LESS_THAN_OR_EQUAL;
 
     return ir::constraint_operation::INVALID;
-}>;
-
-using identifier = std::string;
-
-struct custom_data_type;
-struct capability;
-struct capability_identifier;
-struct has_statement;
-
-using null_type       = std::monostate;
-using literal_integer = std::int32_t;
-using literal_string  = std::string;
-using literal_bool    = bool;
+},
+    actor_accessor>;
 
 template<typename T> struct named_member {
     std::string name;

@@ -20,7 +20,7 @@
 
 TEST_CASE("fabl parsing", "[compiler][frontend]") {
 
-    SECTION("parsing accessor : empty") {
+    SECTION("parsing actor : empty") {
         std::string content = R"(
            actor dada { };
         )";
@@ -34,7 +34,7 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
         CHECK(v->name == "dada");
         CHECK(v->content.size() == 0);
     }
-    SECTION("parsing accessor : 1 has") {
+    SECTION("parsing actor : 1 has") {
         std::string content = R"(
            actor dada {
                 has 4 chocobo;
@@ -57,7 +57,7 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
         CHECK(has1.quantity == 4);
     }
 
-    SECTION("parsing accessor : multiple has") {
+    SECTION("parsing actor : multiple has") {
         std::string content = R"(
            actor ff7 {
                 has 4 chocobo;
@@ -84,7 +84,7 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
         CHECK(has2.quantity == 2);
     }
 
-    SECTION("parsing accessor : can single identifier") {
+    SECTION("parsing actor : can single identifier") {
         std::string content = R"(
            actor chocobo {
                 can fly;
@@ -105,7 +105,7 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
         CHECK(cap.id == "fly");
     }
 
-    SECTION("parsing accessor : can multiple identifiers") {
+    SECTION("parsing actor : can multiple identifiers") {
         std::string content = R"(
            actor chocobo {
                 can fly;
@@ -136,7 +136,7 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
         CHECK(cap3.id == "scream");
     }
 
-    SECTION("parsing accessor : can full single capability") {
+    SECTION("parsing actor : can full single capability") {
         std::string content = R"(
            actor chocobo {
                 can capability fly {
@@ -160,7 +160,7 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
         CHECK(cap.name == "fly");
     }
 
-    SECTION("parsing accessor : can full multiple capabilities") {
+    SECTION("parsing actor : can full multiple capabilities") {
         std::string content = R"(
            actor chocobo {
                 can capability fly {
@@ -190,5 +190,26 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
         REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::capability>(v->content[1]));
         const auto& cap2 = std::get<fabko::compiler::fabl::cst::capability>(v->content[1]);
         CHECK(cap2.name == "sleep");
+    }
+
+    SECTION("parsing actor : pre with single condition") {
+        std::string content = R"(
+           actor chocobo {
+                can capability fly {
+                    pre { self.altitude == 0;  }
+                    post { }
+                };
+            };
+        )";
+
+        fil::buffer_reader reader(std::move(content));
+
+        auto g       = fabko::compiler::fabl::grammar::actor_definition {};
+        const auto v = fil::copa::parse(g, std::move(reader));
+
+        REQUIRE(v.has_value());
+
+        CHECK(v->name == "chocobo");
+        REQUIRE(v->content.size() == 1);
     }
 }
