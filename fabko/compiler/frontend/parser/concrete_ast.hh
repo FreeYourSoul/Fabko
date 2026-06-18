@@ -34,64 +34,8 @@ using literal_integer = std::int32_t;
 using literal_string  = std::string;
 using literal_bool    = bool;
 
-struct resources_hardcoded {
-    resource rsc;
-};
-
-struct actor_accessor {
-    std::string actor;
-    std::optional<std::string> access = std::nullopt;
-};
-
-using effect_ast_node = fil::copa::ast_node<[](const std::string& token) -> ir::operator_exec {
-    if (token == "+")
-        return ir::operator_exec::ADD;
-    if (token == "-")
-        return ir::operator_exec::SUBTRACT;
-    if (token == "*")
-        return ir::operator_exec::MULTIPLY;
-    if (token == "/")
-        return ir::operator_exec::DIVIDE;
-    if (token == "%")
-        return ir::operator_exec::MODULO;
-
-    return ir::operator_exec::INVALID;
-}>;
-
-using precondition_ast_node = fil::copa::ast_node<[](const std::string& token) -> ir::constraint_operation {
-    if (token == "==")
-        return ir::constraint_operation::EQUAL;
-    if (token == "!=")
-        return ir::constraint_operation::DIFFERENT;
-    if (token == ">")
-        return ir::constraint_operation::GREATER_THAN;
-    if (token == ">=")
-        return ir::constraint_operation::GREATER_THAN_OR_EQUAL;
-    if (token == "<")
-        return ir::constraint_operation::LESS_THAN;
-    if (token == "<=")
-        return ir::constraint_operation::LESS_THAN_OR_EQUAL;
-
-    return ir::constraint_operation::INVALID;
-},
-    actor_accessor>;
-
-template<typename T> struct named_member {
-    std::string name;
-    T value;
-};
-
-using data_type = std::variant<    //
-    null_type,                     //
-    custom_data_type,              //
-    has_statement,
-    capability,                    //
-    capability_identifier,
-    named_member<literal_bool>,    //
-    named_member<literal_integer>, //
-    named_member<literal_string>>;
-
-enum class compare_operator {
+enum class compare_operator : int {
+    INVALID,
     GREATER,
     GREATER_EQUAL,
     LESS,
@@ -123,21 +67,72 @@ enum class mutability {
     MUTABLE_IN_SCOPE
 };
 
-struct outcome {};
-
-struct condition {
-    std::shared_ptr<data_type> lhs;
-    compare_operator op;
-    std::shared_ptr<data_type> rhs;
+struct resources_hardcoded {
+    resource rsc;
 };
 
-struct prerequisites {
-    std::vector<condition> conditions;
+struct actor_accessor {
+    std::string actor;
+    std::optional<std::string> access = std::nullopt;
+};
+
+using effect_ast_node = fil::copa::ast_node<[](const std::string& token) -> ir::operator_exec {
+    if (token == "+")
+        return ir::operator_exec::ADD;
+    if (token == "-")
+        return ir::operator_exec::SUBTRACT;
+    if (token == "*")
+        return ir::operator_exec::MULTIPLY;
+    if (token == "/")
+        return ir::operator_exec::DIVIDE;
+    if (token == "%")
+        return ir::operator_exec::MODULO;
+
+    return ir::operator_exec::INVALID;
+}>;
+
+using precondition_ast_node = fil::copa::ast_node<[](const std::string& token) -> compare_operator {
+    if (token == "==")
+        return compare_operator::EQUAL;
+    if (token == "!=")
+        return compare_operator::DIFFERENT;
+    if (token == ">")
+        return compare_operator::GREATER;
+    if (token == ">=")
+        return compare_operator::GREATER_EQUAL;
+    if (token == "<")
+        return compare_operator::LESS;
+    if (token == "<=")
+        return compare_operator::LESS_EQUAL;
+
+    return compare_operator::INVALID;
+},
+    actor_accessor>;
+
+template<typename T> struct named_member {
+    std::string name;
+    T value;
+};
+
+using data_type = std::variant<    //
+    null_type,                     //
+    custom_data_type,              //
+    has_statement,
+    capability,                    //
+    capability_identifier,
+    named_member<literal_bool>,    //
+    named_member<literal_integer>, //
+    named_member<literal_string>>;
+
+struct outcome {};
+
+struct prerequisites_conjunction {
+    std::vector<precondition_ast_node> conditions;
 };
 
 struct capability {
     std::string name;
-    prerequisites pre;
+    prerequisites_conjunction pre;
     outcome post;
 };
 

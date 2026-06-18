@@ -18,6 +18,12 @@
 
 #include "compiler/frontend/parser/fabl_grammar.hh"
 
+// printer specialization
+namespace fil {
+template<> std::string to_string(const fabko::compiler::fabl::cst::compare_operator& op) { return std::to_string(static_cast<std::uint32_t>(op)); }
+template<> std::string to_string(const fabko::compiler::fabl::cst::actor_accessor& aa) { return std::format("[{} {}]", aa.actor, aa.access.value_or("none")); }
+} // namespace fil
+
 TEST_CASE("fabl parsing", "[compiler][frontend]") {
 
     SECTION("parsing actor : empty") {
@@ -211,5 +217,26 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
 
         CHECK(v->name == "chocobo");
         REQUIRE(v->content.size() == 1);
+
+        REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::capability>(v->content[0]));
+        const auto& cap = std::get<fabko::compiler::fabl::cst::capability>(v->content[0]);
+        CHECK(cap.name == "fly");
+
+        REQUIRE(cap.pre.conditions.size() == 1);
+        const auto& precondition1 = cap.pre.conditions[0];
+        std::println("{}", fil::to_string(precondition1));
+
+        CHECK(precondition1.value == fabko::compiler::fabl::cst::compare_operator::EQUAL);
+
+        REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::actor_accessor>(precondition1.lhs));
+        const auto& lhs = std::get<fabko::compiler::fabl::cst::actor_accessor>(precondition1.lhs);
+
+        CHECK(lhs.actor == "self");
+        CHECK(lhs.access == "altitude");
+
+        REQUIRE(std::holds_alternative<int>(precondition1.rhs));
+        const auto rhs = std::get<int>(precondition1.rhs);
+
+        CHECK(rhs == 0);
     }
 }

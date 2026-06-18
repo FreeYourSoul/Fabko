@@ -75,7 +75,7 @@ struct precondition_statement {
     static constexpr auto rules() {
         return fil::copa::match_production<member_accessor, ast_object::leaf> {} //
              + fil::copa::match_parser<condition_grammar> {}                     //
-             + fil::copa::match_identifier<ast_object::leaf> {}                  //
+             + fil::copa::match_number<ast_object::leaf> {}                      //
              + fil::copa::semicol;
     }
 
@@ -83,12 +83,12 @@ struct precondition_statement {
 };
 
 struct capability_pre_statement {
-    using ast_object = cst::prerequisites;
+    using ast_object = cst::prerequisites_conjunction;
 
     static constexpr auto rules() {
         return keywords::match_pre {}                //
              + fil::copa::bracketed(fil::copa::list( //
-                 fil::copa::match_production<precondition_statement> {}));
+                 fil::copa::match_production<precondition_statement, fil::copa::member<&ast_object::conditions>> {}));
     }
 
     static constexpr auto convertor() { return fil::copa::sink::aggregator<ast_object> {}; }
@@ -109,11 +109,11 @@ struct capability_definition {
     using ast_object = cst::capability;
 
     static constexpr auto rules() {
-        return keywords::match_capability {}                                        //
-             + fil::copa::match_identifier<fil::copa::member<&ast_object::name>> {} //
-             + fil::copa::bracketed(                                                //
-                 fil::copa::match_production<capability_pre_statement> {}           //
-                 + fil::copa::match_production<capability_post_statement> {})
+        return keywords::match_capability {}                                                               //
+             + fil::copa::match_identifier<fil::copa::member<&ast_object::name>> {}                        //
+             + fil::copa::bracketed(                                                                       //
+                 fil::copa::match_parser<capability_pre_statement, fil::copa::member<&ast_object::pre>> {} //
+                 + fil::copa::match_parser<capability_post_statement> {})
              + fil::copa::semicol;
     }
     static constexpr auto convertor() { return fil::copa::sink::aggregator<ast_object> {}; }
