@@ -202,7 +202,7 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
         std::string content = R"(
            actor chocobo {
                 can capability fly {
-                    pre { self.altitude == 0;  }
+                    pre { self.altitude == 0; }
                     post { }
                 };
             };
@@ -238,5 +238,90 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
         const auto rhs = std::get<int>(precondition1.rhs);
 
         CHECK(rhs == 0);
+    }
+
+    SECTION("parsing actor : pre with mutliple condition") {
+        std::string content = R"(
+           actor chocobo {
+                can capability fly {
+                    pre {
+                        self.altitude == 0;
+                        self.will >= 42;
+                        self.strength > 1337;
+                    }
+                    post { }
+                };
+            };
+        )";
+
+        fil::buffer_reader reader(std::move(content));
+
+        auto g       = fabko::compiler::fabl::grammar::actor_definition {};
+        const auto v = fil::copa::parse(g, std::move(reader));
+
+        REQUIRE(v.has_value());
+
+        CHECK(v->name == "chocobo");
+        REQUIRE(v->content.size() == 1);
+
+        REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::capability>(v->content[0]));
+        const auto& cap = std::get<fabko::compiler::fabl::cst::capability>(v->content[0]);
+        CHECK(cap.name == "fly");
+
+        REQUIRE(cap.pre.conditions.size() == 3);
+
+        SECTION("test precondition index 0") {
+            const auto& precondition = cap.pre.conditions[0];
+            std::println("---\n precondition index 0 : \n {}", fil::to_string(precondition));
+
+            CHECK(precondition.value == fabko::compiler::fabl::cst::compare_operator::EQUAL);
+
+            REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::actor_accessor>(precondition.lhs));
+            const auto& lhs = std::get<fabko::compiler::fabl::cst::actor_accessor>(precondition.lhs);
+
+            CHECK(lhs.actor == "self");
+            CHECK(lhs.access == "altitude");
+
+            REQUIRE(std::holds_alternative<int>(precondition.rhs));
+            const auto rhs = std::get<int>(precondition.rhs);
+
+            CHECK(rhs == 0);
+        }
+
+        SECTION("test precondition index 1") {
+            const auto& precondition = cap.pre.conditions[1];
+            std::println("---\n precondition index 1 : \n {}", fil::to_string(precondition));
+
+            CHECK(precondition.value == fabko::compiler::fabl::cst::compare_operator::GREATER_EQUAL);
+
+            REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::actor_accessor>(precondition.lhs));
+            const auto& lhs = std::get<fabko::compiler::fabl::cst::actor_accessor>(precondition.lhs);
+
+            CHECK(lhs.actor == "self");
+            CHECK(lhs.access == "will");
+
+            REQUIRE(std::holds_alternative<int>(precondition.rhs));
+            const auto rhs = std::get<int>(precondition.rhs);
+
+            CHECK(rhs == 42);
+        }
+
+        SECTION("test precondition index 2") {
+            const auto& precondition = cap.pre.conditions[2];
+            std::println("---\n precondition index 2 : \n {}", fil::to_string(precondition));
+
+            CHECK(precondition.value == fabko::compiler::fabl::cst::compare_operator::GREATER);
+
+            REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::actor_accessor>(precondition.lhs));
+            const auto& lhs = std::get<fabko::compiler::fabl::cst::actor_accessor>(precondition.lhs);
+
+            CHECK(lhs.actor == "self");
+            CHECK(lhs.access == "strength");
+
+            REQUIRE(std::holds_alternative<int>(precondition.rhs));
+            const auto rhs = std::get<int>(precondition.rhs);
+
+            CHECK(rhs == 1337);
+        }
     }
 }
