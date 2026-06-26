@@ -31,8 +31,10 @@ struct has_statement;
 
 using null_type       = std::monostate;
 using literal_integer = std::int32_t;
-using literal_string  = std::string;
-using literal_bool    = bool;
+struct literal_string {
+    std::string value;
+};
+using literal_bool = bool;
 
 enum class compare_operator : int {
     INVALID,
@@ -124,7 +126,10 @@ using data_type = std::variant<    //
     named_member<literal_integer>, //
     named_member<literal_string>>;
 
-struct outcome {};
+struct assignment;
+struct outcomes {
+    std::vector<assignment> assignments;
+};
 
 struct prerequisites_conjunction {
     std::vector<precondition_ast_node> conditions;
@@ -133,7 +138,7 @@ struct prerequisites_conjunction {
 struct capability {
     std::string name;
     prerequisites_conjunction pre;
-    outcome post;
+    outcomes post;
 };
 
 struct capability_identifier {
@@ -158,6 +163,14 @@ struct metadata_info {
     compile_unit_id unit;
     compile_unit_type type;
     std::size_t line_definition;
+};
+
+using assign_rhs = std::variant< //
+    literal_integer, literal_string, literal_bool, identifier, actor_accessor>;
+
+struct assignment {
+    actor_accessor lhs;
+    assign_rhs rhs;
 };
 
 struct symbol_table {

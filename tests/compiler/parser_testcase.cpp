@@ -240,7 +240,7 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
         CHECK(rhs == 0);
     }
 
-    SECTION("parsing actor : pre with mutliple condition") {
+    SECTION("parsing actor : pre with multiple condition") {
         std::string content = R"(
            actor chocobo {
                 can capability fly {
@@ -323,5 +323,42 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
 
             CHECK(rhs == 1337);
         }
+    }
+
+    SECTION("test postcondition single assignment") {
+        std::string content = R"(
+           actor chocobo {
+                can capability fly {
+                    pre {}
+                    post {
+                        self.altitude = 42;
+                    }
+                };
+            };
+        )";
+
+        fil::buffer_reader reader(std::move(content));
+
+        auto g       = fabko::compiler::fabl::grammar::actor_definition {};
+        const auto v = fil::copa::parse(g, std::move(reader));
+
+        REQUIRE(v.has_value());
+
+        CHECK(v->name == "chocobo");
+        REQUIRE(v->content.size() == 1);
+
+        REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::capability>(v->content[0]));
+        const auto& cap = std::get<fabko::compiler::fabl::cst::capability>(v->content[0]);
+        CHECK(cap.name == "fly");
+
+        REQUIRE(cap.pre.conditions.empty());
+        REQUIRE(cap.post.assignments.size() == 1);
+
+        const auto& assignment = cap.post.assignments[0];
+        CHECK(assignment.lhs.actor == "self");
+        CHECK(assignment.lhs.access == "altitude");
+
+        CHECK(std::holds_alternative<fabko::compiler::fabl::cst::literal_integer>(assignment.rhs));
+        CHECK(std::get<fabko::compiler::fabl::cst::literal_integer>(assignment.rhs) == 42);
     }
 }

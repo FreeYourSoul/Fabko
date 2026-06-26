@@ -41,7 +41,7 @@ static constexpr auto match_any_keyword = fil::copa::or_rule< //
 
 } // namespace keywords
 
-struct member_accessor {
+struct member_accessor_grammar {
     using ast_object = cst::actor_accessor;
 
     static constexpr auto rules() {
@@ -54,36 +54,36 @@ struct member_accessor {
     static constexpr auto convertor() { return fil::copa::sink::aggregator<ast_object> {}; }
 };
 
-struct precondition_statement {
-    using ast_object = cst::precondition_ast_node;
-
-    struct condition_grammar {
-        using ast_object = precondition_statement::ast_object;
-
-        static constexpr auto rules() {
-            return fil::copa::match_string<fil::fixed_string {">="}, ast_object::operand> {} //
-                 | fil::copa::match_string<fil::fixed_string {">"}, ast_object::operand> {}  //
-                 | fil::copa::match_string<fil::fixed_string {"<="}, ast_object::operand> {} //
-                 | fil::copa::match_string<fil::fixed_string {"<"}, ast_object::operand> {}  //
-                 | fil::copa::match_string<fil::fixed_string {"=="}, ast_object::operand> {} //
-                 | fil::copa::match_string<fil::fixed_string {"!="}, ast_object::operand> {} //
-            ;
-        }
-        static constexpr auto convertor() { return fil::copa::sink::ast_tree_generator<ast_object> {1}; }
-    };
-
-    static constexpr auto rules() {
-        return fil::copa::match_production<member_accessor, ast_object::leaf> {} //
-             + fil::copa::match_parser<condition_grammar> {}                     //
-             + fil::copa::match_number<ast_object::leaf> {}                      //
-             + fil::copa::semicol;
-    }
-
-    static constexpr auto convertor() { return fil::copa::sink::ast_tree_generator<ast_object> {0}; }
-};
-
 struct capability_pre_statement {
     using ast_object = cst::prerequisites_conjunction;
+
+    struct precondition_statement {
+        using ast_object = cst::precondition_ast_node;
+
+        struct condition_grammar {
+            using ast_object = precondition_statement::ast_object;
+
+            static constexpr auto rules() {
+                return fil::copa::match_string<fil::fixed_string {">="}, ast_object::operand> {} //
+                     | fil::copa::match_string<fil::fixed_string {">"}, ast_object::operand> {}  //
+                     | fil::copa::match_string<fil::fixed_string {"<="}, ast_object::operand> {} //
+                     | fil::copa::match_string<fil::fixed_string {"<"}, ast_object::operand> {}  //
+                     | fil::copa::match_string<fil::fixed_string {"=="}, ast_object::operand> {} //
+                     | fil::copa::match_string<fil::fixed_string {"!="}, ast_object::operand> {} //
+                ;
+            }
+            static constexpr auto convertor() { return fil::copa::sink::ast_tree_generator<ast_object> {1}; }
+        };
+
+        static constexpr auto rules() {
+            return fil::copa::match_production<member_accessor_grammar, ast_object::leaf> {} //
+                 + fil::copa::match_parser<condition_grammar> {}                             //
+                 + fil::copa::match_number<ast_object::leaf> {}                              //
+                 + fil::copa::semicol;
+        }
+
+        static constexpr auto convertor() { return fil::copa::sink::ast_tree_generator<ast_object> {0}; }
+    };
 
     static constexpr auto rules() {
         return keywords::match_pre {}                //
@@ -93,13 +93,27 @@ struct capability_pre_statement {
 
     static constexpr auto convertor() { return fil::copa::sink::aggregator<ast_object> {}; }
 };
+
 struct capability_post_statement {
-    using ast_object = cst::outcome;
+    using ast_object = cst::outcomes;
+
+    struct assignment_statement {
+        using ast_object = cst::assignment;
+
+        static constexpr auto rules() {                                                                     //
+            return fil::copa::match_parser<member_accessor_grammar, fil::copa::member<&ast_object::lhs>> {} //
+                 + fil::copa::match_char<'='> {}                                                            //
+                 + fil::copa::match_number<fil::copa::member<&ast_object::rhs>> {}                          //
+                 + fil::copa::semicol;
+        }
+
+        static constexpr auto convertor() { return fil::copa::sink::aggregator<ast_object> {}; }
+    };
 
     static constexpr auto rules() {
         return keywords::match_post {}               //
              + fil::copa::bracketed(fil::copa::list( //
-                 fil::copa::match_identifier {}));
+                 fil::copa::match_parser<assignment_statement, fil::copa::member<&ast_object::assignments>> {}));
     }
 
     static constexpr auto convertor() { return fil::copa::sink::aggregator<ast_object> {}; }
@@ -113,7 +127,7 @@ struct capability_definition {
              + fil::copa::match_identifier<fil::copa::member<&ast_object::name>> {}                        //
              + fil::copa::bracketed(                                                                       //
                  fil::copa::match_parser<capability_pre_statement, fil::copa::member<&ast_object::pre>> {} //
-                 + fil::copa::match_parser<capability_post_statement> {})
+                 + fil::copa::match_parser<capability_post_statement, fil::copa::member<&ast_object::post>> {})
              + fil::copa::semicol;
     }
     static constexpr auto convertor() { return fil::copa::sink::aggregator<ast_object> {}; }
