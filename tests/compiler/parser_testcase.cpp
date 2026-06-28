@@ -358,7 +358,61 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
         CHECK(assignment.lhs.actor == "self");
         CHECK(assignment.lhs.access == "altitude");
 
-        CHECK(std::holds_alternative<fabko::compiler::fabl::cst::literal_integer>(assignment.rhs));
-        CHECK(std::get<fabko::compiler::fabl::cst::literal_integer>(assignment.rhs) == 42);
+        CHECK(std::holds_alternative<std::monostate>(assignment.rhs.rhs));
+        CHECK(std::holds_alternative<fabko::compiler::fabl::cst::literal_integer>(assignment.rhs.lhs));
+        CHECK(std::get<fabko::compiler::fabl::cst::literal_integer>(assignment.rhs.lhs) == 42);
+    }
+
+    SECTION("test postcondition multiple assignments") {
+        std::string content = R"(
+           actor chocobo {
+                can capability fly {
+                    pre {}
+                    post {
+                        self.altitude = 42;
+                        self.notoriety = true;
+                    }
+                };
+            };
+        )";
+
+        fil::buffer_reader reader(std::move(content));
+
+        auto g       = fabko::compiler::fabl::grammar::actor_definition {};
+        const auto v = fil::copa::parse(g, std::move(reader));
+
+        REQUIRE(v.has_value());
+
+        CHECK(v->name == "chocobo");
+        REQUIRE(v->content.size() == 1);
+
+        REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::capability>(v->content[0]));
+        const auto& cap = std::get<fabko::compiler::fabl::cst::capability>(v->content[0]);
+        CHECK(cap.name == "fly");
+
+        REQUIRE(cap.pre.conditions.empty());
+        REQUIRE(cap.post.assignments.size() == 2);
+
+        SECTION("assignment #1") {
+            const auto& assignment = cap.post.assignments[0];
+
+            CHECK(assignment.lhs.actor == "self");
+            CHECK(assignment.lhs.access == "altitude");
+
+            CHECK(std::holds_alternative<std::monostate>(assignment.rhs.rhs));
+            CHECK(std::holds_alternative<fabko::compiler::fabl::cst::literal_integer>(assignment.rhs.lhs));
+            CHECK(std::get<fabko::compiler::fabl::cst::literal_integer>(assignment.rhs.lhs) == 42);
+        }
+
+        SECTION("assignment #2") {
+            const auto& assignment = cap.post.assignments[1];
+
+            CHECK(assignment.lhs.actor == "self");
+            CHECK(assignment.lhs.access == "notoriety");
+
+            CHECK(std::holds_alternative<std::monostate>(assignment.rhs.rhs));
+            CHECK(std::holds_alternative<fabko::compiler::fabl::cst::literal_bool>(assignment.rhs.lhs));
+            CHECK(std::get<fabko::compiler::fabl::cst::literal_bool>(assignment.rhs.lhs).value);
+        }
     }
 }

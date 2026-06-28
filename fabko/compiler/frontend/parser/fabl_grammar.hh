@@ -20,7 +20,6 @@
 #include "concrete_ast.hh"
 
 namespace fabko::compiler::fabl::grammar {
-
 namespace keywords {
 static constexpr auto ACTOR           = fil::fixed_string {"actor"};
 static constexpr auto ACTOR_CAN       = fil::fixed_string {"can"};
@@ -41,6 +40,16 @@ static constexpr auto match_any_keyword = fil::copa::or_rule< //
 
 } // namespace keywords
 
+struct bool_literal_grammar {
+    using ast_object = cst::literal_bool;
+
+    static constexpr auto rules() {
+        return fil::copa::match_string<fil::fixed_string {"true"}, fil::copa::callback<[](std::string_view) { return cst::literal_bool {true}; }>> {} //
+             | fil::copa::match_string<fil::fixed_string {"false"}, fil::copa::callback<[](std::string_view) { return cst::literal_bool {false}; }>> {};
+    }
+    static constexpr auto convertor() { return fil::copa::sink::aggregator<ast_object> {}; }
+};
+
 struct member_accessor_grammar {
     using ast_object = cst::actor_accessor;
 
@@ -53,6 +62,70 @@ struct member_accessor_grammar {
     }
     static constexpr auto convertor() { return fil::copa::sink::aggregator<ast_object> {}; }
 };
+
+struct expression_grammar {
+
+    using ast_object = cst::expression_node;
+
+    struct level_2_grammar {
+        using ast_object = expression_grammar::ast_object;
+
+        //
+        // Definition of grammar for multiplication and division (higher than addition and substraction in precedence)
+
+        static constexpr auto rules() {
+            return fil::copa::match_string<fil::fixed_string {"*"}, ast_object::operand> {} //
+                 | fil::copa::match_string<fil::fixed_string {"/"}, ast_object::operand> {};
+        }
+        static constexpr auto convertor() { return fil::copa::sink::ast_tree_generator<ast_object> {2}; }
+    };
+
+    struct level_1_grammar {
+        using ast_object = expression_grammar::ast_object;
+
+        //
+        // Definition of grammar for addition and substraction (lowest level of precedence in operand)
+
+        static constexpr auto rules() {
+            return fil::copa::match_string<fil::fixed_string {"+"}, ast_object::operand> {} //
+                 | fil::copa::match_string<fil::fixed_string {"-"}, ast_object::operand> {};
+        }
+        static constexpr auto convertor() { return fil::copa::sink::ast_tree_generator<ast_object> {1}; }
+    };
+
+    struct base_grammar {
+        using ast_object = expression_grammar::ast_object;
+
+        //
+        // Definition of grammar for base level
+
+        static constexpr fil::copa::rule auto rules();
+        static constexpr auto convertor() { return fil::copa::sink::ast_tree_generator<ast_object> {0}; }
+    };
+    //
+    // Definition of grammar for high level of the expression
+
+    static constexpr auto rules() {
+        return fil::copa::list_rule<fil::copa::or_rule< //
+            fil::copa::match_parser<base_grammar>,      //
+            fil::copa::match_parser<level_1_grammar>,   //
+            fil::copa::match_parser<level_2_grammar>    //
+            >> {};
+    }
+    static constexpr auto convertor() { return fil::copa::sink::ast_tree_generator<ast_object> {0}; }
+};
+
+// NOTE: Use match_production (not match_parser) when embedding a grammar that uses
+// aggregator<T> as its convertor() inside a grammar that uses ast_tree_generator<T>.
+// match_parser propagates the parent's ctx_extension, which causes a hard compile
+// error when the two convertor types differ (aggregator::ctx_extension = int vs
+// ast_tree_generator::ctx_extension).
+constexpr fil::copa::rule auto expression_grammar::base_grammar::rules() {
+    return fil::copa::match_number<ast_object::leaf> {}                              //
+         | fil::copa::match_production<bool_literal_grammar, ast_object::leaf> {}    //
+         | fil::copa::match_production<member_accessor_grammar, ast_object::leaf> {} //
+         | fil::copa::parenthesised(fil::copa::match_production<expression_grammar, ast_object::leaf> {});
+}
 
 struct capability_pre_statement {
     using ast_object = cst::prerequisites_conjunction;
@@ -103,7 +176,7 @@ struct capability_post_statement {
         static constexpr auto rules() {                                                                     //
             return fil::copa::match_parser<member_accessor_grammar, fil::copa::member<&ast_object::lhs>> {} //
                  + fil::copa::match_char<'='> {}                                                            //
-                 + fil::copa::match_number<fil::copa::member<&ast_object::rhs>> {}                          //
+                 + fil::copa::match_production<expression_grammar, fil::copa::member<&ast_object::rhs>> {}  //
                  + fil::copa::semicol;
         }
 

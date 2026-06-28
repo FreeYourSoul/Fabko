@@ -34,7 +34,19 @@ using literal_integer = std::int32_t;
 struct literal_string {
     std::string value;
 };
-using literal_bool = bool;
+
+struct literal_bool {
+    bool value;
+};
+
+enum class operator_exec : int {
+    INVALID,
+    ADD,
+    SUBTRACT,
+    MULTIPLY,
+    DIVIDE,
+    MODULO,
+};
 
 enum class compare_operator : int {
     INVALID,
@@ -78,21 +90,6 @@ struct actor_accessor {
     std::optional<std::string> access = std::nullopt;
 };
 
-using effect_ast_node = fil::copa::ast_node<[](const std::string& token) -> ir::operator_exec {
-    if (token == "+")
-        return ir::operator_exec::ADD;
-    if (token == "-")
-        return ir::operator_exec::SUBTRACT;
-    if (token == "*")
-        return ir::operator_exec::MULTIPLY;
-    if (token == "/")
-        return ir::operator_exec::DIVIDE;
-    if (token == "%")
-        return ir::operator_exec::MODULO;
-
-    return ir::operator_exec::INVALID;
-}>;
-
 using precondition_ast_node = fil::copa::ast_node<[](const std::string& token) -> compare_operator {
     if (token == "==")
         return compare_operator::EQUAL;
@@ -116,12 +113,31 @@ template<typename T> struct named_member {
     T value;
 };
 
+using expression_node = fil::copa::ast_node<[](const std::string& token) -> operator_exec {
+    if (token == "+")
+        return operator_exec::ADD;
+    if (token == "-")
+        return operator_exec::SUBTRACT;
+    if (token == "*")
+        return operator_exec::MULTIPLY;
+    if (token == "/")
+        return operator_exec::DIVIDE;
+    if (token == "%")
+        return operator_exec::MODULO;
+
+    return operator_exec::INVALID;
+},
+    literal_bool, actor_accessor>;
+
 using data_type = std::variant<    //
     null_type,                     //
     custom_data_type,              //
     has_statement,
     capability,                    //
     capability_identifier,
+    literal_integer,               //
+    literal_string,                //
+    literal_bool,                  //
     named_member<literal_bool>,    //
     named_member<literal_integer>, //
     named_member<literal_string>>;
@@ -165,12 +181,9 @@ struct metadata_info {
     std::size_t line_definition;
 };
 
-using assign_rhs = std::variant< //
-    literal_integer, literal_string, literal_bool, identifier, actor_accessor>;
-
 struct assignment {
     actor_accessor lhs;
-    assign_rhs rhs;
+    expression_node rhs;
 };
 
 struct symbol_table {
