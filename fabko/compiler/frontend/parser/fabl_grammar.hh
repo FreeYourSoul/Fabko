@@ -63,6 +63,17 @@ struct member_accessor_grammar {
     static constexpr auto convertor() { return fil::copa::sink::aggregator<ast_object> {}; }
 };
 
+struct strict_member_accessor_grammar {
+    using ast_object = cst::actor_accessor;
+
+    static constexpr auto rules() {
+        return fil::copa::match_identifier<fil::copa::member<&ast_object::actor>> {}   //
+             + fil::copa::match_point {}                                               //
+             + fil::copa::match_identifier<fil::copa::member<&ast_object::access>> {}; //
+    }
+    static constexpr auto convertor() { return fil::copa::sink::aggregator<ast_object> {}; }
+};
+
 struct expression_grammar {
 
     using ast_object = cst::expression_node;
@@ -121,9 +132,10 @@ struct expression_grammar {
 // error when the two convertor types differ (aggregator::ctx_extension = int vs
 // ast_tree_generator::ctx_extension).
 constexpr fil::copa::rule auto expression_grammar::base_grammar::rules() {
-    return fil::copa::match_number<ast_object::leaf> {}                              //
-         | fil::copa::match_production<bool_literal_grammar, ast_object::leaf> {}    //
-         | fil::copa::match_production<member_accessor_grammar, ast_object::leaf> {} //
+    return fil::copa::match_number<ast_object::leaf> {}                                     //
+         | fil::copa::match_production<bool_literal_grammar, ast_object::leaf> {}           //
+         | fil::copa::match_production<strict_member_accessor_grammar, ast_object::leaf> {} //
+         | fil::copa::match_identifier<ast_object::leaf> {}                                 //
          | fil::copa::parenthesised(fil::copa::match_production<expression_grammar, ast_object::leaf> {});
 }
 

@@ -21,7 +21,12 @@
 // printer specialization
 namespace fil {
 template<> std::string to_string(const fabko::compiler::fabl::cst::compare_operator& op) { return std::to_string(static_cast<std::uint32_t>(op)); }
+template<> std::string to_string(const fabko::compiler::fabl::cst::operator_exec& op) { return std::to_string(static_cast<std::uint32_t>(op)); }
 template<> std::string to_string(const fabko::compiler::fabl::cst::actor_accessor& aa) { return std::format("[{} {}]", aa.actor, aa.access.value_or("none")); }
+template<> std::string to_string(const fabko::compiler::fabl::cst::literal_bool& aa) { return std::format("{}", aa.value ? "true" : "false"); }
+template<> std::string to_string(const fabko::compiler::fabl::cst::literal_string& aa) { return std::format("{}", aa.value); }
+template<> std::string to_string(const fabko::compiler::fabl::cst::custom_data_type& aa) { return std::format("datatype[{}]", aa.name); }
+template<> std::string to_string(const fabko::compiler::fabl::cst::assignment& aa) { return std::format("\n[\nrhs : {}\nlhs : {}\n]", to_string(aa.lhs), to_string(aa.rhs)); }
 } // namespace fil
 
 TEST_CASE("fabl parsing", "[compiler][frontend]") {
@@ -414,5 +419,47 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
             CHECK(std::holds_alternative<fabko::compiler::fabl::cst::literal_bool>(assignment.rhs.lhs));
             CHECK(std::get<fabko::compiler::fabl::cst::literal_bool>(assignment.rhs.lhs).value);
         }
+    }
+
+    SECTION("test expression : identifier") {
+        std::string content = R"(
+           actor chocobo {
+                can capability fly {
+                    pre {}
+                    post {
+                        self.altitude = MAGIC;
+                    }
+                };
+            };
+        )";
+
+        fil::buffer_reader reader(std::move(content));
+
+        auto g       = fabko::compiler::fabl::grammar::actor_definition {};
+        const auto v = fil::copa::parse(g, std::move(reader));
+
+        REQUIRE(v.has_value());
+
+        std::println("{}", fil::to_string(v.value()));
+
+        CHECK(v->name == "chocobo");
+        REQUIRE(v->content.size() == 1);
+
+        REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::capability>(v->content[0]));
+        const auto& cap = std::get<fabko::compiler::fabl::cst::capability>(v->content[0]);
+        CHECK(cap.name == "fly");
+
+        REQUIRE(cap.pre.conditions.empty());
+        REQUIRE(cap.post.assignments.size() == 1);
+
+        const auto& assignment = cap.post.assignments[0];
+
+        CHECK(assignment.lhs.actor == "self");
+        CHECK(assignment.lhs.access == "altitude");
+
+        CHECK(assignment.rhs.value == fabko::compiler::fabl::cst::operator_exec::NONE);
+        CHECK(std::holds_alternative<std::monostate>(assignment.rhs.rhs));
+        CHECK(std::holds_alternative<fabko::compiler::fabl::cst::identifier>(assignment.rhs.lhs));
+        CHECK(std::get<fabko::compiler::fabl::cst::identifier>(assignment.rhs.lhs) == "MAGIC");
     }
 }

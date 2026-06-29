@@ -40,7 +40,7 @@ struct literal_bool {
 };
 
 enum class operator_exec : int {
-    INVALID,
+    NONE,
     ADD,
     SUBTRACT,
     MULTIPLY,
@@ -125,7 +125,7 @@ using expression_node = fil::copa::ast_node<[](const std::string& token) -> oper
     if (token == "%")
         return operator_exec::MODULO;
 
-    return operator_exec::INVALID;
+    return operator_exec::NONE;
 },
     literal_bool, actor_accessor>;
 
