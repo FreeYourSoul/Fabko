@@ -20,13 +20,32 @@
 
 // printer specialization
 namespace fil {
-template<> std::string to_string(const fabko::compiler::fabl::cst::compare_operator& op) { return std::to_string(static_cast<std::uint32_t>(op)); }
-template<> std::string to_string(const fabko::compiler::fabl::cst::operator_exec& op) { return std::to_string(static_cast<std::uint32_t>(op)); }
-template<> std::string to_string(const fabko::compiler::fabl::cst::actor_accessor& aa) { return std::format("[{} {}]", aa.actor, aa.access.value_or("none")); }
+template<> std::string to_string(const fabko::compiler::fabl::cst::null_type&) { return "nulltype"; }
+template<> std::string to_string(const fabko::compiler::fabl::cst::has_statement& s) { return std::format("has[{} : {}]", s.id, s.quantity); }
+template<> std::string to_string(const fabko::compiler::fabl::cst::compare_operator& op) { return std::format("op_comp[{}]", static_cast<std::uint32_t>(op)); }
+template<> std::string to_string(const fabko::compiler::fabl::cst::operator_exec& op) { return std::format("op_exec[{}]", static_cast<std::uint32_t>(op)); }
+template<> std::string to_string(const fabko::compiler::fabl::cst::actor_accessor& aa) { return std::format("accessor[{} {}]", aa.actor, aa.access.value_or("none")); }
 template<> std::string to_string(const fabko::compiler::fabl::cst::literal_bool& aa) { return std::format("{}", aa.value ? "true" : "false"); }
+template<> std::string to_string(const fabko::compiler::fabl::cst::capability_identifier& aa) { return std::format("cap_id[{}]", aa.id); }
 template<> std::string to_string(const fabko::compiler::fabl::cst::literal_string& aa) { return std::format("{}", aa.value); }
-template<> std::string to_string(const fabko::compiler::fabl::cst::custom_data_type& aa) { return std::format("datatype[{}]", aa.name); }
+template<> std::string to_string(const fabko::compiler::fabl::cst::named_lit<fabko::compiler::fabl::cst::literal_string>& aa) {
+    return std::format("lit[{}={}]", aa.name, to_string(aa.name));
+}
+template<> std::string to_string(const fabko::compiler::fabl::cst::named_lit<fabko::compiler::fabl::cst::literal_bool>& aa) {
+    return std::format("lit[{}={}]", aa.name, to_string(aa.name));
+}
+template<> std::string to_string(const fabko::compiler::fabl::cst::named_lit<fabko::compiler::fabl::cst::literal_integer>& aa) {
+    return std::format("lit[{}={}]", aa.name, to_string(aa.name));
+}
 template<> std::string to_string(const fabko::compiler::fabl::cst::assignment& aa) { return std::format("\n[\nrhs : {}\nlhs : {}\n]", to_string(aa.lhs), to_string(aa.rhs)); }
+template<> std::string to_string(const fabko::compiler::fabl::cst::outcomes& o) { return std::format("outcome[{}]", join(o.assignments)); }
+template<> std::string to_string(const fabko::compiler::fabl::cst::capability& c) { return std::format("capability[{} : {}]", c.name, to_string(c.post)); }
+template<> std::string to_string(const fabko::compiler::fabl::cst::custom_data_type& aa) {
+    std::string joined;
+    for (const auto& item : aa.content)
+        joined += std::visit([](const auto& v) { return fil::to_string(v); }, item);
+    return std::format("datatype[{} :: {}]", aa.name, joined);
+}
 } // namespace fil
 
 TEST_CASE("fabl parsing", "[compiler][frontend]") {
@@ -461,5 +480,158 @@ TEST_CASE("fabl parsing", "[compiler][frontend]") {
         CHECK(std::holds_alternative<std::monostate>(assignment.rhs.rhs));
         CHECK(std::holds_alternative<fabko::compiler::fabl::cst::identifier>(assignment.rhs.lhs));
         CHECK(std::get<fabko::compiler::fabl::cst::identifier>(assignment.rhs.lhs) == "MAGIC");
+    }
+
+    SECTION("test expression : actor access") {
+        std::string content = R"(
+           actor chocobo {
+                can capability fly {
+                    pre {}
+                    post {
+                        self.altitude = sky.highest;
+                    }
+                };
+            };
+        )";
+
+        fil::buffer_reader reader(std::move(content));
+
+        auto g       = fabko::compiler::fabl::grammar::actor_definition {};
+        const auto v = fil::copa::parse(g, std::move(reader));
+
+        REQUIRE(v.has_value());
+
+        std::println("{}", fil::to_string(v.value()));
+
+        CHECK(v->name == "chocobo");
+        REQUIRE(v->content.size() == 1);
+
+        REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::capability>(v->content[0]));
+        const auto& cap = std::get<fabko::compiler::fabl::cst::capability>(v->content[0]);
+        CHECK(cap.name == "fly");
+
+        REQUIRE(cap.pre.conditions.empty());
+        REQUIRE(cap.post.assignments.size() == 1);
+
+        const auto& assignment = cap.post.assignments[0];
+
+        CHECK(assignment.lhs.actor == "self");
+        CHECK(assignment.lhs.access == "altitude");
+
+        CHECK(assignment.rhs.value == fabko::compiler::fabl::cst::operator_exec::NONE);
+        CHECK(std::holds_alternative<std::monostate>(assignment.rhs.rhs));
+        CHECK(std::holds_alternative<fabko::compiler::fabl::cst::actor_accessor>(assignment.rhs.lhs));
+        const auto& lhs = std::get<fabko::compiler::fabl::cst::actor_accessor>(assignment.rhs.lhs);
+        CHECK(lhs.actor == "sky");
+        CHECK(lhs.access == "highest");
+    }
+
+    SECTION("test expression : addition") {
+        std::string content = R"(
+           actor chocobo {
+                can capability fly {
+                    pre {}
+                    post {
+                        self.altitude = self.altitude + 42;
+                    }
+                };
+            };
+        )";
+
+        fil::buffer_reader reader(std::move(content));
+
+        auto g       = fabko::compiler::fabl::grammar::actor_definition {};
+        const auto v = fil::copa::parse(g, std::move(reader));
+
+        REQUIRE(v.has_value());
+
+        std::println("{}", fil::to_string(v.value()));
+
+        CHECK(v->name == "chocobo");
+        REQUIRE(v->content.size() == 1);
+
+        REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::capability>(v->content[0]));
+        const auto& cap = std::get<fabko::compiler::fabl::cst::capability>(v->content[0]);
+        CHECK(cap.name == "fly");
+
+        REQUIRE(cap.pre.conditions.empty());
+        REQUIRE(cap.post.assignments.size() == 1);
+
+        const auto& assignment = cap.post.assignments[0];
+
+        CHECK(assignment.lhs.actor == "self");
+        CHECK(assignment.lhs.access == "altitude");
+
+        CHECK(assignment.rhs.value == fabko::compiler::fabl::cst::operator_exec::ADD);
+
+        CHECK(std::holds_alternative<fabko::compiler::fabl::cst::actor_accessor>(assignment.rhs.lhs));
+        const auto& lhs = std::get<fabko::compiler::fabl::cst::actor_accessor>(assignment.rhs.lhs);
+        CHECK(lhs.actor == "self");
+        CHECK(lhs.access == "altitude");
+
+        CHECK(std::holds_alternative<fabko::compiler::fabl::cst::literal_integer>(assignment.rhs.rhs));
+        const auto rhs = std::get<fabko::compiler::fabl::cst::literal_integer>(assignment.rhs.rhs);
+        CHECK(rhs == 42);
+    }
+
+    SECTION("test expression : complex expression") {
+        std::string content = R"(
+           actor chocobo {
+                can capability fly {
+                    pre {}
+                    post {
+                        self.altitude = self.altitude + (MAGIC_NUMBER - anotherNumber * 42);
+                    }
+                };
+            };
+        )";
+
+        fil::buffer_reader reader(std::move(content));
+
+        auto g       = fabko::compiler::fabl::grammar::actor_definition {};
+        const auto v = fil::copa::parse(g, std::move(reader));
+
+        REQUIRE(v.has_value());
+
+        std::println("{}", fil::to_string(v.value()));
+
+        CHECK(v->name == "chocobo");
+        REQUIRE(v->content.size() == 1);
+
+        REQUIRE(std::holds_alternative<fabko::compiler::fabl::cst::capability>(v->content[0]));
+        const auto& cap = std::get<fabko::compiler::fabl::cst::capability>(v->content[0]);
+        CHECK(cap.name == "fly");
+
+        REQUIRE(cap.pre.conditions.empty());
+        REQUIRE(cap.post.assignments.size() == 1);
+
+        const auto& assignment = cap.post.assignments[0];
+
+        CHECK(assignment.lhs.actor == "self");
+        CHECK(assignment.lhs.access == "altitude");
+
+        CHECK(assignment.rhs.value == fabko::compiler::fabl::cst::operator_exec::ADD);
+
+        CHECK(std::holds_alternative<fabko::compiler::fabl::cst::actor_accessor>(assignment.rhs.lhs));
+        const auto& lhs = std::get<fabko::compiler::fabl::cst::actor_accessor>(assignment.rhs.lhs);
+        CHECK(lhs.actor == "self");
+        CHECK(lhs.access == "altitude");
+
+        CHECK(std::holds_alternative<std::shared_ptr<fabko::compiler::fabl::cst::expression_node>>(assignment.rhs.rhs));
+        const auto rhs = std::get<std::shared_ptr<fabko::compiler::fabl::cst::expression_node>>(assignment.rhs.rhs);
+        CHECK(rhs->value == fabko::compiler::fabl::cst::operator_exec::SUBTRACT);
+
+        CHECK(std::holds_alternative<fabko::compiler::fabl::cst::identifier>(rhs->lhs));
+        CHECK(std::get<fabko::compiler::fabl::cst::identifier>(rhs->lhs) == "MAGIC_NUMBER");
+
+        CHECK(std::holds_alternative<std::shared_ptr<fabko::compiler::fabl::cst::expression_node>>(rhs->rhs));
+        const auto rhs_rhs = std::get<std::shared_ptr<fabko::compiler::fabl::cst::expression_node>>(rhs->rhs);
+        CHECK(rhs_rhs->value == fabko::compiler::fabl::cst::operator_exec::MULTIPLY);
+
+        CHECK(std::holds_alternative<fabko::compiler::fabl::cst::identifier>(rhs_rhs->lhs));
+        CHECK(std::get<fabko::compiler::fabl::cst::identifier>(rhs_rhs->lhs) == "anotherNumber");
+
+        CHECK(std::holds_alternative<fabko::compiler::fabl::cst::literal_integer>(rhs_rhs->rhs));
+        CHECK(std::get<fabko::compiler::fabl::cst::literal_integer>(rhs_rhs->rhs) == 42);
     }
 }

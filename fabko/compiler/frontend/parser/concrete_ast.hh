@@ -108,7 +108,7 @@ using precondition_ast_node = fil::copa::ast_node<[](const std::string& token) -
 },
     actor_accessor>;
 
-template<typename T> struct named_member {
+template<typename T> struct named_lit {
     std::string name;
     T value;
 };
@@ -129,18 +129,18 @@ using expression_node = fil::copa::ast_node<[](const std::string& token) -> oper
 },
     literal_bool, actor_accessor>;
 
-using data_type = std::variant<    //
-    null_type,                     //
-    custom_data_type,              //
+using data_type = std::variant< //
+    null_type,                  //
+    custom_data_type,           //
     has_statement,
-    capability,                    //
+    capability,                 //
     capability_identifier,
-    literal_integer,               //
-    literal_string,                //
-    literal_bool,                  //
-    named_member<literal_bool>,    //
-    named_member<literal_integer>, //
-    named_member<literal_string>>;
+    literal_integer,            //
+    literal_string,             //
+    literal_bool,               //
+    named_lit<literal_bool>,    //
+    named_lit<literal_integer>, //
+    named_lit<literal_string>>;
 
 struct assignment;
 struct outcomes {
