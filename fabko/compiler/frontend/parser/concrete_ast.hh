@@ -132,9 +132,9 @@ using expression_node = fil::copa::ast_node<[](const std::string& token) -> oper
 using data_type = std::variant< //
     null_type,                  //
     custom_data_type,           //
-    has_statement,
+    has_statement,              //
     capability,                 //
-    capability_identifier,
+    capability_identifier,      //
     literal_integer,            //
     literal_string,             //
     literal_bool,               //
